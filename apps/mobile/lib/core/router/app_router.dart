@@ -1,3 +1,7 @@
+import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
+import 'package:campusconnect/features/auth/presentation/login_screen.dart';
+import 'package:campusconnect/features/auth/presentation/register_screen.dart';
+import 'package:campusconnect/features/auth/presentation/verify_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chats_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_screen.dart';
 import 'package:campusconnect/features/profile/presentation/profile_screen.dart';
@@ -6,11 +10,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// App shell routes (spec §6.3): bottom nav for the 3 core areas + profile.
+const _authLocations = {'/login', '/register', '/verify'};
+
+/// App routes: auth screens outside the shell, bottom-nav shell for the
+/// 3 core areas + profile (spec §6.3). Guarded per M2 acceptance —
+/// unauthenticated users are redirected to /login.
 final routerProvider = Provider<GoRouter>((ref) {
+  final auth = ValueNotifier(ref.read(authControllerProvider).status);
+  ref
+    ..onDispose(auth.dispose)
+    ..listen(
+      authControllerProvider,
+      (_, next) => auth.value = next.status,
+    );
+
   return GoRouter(
     initialLocation: '/market',
+    refreshListenable: auth,
+    redirect: (context, state) {
+      final status = auth.value;
+      final onAuthScreen = _authLocations.contains(state.matchedLocation);
+      if (status == AuthStatus.unknown) return null; // bootstrap in flight
+      if (status == AuthStatus.unauthenticated) {
+        return onAuthScreen ? null : '/login';
+      }
+      return onAuthScreen ? '/market' : null;
+    },
     routes: [
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(
+        path: '/verify',
+        builder: (_, state) => VerifyScreen(email: state.extra! as String),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _AppShell(shell: shell),
         branches: [
