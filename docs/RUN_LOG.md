@@ -1,13 +1,13 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: Flutter M4 — marketplace browse (GET /listings via generated client, infinite scroll, skeletons) + listing detail; then tutoring/chats/messaging UIs (M5–M7 Flutter). Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
+▶ NEXT: Flutter M5 — messaging UI (conversations list + thread, polling provider, optimistic send + rollback §6.3) and wire the "Message seller" CTA; then M6 tutor search + M7 chats UIs. Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API green; Flutter scaffold UNBLOCKED + green via pub mirror
 - [x] M1 — Data model & seed
 - [x] M2 — Auth & identity — API done; Flutter done (c8ef080): generated campus_api client (§2.3), secure tokens, refresh interceptor, auth screens + router guard, 9 widget tests green
 - [x] M3 — Design system + app shell — theme tokens, shell, generated client wired; widget library grows per-feature
-- [x] M4 — Marketplace core (J1 + browse) — API done; Flutter UI TODO(blocked)
+- [x] M4 — Marketplace core (J1 + browse) — API done; Flutter done (27b9a68 + 8417cd7): browse grid + skeletons + category chips, detail w/ seller reputation, J1 sell form; 14 widget tests green
 - [x] M5 — Messaging + reputation — API done; Flutter UI TODO(blocked)
 - [x] M6 — Tutoring — API done; Flutter UI TODO(blocked)
 - [x] M7 — Community chats — API done; Flutter UI TODO(blocked)
@@ -245,3 +245,16 @@ credentials, production CAMPUS_EMAIL_DOMAIN, instructor GitHub invite.
   flutter analyze 0 issues; `flutter build web` compiles.
 - Gotcha logged: Makefile env exports don't reach standalone shells — export the pub
   mirror vars explicitly before flutter commands.
+
+### Flutter M4 — marketplace UI (commits 27b9a68, 8417cd7)
+- Browse (§6.4): search field, category FilterChips (64px row → 48px a11y tap targets),
+  skeleton grid on first load (§6.3), infinite-scroll SliverGrid, empty/error states
+  with actions, pull-to-refresh.
+- Listing detail: gallery placeholder, price/condition chips, seller card with
+  Bayesian reputation "4.6 ★ (12)", "Message seller" CTA (stub until M5 UI).
+- J1 sell flow: title/price/category/condition/description form, price → cents parse,
+  posts via generated client, refreshes browse, ≤5-tap path from FAB or empty state.
+- 14 widget tests green (incl. J1 end-to-end widget test capturing created listing);
+  analyze 0 issues. Gotchas: lazy ListView children below fold need
+  `scrollUntilVisible` in tests; DropdownButtonFormField uses `initialValue` (SDK 3.29).
+- Tagged m4-marketplace-flutter.
