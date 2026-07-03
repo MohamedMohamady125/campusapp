@@ -2,6 +2,7 @@ import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/auth/presentation/login_screen.dart';
 import 'package:campusconnect/features/auth/presentation/register_screen.dart';
 import 'package:campusconnect/features/auth/presentation/verify_screen.dart';
+import 'package:campusconnect/features/chats/presentation/chat_room_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chats_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/listing_detail_screen.dart';
@@ -87,6 +88,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'conversation/:id',
                     builder: (_, state) => ThreadScreen(
                       conversationId: state.pathParameters['id']!,
+                      title: state.extra as String?,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'room/:id',
+                    builder: (_, state) => ChatRoomScreen(
+                      chatId: state.pathParameters['id']!,
                       title: state.extra as String?,
                     ),
                   ),
