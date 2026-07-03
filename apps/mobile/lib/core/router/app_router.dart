@@ -6,6 +6,7 @@ import 'package:campusconnect/features/chats/presentation/chats_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/listing_detail_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/sell_screen.dart';
+import 'package:campusconnect/features/messaging/presentation/thread_screen.dart';
 import 'package:campusconnect/features/profile/presentation/profile_screen.dart';
 import 'package:campusconnect/features/tutoring/presentation/tutor_search_screen.dart';
 import 'package:flutter/material.dart';
@@ -78,7 +79,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/chats', builder: (_, _) => const ChatsScreen()),
+              GoRoute(
+                path: '/chats',
+                builder: (_, _) => const ChatsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'conversation/:id',
+                    builder: (_, state) => ThreadScreen(
+                      conversationId: state.pathParameters['id']!,
+                      title: state.extra as String?,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
           StatefulShellBranch(

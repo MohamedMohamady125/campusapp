@@ -1,10 +1,13 @@
 import 'package:campus_api/campus_api.dart';
+import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/features/marketplace/data/listings_repository.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_screen.dart';
+import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
 import 'package:campusconnect/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 final AutoDisposeFutureProviderFamily<ListingResponse, String>
 listingDetailProvider = FutureProvider.autoDispose
@@ -18,6 +21,36 @@ class ListingDetailScreen extends ConsumerWidget {
   const ListingDetailScreen({required this.listingId, super.key});
 
   final String listingId;
+
+  /// Opens (or reuses) the listing-context conversation with the seller
+  /// and jumps into the thread (J1 → M5 handoff).
+  Future<void> _messageSeller(
+    BuildContext context,
+    WidgetRef ref,
+    ListingResponse listing,
+  ) async {
+    try {
+      final convo = await ref
+          .read(conversationsRepositoryProvider)
+          .openConversation(
+            recipientId: listing.seller.id,
+            contextType: ConversationContext.listing,
+            contextId: listing.id,
+          );
+      if (context.mounted) {
+        context.go(
+          '/chats/conversation/${convo.id}',
+          extra: listing.seller.displayName,
+        );
+      }
+    } on Object catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
+      }
+    }
+  }
 
   static const _conditionLabels = <ListingCondition, String>{
     ListingCondition.new_: 'New',
@@ -98,11 +131,7 @@ class ListingDetailScreen extends ConsumerWidget {
               _SellerCard(seller: listing.seller),
               const SizedBox(height: AppSpacing.lg),
               FilledButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Messaging arrives with the M5 UI.'),
-                  ),
-                ),
+                onPressed: () => _messageSeller(context, ref, listing),
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: const Text('Message seller'),
               ),

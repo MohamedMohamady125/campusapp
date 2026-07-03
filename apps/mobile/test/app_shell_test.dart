@@ -1,15 +1,20 @@
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
+import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
 import 'package:campusconnect/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/fake_auth.dart';
+import 'helpers/fake_conversations.dart';
 
 Widget _authedApp() => ProviderScope(
   overrides: [
     authControllerProvider.overrideWith(
       () => FakeAuthController(authedState()),
+    ),
+    conversationsRepositoryProvider.overrideWithValue(
+      FakeConversationsRepository(),
     ),
   ],
   child: const CampusConnectApp(),
@@ -40,7 +45,8 @@ void main() {
 
     await tester.tap(find.text('Chats'));
     await tester.pumpAndSettle();
-    expect(find.text('Join the conversation'), findsOneWidget);
+    expect(find.text('No messages yet'), findsOneWidget); // Messages tab
+    expect(find.text('Groups'), findsOneWidget);
 
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
