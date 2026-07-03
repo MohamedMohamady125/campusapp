@@ -1,6 +1,16 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: all planned milestones done (API M0–M10 + Flutter UIs J1/J2/J3, 26 widget tests, web build ✓). Optional stretch: sell-flow image upload (image_picker + signed URL), M9 admin dashboard web routes, integration_test on emulator, Lighthouse gate. Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
+▶ NEXT: all planned milestones done + premium UI overhaul shipped (fa278e5); optional stretch below unchanged.
+
+## 2026-07-03 — Premium UI/UX overhaul (user request)
+
+- Design research (Depop/OfferUp/Airbnb/iMessage/Messenger/Discord patterns, M3 motion spec) applied app-wide in fa278e5.
+- Theme: Plus Jakarta Sans display + Inter body (google_fonts), seed #5B5BF0, hand-tuned dark palette (#0E0F13 bg / #1A1B21 cards / #2A2B33 borders / #8C8CFF primary), bordered near-flat cards, pill buttons, FadeForwards/Cupertino page transitions, floating snackbars, themed nav/chips/sheets/tabs.
+- Motion: `shared/widgets/motion.dart` — PressableScale (0.97 ≤100ms, easeOutBack release) + staggered FadeSlideIn (280ms, 35ms stagger cap 6, 12px rise); both honor `MediaQuery.disableAnimations`; finite → pumpAndSettle-safe.
+- Patterns: Hero listing image browse→detail; Depop price-overlay grid card; sticky bottom CTA bar on detail; shared `chat_ui.dart` ChatBubble (gradient sent, tail radius, pending opacity) + pill ChatComposer for thread AND chat room; rank-badged tutor cards; amber stars; branded gradient login mark.
+- Verified: dart format clean, flutter analyze 0 issues, 26/26 widget tests, `flutter build web` ✓.
+
+Previous status: all planned milestones done (API M0–M10 + Flutter UIs J1/J2/J3, 26 widget tests, web build ✓). Optional stretch: sell-flow image upload (image_picker + signed URL), M9 admin dashboard web routes, integration_test on emulator, Lighthouse gate. Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API green; Flutter scaffold UNBLOCKED + green via pub mirror
