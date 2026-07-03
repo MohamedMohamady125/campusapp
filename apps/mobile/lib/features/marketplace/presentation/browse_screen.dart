@@ -41,6 +41,11 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Marketplace')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go('/market/sell'),
+        icon: const Icon(Icons.add_a_photo_outlined),
+        label: const Text('Sell'),
+      ),
       body: RefreshIndicator(
         onRefresh: controller.refresh,
         child: CustomScrollView(
@@ -80,13 +85,14 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 ),
               )
             else if (state.items.isEmpty)
-              const SliverFillRemaining(
+              SliverFillRemaining(
                 hasScrollBody: false,
                 child: EmptyState(
                   icon: Icons.storefront_outlined,
                   title: 'No listings yet',
                   message: 'Be the first — post something to sell.',
                   actionLabel: 'Sell something',
+                  onAction: () => context.go('/market/sell'),
                 ),
               )
             else

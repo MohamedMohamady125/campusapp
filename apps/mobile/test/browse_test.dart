@@ -55,6 +55,15 @@ class _FakeListingsRepository implements ListingsRepository {
   @override
   Future<ListingResponse> fetchListing(String id) async =>
       _listing(id, 'Calc Textbook', 2500);
+
+  @override
+  Future<ListingResponse> createListing({
+    required String title,
+    required String description,
+    required int priceCents,
+    required ListingCategory category,
+    required ListingCondition condition,
+  }) async => throw UnimplementedError();
 }
 
 Widget _app(_FakeListingsRepository repo) => ProviderScope(
@@ -126,4 +135,49 @@ void main() {
     await tester.scrollUntilVisible(find.text('Message seller'), 200);
     expect(find.text('Message seller'), findsOneWidget);
   });
+
+  testWidgets('J1: sell flow posts a listing and returns to browse', (
+    tester,
+  ) async {
+    final repo = _CreateCapturingRepo();
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sell something'));
+    await tester.pumpAndSettle();
+    expect(find.text('Post listing'), findsOneWidget);
+
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'Desk Lamp');
+    await tester.enterText(fields.at(1), '9.50');
+    await tester.enterText(fields.at(2), 'Warm light, barely used.');
+    await tester.tap(find.text('Post listing'));
+    await tester.pumpAndSettle();
+
+    expect(repo.createdTitle, 'Desk Lamp');
+    expect(repo.createdCents, 950);
+    expect(find.text('Marketplace'), findsOneWidget); // back on browse
+  });
+}
+
+// --- J1 sell flow ---
+
+class _CreateCapturingRepo extends _FakeListingsRepository {
+  _CreateCapturingRepo() : super([const ListingsPage(items: [])]);
+
+  String? createdTitle;
+  int? createdCents;
+
+  @override
+  Future<ListingResponse> createListing({
+    required String title,
+    required String description,
+    required int priceCents,
+    required ListingCategory category,
+    required ListingCondition condition,
+  }) async {
+    createdTitle = title;
+    createdCents = priceCents;
+    return _listing('new', title, priceCents);
+  }
 }

@@ -42,6 +42,26 @@ class ListingsRepository {
     );
     return res.data!;
   }
+
+  Future<ListingResponse> createListing({
+    required String title,
+    required String description,
+    required int priceCents,
+    required ListingCategory category,
+    required ListingCondition condition,
+  }) async {
+    final res = await _listings.createListingApiV1ListingsPost(
+      listingCreateRequest: ListingCreateRequest(
+        (b) => b
+          ..title = title
+          ..description = description
+          ..priceCents = priceCents
+          ..category = category
+          ..condition = condition,
+      ),
+    );
+    return res.data!;
+  }
 }
 
 final listingsRepositoryProvider = Provider<ListingsRepository>(
