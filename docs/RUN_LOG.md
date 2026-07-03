@@ -1,13 +1,13 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: M2 — auth & identity (API side first; Flutter blocked on pub.dev network).
+▶ NEXT: M5 — messaging + reputation API (conversations/messages, rating submission with Bayesian §5.2 inside the rating transaction). Flutter still blocked on pub.dev — retry each milestone.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API side green; Flutter scaffold TODO(blocked): pub.dev unreachable
 - [x] M1 — Data model & seed
-- [ ] M2 — Auth & identity (API + Flutter)
-- [ ] M3 — Design system + app shell
-- [ ] M4 — Marketplace core (J1 + browse)
+- [x] M2 — Auth & identity — API done; Flutter screens TODO(blocked): pub.dev
+- [ ] M3 — Design system + app shell (Flutter-blocked)
+- [x] M4 — Marketplace core (J1 + browse) — API done; Flutter UI TODO(blocked)
 - [ ] M5 — Messaging + reputation
 - [ ] M6 — Tutoring
 - [ ] M7 — Community chats
@@ -40,3 +40,23 @@
 - Seed: 50 courses, 20 verified users, 40 listings w/ images, 16 tutor offerings, 5 chats
   (33 memberships, 25 messages), 30 ratings, 5 feature flags (all off). Idempotent (skips if users exist).
 - Acceptance: scripts/row_counts.py prints all tables populated ✓; seed rerun skips ✓; pytest green ✓.
+
+### M2 — Auth & identity (API ✅, Flutter blocked)
+- Full flow: register (campus.edu gate) → email code verify (stub provider, sha256 at rest,
+  10-min TTL, single-use) → login (argon2id) → JWT access (~15 min) + rotating refresh with
+  family reuse detection (reuse revokes whole family, code REFRESH_REUSED) → logout → password
+  reset (revokes all sessions). Rate limits: login 5/15min, code requests 3/15min → 429 + Retry-After.
+- Public profile endpoint never returns email. 10 tests green; committed 23249e0.
+
+### M4 — Marketplace core (API ✅, Flutter blocked)
+- Listing CRUD with ownership checks (403 NOT_OWNER), 90-day TTL, soft delete.
+- Search §5.3: FTS (generated tsvector, plainto_tsquery + ts_rank) blended with pg_trgm
+  similarity (>0.2) for typo tolerance; all filters are SQL WHERE clauses. Recency feed uses
+  keyset cursor (created_at,id); ranked search returns no cursor by design.
+- Signed uploads §2.5: presigned POST via storage interface (S3/MinIO real, stub in tests),
+  5MB cap, jpeg/png/webp allowlist; moderation gate — images invisible until approved
+  (stub rejects keys containing "reject"). TODO: real deployments move review to Celery webhook.
+- Celery §5.4: beat 3:00/3:15/3:30 — expire_listings, recompute_global_mean (seed 4.0),
+  purge_verification_codes. Job bodies are plain async fns, tested idempotent.
+- N+1 guard: selectinload(seller, images) + query-count assertion test (≤5 SELECTs).
+- Lane green: ruff ✓ mypy strict ✓ 19 tests ✓. OpenAPI re-exported.
