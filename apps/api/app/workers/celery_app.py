@@ -30,5 +30,9 @@ celery_app.conf.update(
             "task": "app.workers.tasks.purge_verification_codes",
             "schedule": crontab(hour=3, minute=30),
         },
+        "aggregate-daily-metrics-nightly": {
+            "task": "app.workers.tasks.aggregate_daily_metrics",
+            "schedule": crontab(hour=3, minute=45),
+        },
     },
 )

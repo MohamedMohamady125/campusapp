@@ -6,6 +6,8 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import BusinessRuleError, ForbiddenError, NotFoundError, ValidationAppError
+from app.integrations.analytics.base import EVENT_LISTING_CREATED
+from app.integrations.analytics.provider import get_analytics_provider
 from app.integrations.moderation.base import ModerationProvider, ModerationVerdict
 from app.integrations.storage.base import ALLOWED_CONTENT_TYPES, SignedUpload, StorageProvider
 from app.models import Listing, ListingImage, User
@@ -40,6 +42,13 @@ class ListingService:
             expires_at=datetime.now(UTC) + timedelta(days=LISTING_TTL_DAYS),
         )
         self._repo.add(listing)
+        await self._session.flush()
+        await get_analytics_provider().track(
+            self._session,
+            name=EVENT_LISTING_CREATED,
+            user_id=seller.id,
+            properties={"listing_id": str(listing.id), "category": body.category},
+        )
         await self._session.commit()
         return await self._get_or_404(listing.id)
 

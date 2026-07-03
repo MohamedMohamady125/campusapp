@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
 from app.core.scoring import GLOBAL_MEAN_SEED, bayesian_reputation
+from app.integrations.analytics.base import EVENT_RATING_SUBMITTED
+from app.integrations.analytics.provider import get_analytics_provider
 from app.models import AuditLog, Listing, Rating, Report, User
 from app.models.enums import RatingContext, ReportStatus
 from app.repositories.user_repo import UserRepository
@@ -75,6 +77,12 @@ class RatingService:
             ratings_sum=float(rated_sum), ratings_count=int(rated_n), global_mean=m
         )
         rated.rating_count = int(rated_n)
+        await get_analytics_provider().track(
+            self._session,
+            name=EVENT_RATING_SUBMITTED,
+            user_id=rater.id,
+            properties={"rated_user_id": str(rated.id), "stars": body.stars},
+        )
         await self._session.commit()
         await self._session.refresh(rating)
         return rating

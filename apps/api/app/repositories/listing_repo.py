@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -49,11 +49,15 @@ class ListingRepository:
         max_price_cents: int | None,
         cursor: tuple[datetime, uuid.UUID] | None,
         limit: int,
+        boost_promoted: bool = False,
     ) -> list[Listing]:
         """Filters are SQL WHERE clauses, never post-filtering (spec §5.3).
 
         With a text query: ts_rank blended with pg_trgm similarity for typo
         tolerance, then recency. Without: pure recency (created_at desc).
+        boost_promoted (spec §13.1, flags.promoted_listings): actively boosted
+        listings rank first in text search; the recency feed keeps its stable
+        keyset order.
         """
         stmt = self._base_query().where(Listing.status == ListingStatus.active)
 
@@ -69,16 +73,20 @@ class ListingRepository:
         if query:
             ts_query = func.plainto_tsquery("english", query)
             similarity = func.similarity(Listing.title, query)
+            order_by = [
+                (func.ts_rank(Listing.search_vector, ts_query) + similarity).desc(),
+                Listing.created_at.desc(),
+                Listing.id.desc(),
+            ]
+            if boost_promoted:
+                is_boosted = case((Listing.boosted_until > func.now(), 1), else_=0)
+                order_by.insert(0, is_boosted.desc())
             stmt = stmt.where(
                 or_(
                     Listing.search_vector.op("@@")(ts_query),
                     similarity > 0.2,
                 )
-            ).order_by(
-                (func.ts_rank(Listing.search_vector, ts_query) + similarity).desc(),
-                Listing.created_at.desc(),
-                Listing.id.desc(),
-            )
+            ).order_by(*order_by)
             # Ranked search uses simple page slicing; keyset cursor applies to
             # the recency feed where the sort is stable.
             result = await self._session.execute(stmt.limit(limit))

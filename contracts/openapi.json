@@ -418,6 +418,30 @@
         "title": "CourseResponse",
         "type": "object"
       },
+      "DailyMetricItem": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "day",
+          "name",
+          "value"
+        ],
+        "title": "DailyMetricItem",
+        "type": "object"
+      },
       "FlagItem": {
         "properties": {
           "enabled": {
@@ -857,6 +881,30 @@
         "title": "MessagePageResponse",
         "type": "object"
       },
+      "MetricsResponse": {
+        "properties": {
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/DailyMetricItem"
+            },
+            "title": "Daily",
+            "type": "array"
+          },
+          "totals": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Totals",
+            "type": "object"
+          }
+        },
+        "required": [
+          "totals",
+          "daily"
+        ],
+        "title": "MetricsResponse",
+        "type": "object"
+      },
       "ModerationStatus": {
         "enum": [
           "pending",
@@ -1120,6 +1168,11 @@
         "properties": {
           "offering": {
             "$ref": "#/components/schemas/OfferingResponse"
+          },
+          "premium": {
+            "default": false,
+            "title": "Premium",
+            "type": "boolean"
           },
           "recency_norm": {
             "title": "Recency Norm",
@@ -1561,6 +1614,36 @@
         "title": "ResetPasswordRequest",
         "type": "object"
       },
+      "SubscriptionResponse": {
+        "properties": {
+          "current_period_end": {
+            "format": "date-time",
+            "title": "Current Period End",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "plan": {
+            "title": "Plan",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "plan",
+          "status",
+          "current_period_end"
+        ],
+        "title": "SubscriptionResponse",
+        "type": "object"
+      },
       "TokenResponse": {
         "properties": {
           "access_token": {
@@ -1981,6 +2064,56 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/metrics": {
+      "get": {
+        "operationId": "admin_metrics_api_v1_admin_metrics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 14,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Metrics",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/reports": {
       "get": {
         "operationId": "list_reports_api_v1_admin_reports_get",
@@ -3852,6 +3985,55 @@
         ]
       }
     },
+    "/api/v1/listings/{listing_id}/promote": {
+      "post": {
+        "description": "Promoted listings rail (spec \u00a713.1) \u2014 403 FEATURE_DISABLED while the flag is off.",
+        "operationId": "promote_listing_api_v1_listings__listing_id__promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "listing_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Listing Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Promote Listing",
+        "tags": [
+          "listings"
+        ]
+      }
+    },
     "/api/v1/notifications": {
       "get": {
         "operationId": "list_notifications_api_v1_notifications_get",
@@ -4181,6 +4363,57 @@
           }
         ],
         "summary": "Delete Offering",
+        "tags": [
+          "tutoring"
+        ]
+      }
+    },
+    "/api/v1/tutoring/premium/subscription": {
+      "delete": {
+        "operationId": "cancel_tutor_premium_api_v1_tutoring_premium_subscription_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Cancel Tutor Premium",
+        "tags": [
+          "tutoring"
+        ]
+      },
+      "post": {
+        "description": "Tutor premium rail (spec \u00a713.2) \u2014 403 FEATURE_DISABLED while the flag is off.",
+        "operationId": "subscribe_tutor_premium_api_v1_tutoring_premium_subscription_post",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Subscribe Tutor Premium",
         "tags": [
           "tutoring"
         ]

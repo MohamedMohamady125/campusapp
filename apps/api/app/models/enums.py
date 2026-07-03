@@ -84,3 +84,26 @@ class ReportStatus(enum.StrEnum):
     reviewing = "reviewing"
     actioned = "actioned"
     dismissed = "dismissed"
+
+
+class PaymentPurpose(enum.StrEnum):
+    promoted_listing = "promoted_listing"
+    tutor_premium = "tutor_premium"
+    escrow = "escrow"
+
+
+class PaymentStatus(enum.StrEnum):
+    pending = "pending"
+    succeeded = "succeeded"
+    failed = "failed"
+    refunded = "refunded"
+
+
+class SubscriptionPlan(enum.StrEnum):
+    tutor_premium = "tutor_premium"
+
+
+class SubscriptionStatus(enum.StrEnum):
+    active = "active"
+    canceled = "canceled"
+    expired = "expired"

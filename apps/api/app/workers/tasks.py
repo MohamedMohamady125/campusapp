@@ -6,6 +6,7 @@ from typing import Any
 from app.db.session import async_session_factory
 from app.workers.celery_app import celery_app
 from app.workers.jobs import (
+    aggregate_daily_metrics_job,
     expire_listings_job,
     purge_verification_codes_job,
     recompute_global_mean_job,
@@ -33,3 +34,9 @@ def recompute_global_mean() -> float:
 @celery_app.task  # type: ignore[untyped-decorator]
 def purge_verification_codes() -> int:
     return int(_run(purge_verification_codes_job))
+
+
+@celery_app.task  # type: ignore[untyped-decorator]
+def aggregate_daily_metrics() -> dict[str, float]:
+    result = _run(aggregate_daily_metrics_job)
+    return dict(result)

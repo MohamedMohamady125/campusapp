@@ -1,6 +1,6 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: M9 — monetization & analytics rails, all behind flags (promoted_listings, tutor_premium, escrow, partner_slots — ship dark). Analytics event taxonomy §13. Flutter still blocked on pub.dev — retry each milestone.
+▶ NEXT: M10 — deploy & docs: GH Actions deploy lane, RUNBOOK.md, README quickstart, ReDoc publish, final full-suite pass, tag v1.0.0-rc1. Flutter still blocked on pub.dev — retry each milestone.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API side green; Flutter scaffold TODO(blocked): pub.dev unreachable
@@ -12,7 +12,7 @@
 - [x] M6 — Tutoring — API done; Flutter UI TODO(blocked)
 - [x] M7 — Community chats — API done; Flutter UI TODO(blocked)
 - [x] M8 — Hardening: perf, security — API done; a11y + Flutter scans TODO(blocked)
-- [ ] M9 — Monetization & analytics rails (flags OFF)
+- [x] M9 — Monetization & analytics rails (flags OFF) — API done; admin dashboard UI TODO(blocked)
 - [ ] M10 — Deploy & docs
 
 ## Journal
@@ -135,3 +135,32 @@
 - Tests +5 (48 total): headers, flags endpoint + cache staleness/reset, rollout determinism,
   WS gating (dark without flag, 4401 bad token, live message over WS after flag on —
   starlette TestClient), tutor-search cache invalidation on offering create.
+
+### M9 — Monetization & analytics rails (API ✅; admin dashboard UI blocked)
+- **All rails dark by default** (guardrail §16): promoted_listings + tutor_premium behind
+  flags; escrow + partner_slots remain design-only stubs (PaymentPurpose.escrow reserved).
+  No real charge path: get_payments_provider() returns Stripe adapter ONLY if
+  is_prod AND stripe_secret_key set; otherwise StubPaymentsProvider (deterministic
+  sha256 refs). Stripe adapter is raw httpx REST + HMAC webhook verify (300s tolerance).
+- Ledger: Payment table with **unique idempotency_key** — retries reuse the existing row,
+  never double-charge. Subscription table unique (user_id, plan).
+- Promoted listings (§13.1): POST /listings/{id}/promote — flag-gated (403
+  FEATURE_DISABLED), owner-only (403 NOT_OWNER), $3/7d via stub. Boost is single-active:
+  promoting an already-boosted listing is an idempotent no-op. Ranked text search
+  prepends `case(boosted_until > now())` desc when the flag is on; recency feed keyset
+  order untouched.
+- Tutor premium (§13.2): POST/DELETE /tutoring/premium/subscription — $5/30d, idempotent
+  while active; cancel keeps entitlement until period end (has_tutor_premium checks
+  active|canceled + period_end > now). Ranked tutors expose `premium` badge when flag on.
+- Analytics (§12): AnalyticsProvider interface + DbAnalyticsProvider (writes in caller's
+  txn, never raises). Emissions: signup_completed, listing_created, message_sent,
+  chat_joined, rating_submitted, tutor_match_viewed. aggregate_daily_metrics_job:
+  idempotent delete-and-rewrite per day incl. active_peers (distinct users); Celery beat
+  nightly 03:45. GET /admin/metrics (moderator/admin) → totals + daily series for the
+  Flutter-web dashboard (UI TODO(blocked): pub.dev).
+- Migration 53a611bb60bc (payments, subscriptions, analytics_events, daily_metrics) —
+  applied, `alembic check` clean.
+- Acceptance §14 M9: flag on → promoted listing outranks newer sibling ✓; analytics events
+  land in table ✓; admin metrics endpoint serves dashboard data ✓; no real charge path ✓.
+- Tests +6 (54 total). Lane green: ruff ✓ format ✓ mypy strict ✓ pytest 54 ✓. OpenAPI
+  re-exported.

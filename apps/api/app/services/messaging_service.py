@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import BusinessRuleError, ForbiddenError, NotFoundError
 from app.core.rate_limit import enforce_rate_limit
+from app.integrations.analytics.base import EVENT_MESSAGE_SENT
+from app.integrations.analytics.provider import get_analytics_provider
 from app.models import Conversation, ConversationParticipant, Message, User
 from app.models.enums import ConversationContext
 from app.repositories.conversation_repo import ConversationRepository
@@ -105,6 +107,12 @@ class MessagingService:
         message = Message(conversation_id=conversation_id, sender_id=user.id, body=body)
         self._repo.add(message)
         participant.last_read_at = datetime.now(UTC)
+        await get_analytics_provider().track(
+            self._session,
+            name=EVENT_MESSAGE_SENT,
+            user_id=user.id,
+            properties={"conversation_id": str(conversation_id)},
+        )
         await self._session.commit()
         await self._session.refresh(message)
         return message

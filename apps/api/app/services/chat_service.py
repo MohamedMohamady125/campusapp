@@ -18,6 +18,8 @@ from app.core.errors import (
     NotFoundError,
 )
 from app.core.rate_limit import enforce_rate_limit
+from app.integrations.analytics.base import EVENT_CHAT_JOINED
+from app.integrations.analytics.provider import get_analytics_provider
 from app.models import AuditLog, Chat, ChatMembership, ChatMessage, Notification, User
 from app.models.enums import ChatRole, ChatVisibility
 from app.repositories.chat_repo import ChatRepository, NotificationRepository
@@ -89,6 +91,12 @@ class ChatService:
             raise BusinessRuleError("Chat is at member capacity.", code="CHAT_FULL")
         membership = ChatMembership(chat_id=chat.id, user_id=user.id)
         self._repo.add(membership)
+        await get_analytics_provider().track(
+            self._session,
+            name=EVENT_CHAT_JOINED,
+            user_id=user.id,
+            properties={"chat_id": str(chat.id)},
+        )
         await self._session.commit()
         return membership
 

@@ -25,6 +25,8 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from app.integrations.analytics.base import EVENT_SIGNUP_COMPLETED
+from app.integrations.analytics.provider import get_analytics_provider
 from app.integrations.email.base import EmailProvider
 from app.models import AuditLog, RefreshToken, User, VerificationCode
 from app.models.enums import UserStatus, VerificationPurpose
@@ -111,6 +113,9 @@ class AuthService:
         if record is None:
             raise UnauthenticatedError("Invalid or expired code.", code="CODE_INVALID")
         user.email_verified_at = datetime.now(UTC)
+        await get_analytics_provider().track(
+            self._session, name=EVENT_SIGNUP_COMPLETED, user_id=user.id
+        )
         await self._session.commit()
 
     async def _consume_code(

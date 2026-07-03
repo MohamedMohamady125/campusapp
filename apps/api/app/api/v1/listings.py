@@ -21,7 +21,9 @@ from app.schemas.listing import (
     ListingResponse,
     ListingUpdateRequest,
 )
+from app.services.flag_service import is_enabled
 from app.services.listing_service import ListingService
+from app.services.monetization_service import MonetizationService
 
 router = APIRouter(prefix="/listings", tags=["listings"])
 
@@ -52,6 +54,7 @@ async def list_listings(
         max_price_cents=max_price,
         cursor=decode_cursor(cursor) if cursor else None,
         limit=limit + 1,
+        boost_promoted=await is_enabled(session, "promoted_listings"),
     )
     has_more = len(listings) > limit
     listings = listings[:limit]
@@ -112,6 +115,17 @@ async def mark_sold(
     svc: ListingService = Depends(_service),
 ) -> ListingResponse:
     return ListingResponse.model_validate(await svc.mark_sold(listing_id=listing_id, user=user))
+
+
+@router.post("/{listing_id}/promote", response_model=ListingResponse)
+async def promote_listing(
+    listing_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> ListingResponse:
+    """Promoted listings rail (spec §13.1) — 403 FEATURE_DISABLED while the flag is off."""
+    listing = await MonetizationService(session).promote_listing(listing_id=listing_id, user=user)
+    return ListingResponse.model_validate(listing)
 
 
 class ImageUploadUrlRequest(BaseModel):

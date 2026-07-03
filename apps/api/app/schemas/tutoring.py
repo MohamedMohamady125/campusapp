@@ -47,8 +47,19 @@ class RankedTutorResponse(BaseModel):
     reputation_norm: float
     recency_norm: float
     responsiveness_norm: float
+    # Premium badge (spec §13.2) — always False while flags.tutor_premium is off.
+    premium: bool = False
 
 
 class TutorSearchResponse(BaseModel):
     course: CourseResponse
     items: list[RankedTutorResponse]
+
+
+class SubscriptionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    plan: str
+    status: str
+    current_period_end: datetime

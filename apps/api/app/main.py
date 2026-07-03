@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
+from app.api.v1.admin_metrics import router as admin_metrics_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.chats import router as chats_router
 from app.api.v1.conversations import router as conversations_router
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(tutoring_router, prefix="/api/v1")
     app.include_router(chats_router, prefix="/api/v1")
     app.include_router(notifications_router, prefix="/api/v1")
+    app.include_router(admin_metrics_router, prefix="/api/v1")
 
     return app
 
