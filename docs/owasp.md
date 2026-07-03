@@ -27,10 +27,10 @@ Status legend: ✅ addressed · 🟡 partial (noted follow-up) · N/A not applic
 - Security headers middleware: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Strict-Transport-Security`, `Permissions-Policy`.
 - CORS restricted to configured origins (no `*` with credentials).
 - Error envelope hides internals; framework 500s return generic `INTERNAL` (no stack traces to clients).
-- 🟡 `/docs` + `/redoc` enabled in all envs — disable in prod during M10 deploy.
+- ✅ (M10) Swagger UI (`/docs`) disabled in prod; `/redoc` intentionally kept for published API docs.
 
 ## A06 — Vulnerable & Outdated Components 🟡
-- `pip-audit` run in M8 (see RUN_LOG for findings/date). Re-run each milestone and in CI (M10).
+- `pip-audit` run in M8 (see RUN_LOG for findings/date) and in CI (`ci-api.yml` audit step).
 - Flutter dependency scan TODO(blocked): pub.dev unreachable from this network.
 
 ## A07 — Identification & Authentication Failures ✅
@@ -45,7 +45,7 @@ Status legend: ✅ addressed · 🟡 partial (noted follow-up) · N/A not applic
 ## A09 — Security Logging & Monitoring Failures ✅
 - structlog everywhere; JSON logs in prod.
 - AuditLog rows for every moderation action (report status changes, chat delete/mute/ban).
-- 🟡 Sentry DSN wired in config but not initialized — enable at M10 deploy.
+- ✅ (M10) Sentry initialized at app startup when `SENTRY_DSN` is set (no-op otherwise).
 
 ## A10 — Server-Side Request Forgery N/A
 - API makes no requests to user-supplied URLs. Image fetching is client→S3 via presigned URLs only.

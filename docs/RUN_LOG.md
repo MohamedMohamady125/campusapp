@@ -1,6 +1,6 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: M10 — deploy & docs: GH Actions deploy lane, RUNBOOK.md, README quickstart, ReDoc publish, final full-suite pass, tag v1.0.0-rc1. Flutter still blocked on pub.dev — retry each milestone.
+▶ NEXT: API v1 complete (v1.0.0-rc1). Remaining work is Flutter-only and blocked on pub.dev — when the network unblocks: bootstrap apps/mobile (M0), generate the dart-dio client from contracts/openapi.json, then M2/M3/M4… UI milestones in order. See "Handoff summary" at the bottom of this log.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API side green; Flutter scaffold TODO(blocked): pub.dev unreachable
@@ -13,7 +13,7 @@
 - [x] M7 — Community chats — API done; Flutter UI TODO(blocked)
 - [x] M8 — Hardening: perf, security — API done; a11y + Flutter scans TODO(blocked)
 - [x] M9 — Monetization & analytics rails (flags OFF) — API done; admin dashboard UI TODO(blocked)
-- [ ] M10 — Deploy & docs
+- [x] M10 — Deploy & docs — API side done; web/mobile deploy legs guarded + TODO(blocked)
 
 ## Journal
 
@@ -164,3 +164,54 @@
   land in table ✓; admin metrics endpoint serves dashboard data ✓; no real charge path ✓.
 - Tests +6 (54 total). Lane green: ruff ✓ format ✓ mypy strict ✓ pytest 54 ✓. OpenAPI
   re-exported.
+
+### M10 — Deploy & docs (API ✅; web/mobile deploy legs blocked)
+- .github/workflows/deploy.yml (spec §11): tag `v*` or manual dispatch → **migrate →
+  deploy API → deploy web + mobile artifacts → smoke → rollback-on-failure**. Every cloud
+  step is guarded by its secret (PROD_DATABASE_URL, RENDER_DEPLOY_HOOK, PROD_API_URL,
+  VERCEL_DEPLOY_HOOK, RENDER_ROLLBACK_HOOK) so the pipeline **dry-runs green with zero
+  credentials** — acceptance "deploy pipeline dry-run/documented" ✓. Web/mobile leg skips
+  itself while apps/mobile has no pubspec.lock (TODO(blocked): pub.dev).
+- Smoke gate: /health/ready 200 (retries 2 min) + public /flags read + unauthenticated
+  /listings must be 401 (auth boundary probe). Same checks documented for manual runs.
+- docs/RUNBOOK.md: environments, full prod env-var table (incl. §16 warning on Stripe
+  keys), deploy + manual deploy commands (gunicorn/uvicorn workers, celery worker+beat),
+  **forward-only migration rollback policy**, flag-flip instant rollback, routine ops
+  (migrations, seed, flags, nightly jobs, backups, k6, pip-audit), incident quick
+  reference, and the human plug-in list.
+- Prod hardening (closes owasp.md 🟡 items): Swagger UI off when APP_ENV=prod (**/redoc
+  stays served** per M10 "OpenAPI/redoc served"); Sentry initialized at startup when
+  SENTRY_DSN set (sentry-sdk dep added — justification: prod crash reporting §8).
+- README: quickstart already ≤5 commands (clone → make dev → make seed → flutter run);
+  added deploy section + ReDoc pointer.
+- Final lane green: ruff ✓ format ✓ mypy strict ✓ **pytest 54/54 ✓**. Tagged v1.0.0-rc1.
+
+## Handoff summary (spec §17 step 5)
+
+**Done (API, all green):** M0–M2, M4–M10 backend: verified .edu auth (argon2 + JWT
+rotation + email verify), marketplace (listings, images w/ moderation gate, FTS + trgm
+search, cursor pagination, expiry sweep), messaging + Bayesian reputation, tutoring
+(offerings + ranked match + premium badge), community chats (mod tools, notifications),
+hardening (headers, flags w/ % rollout, Redis cache, WS realtime behind flag, k6,
+owasp.md), monetization rails **dark** (promoted listings, tutor premium, Payment ledger
+w/ idempotency), analytics events + nightly daily_metrics + /admin/metrics, CI (ci-api,
+ci-mobile, deploy). 54 tests; contracts/openapi.json current.
+
+**Stubbed (interface + stub adapter, real adapter activates via env key):** email
+(SMTP/Mailhog stub), moderation (allow-all stub w/ audit), payments (stub provider; Stripe
+adapter exists but requires APP_ENV=prod + key + flag + human review per §16), analytics
+(DB table adapter), storage (MinIO dev; real S3 via env).
+
+**Blocked (pub.dev unreachable all session — retried every milestone):** the entire
+Flutter app: M0 scaffold, M2 auth screens, M3 design system/app shell, M4–M7 UIs, M8 a11y
+scans, M9 admin dashboard (Flutter-web), M10 web/mobile deploy legs. First unblocked
+steps: `flutter create` per spec layout → generate dart-dio client from
+contracts/openapi.json → proceed M2→M3→… UI work.
+
+**A human must plug in:** real S3 + email + moderation keys, Stripe keys (only with §16
+review), SENTRY_DSN, deploy-hook secrets (PROD_DATABASE_URL, RENDER_DEPLOY_HOOK,
+PROD_API_URL, VERCEL_DEPLOY_HOOK), FCM/APNs certs (post-v1 push), DNS/TLS, app-store
+credentials, production CAMPUS_EMAIL_DOMAIN, instructor GitHub invite.
+
+**How to run:** `make dev` (API :8000 + Postgres/Redis/MinIO/Mailhog) → `make seed` →
+`make ci` for the full verification lane. Ops: docs/RUNBOOK.md.

@@ -23,14 +23,25 @@ from app.core.logging import configure_logging
 from app.core.security_headers import SecurityHeadersMiddleware
 
 
+def _init_sentry(dsn: str, environment: str) -> None:
+    """Crash reporting (spec §8). No-op unless SENTRY_DSN is provided."""
+    if not dsn:
+        return
+    import sentry_sdk
+
+    sentry_sdk.init(dsn=dsn, environment=environment, traces_sample_rate=0.1)
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(json_logs=settings.is_prod)
+    _init_sentry(settings.sentry_dsn, settings.app_env)
 
     app = FastAPI(
         title=settings.app_name,
         version="0.1.0",
-        docs_url="/docs",
+        # Swagger UI is a dev tool (docs/owasp.md); ReDoc stays served in prod (spec M10).
+        docs_url=None if settings.is_prod else "/docs",
         redoc_url="/redoc",
     )
 

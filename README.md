@@ -14,7 +14,15 @@ make seed         # realistic demo data (courses, users, listings, chats)
 cd apps/mobile && flutter run    # launch the app (device/emulator/chrome)
 ```
 
-API docs: http://localhost:8000/docs · Mailhog: http://localhost:8025 · MinIO console: http://localhost:9001
+API docs: http://localhost:8000/docs (Swagger, dev-only) · http://localhost:8000/redoc (ReDoc, all envs) ·
+Mailhog: http://localhost:8025 · MinIO console: http://localhost:9001
+
+## Deploy
+
+Tagging `v*` runs `.github/workflows/deploy.yml`: migrate → deploy API → web/mobile
+artifacts → smoke (`/health/ready`, `/flags`, auth boundary) → rollback on failure.
+All cloud steps are secret-guarded, so it dry-runs green without credentials.
+Ops, env vars, and rollback: `docs/RUNBOOK.md`.
 
 ## Development
 

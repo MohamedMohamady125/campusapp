@@ -1,0 +1,119 @@
+# Deploy lane (spec §11): migrate → deploy API → deploy web + mobile artifacts → smoke → rollback.
+#
+# Every cloud-touching step is guarded by the presence of its secret, so the pipeline
+# "dry-runs" green on a fresh fork with zero credentials. A human plugs in:
+#   PROD_DATABASE_URL   — Postgres URL for Alembic migrations (sync driver ok)
+#   RENDER_DEPLOY_HOOK  — Render/Railway deploy-hook URL for the API container
+#   PROD_API_URL        — public base URL for post-deploy smoke (e.g. https://api.example.com)
+#   VERCEL_DEPLOY_HOOK  — deploy hook for the Flutter-web build (TODO(blocked): pub.dev)
+# Manual rollback: docs/RUNBOOK.md §Rollback.
+
+name: deploy
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install API
+        run: |
+          python -m venv apps/api/.venv
+          apps/api/.venv/bin/pip install --upgrade pip
+          apps/api/.venv/bin/pip install -e apps/api
+      - name: Alembic upgrade head (guarded)
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          if [ -z "$PROD_DATABASE_URL" ]; then
+            echo "::notice::PROD_DATABASE_URL not set — dry-run: skipping migration."
+            cd apps/api && .venv/bin/alembic history | head -5
+          else
+            cd apps/api && DATABASE_URL="$PROD_DATABASE_URL" .venv/bin/alembic upgrade head
+          fi
+
+  deploy-api:
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger API deploy hook (guarded)
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::notice::RENDER_DEPLOY_HOOK not set — dry-run: skipping API deploy."
+          else
+            curl -fsS -X POST "$RENDER_DEPLOY_HOOK"
+          fi
+
+  deploy-web-and-mobile:
+    needs: deploy-api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # TODO(blocked): pub.dev unreachable during the build run — the Flutter app has no
+      # lockfile yet. When unblocked: setup Flutter → `flutter build web` + upload to
+      # Vercel/Firebase → `flutter build apk --release` + upload artifact / Play internal.
+      - name: Flutter web + mobile artifacts (guarded)
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ ! -f apps/mobile/pubspec.lock ]; then
+            echo "::notice::Flutter app not bootstrapped (pub.dev blocked) — skipping web/mobile deploy."
+          elif [ -z "$VERCEL_DEPLOY_HOOK" ]; then
+            echo "::notice::VERCEL_DEPLOY_HOOK not set — dry-run: skipping web deploy."
+          else
+            curl -fsS -X POST "$VERCEL_DEPLOY_HOOK"
+          fi
+
+  smoke:
+    needs: [deploy-api, deploy-web-and-mobile]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post-deploy smoke — /health/ready + one read endpoint (guarded)
+        env:
+          PROD_API_URL: ${{ secrets.PROD_API_URL }}
+        run: |
+          if [ -z "$PROD_API_URL" ]; then
+            echo "::notice::PROD_API_URL not set — dry-run: skipping smoke."
+            exit 0
+          fi
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_API_URL/api/v1/health/ready" || true)
+            [ "$code" = "200" ] && break
+            echo "waiting for ready ($code)…"; sleep 10
+          done
+          [ "$code" = "200" ] || { echo "::error::/health/ready never returned 200"; exit 1; }
+          # One public read endpoint (flags list needs no auth).
+          curl -fsS "$PROD_API_URL/api/v1/flags" > /dev/null
+          # Auth boundary intact: listings without a token must be 401, not 200/500.
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_API_URL/api/v1/listings")
+          [ "$code" = "401" ] || { echo "::error::unauthenticated /listings returned $code (want 401)"; exit 1; }
+
+  rollback-on-failure:
+    needs: smoke
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger rollback (guarded)
+        env:
+          RENDER_ROLLBACK_HOOK: ${{ secrets.RENDER_ROLLBACK_HOOK }}
+        run: |
+          if [ -z "$RENDER_ROLLBACK_HOOK" ]; then
+            echo "::warning::Smoke failed and RENDER_ROLLBACK_HOOK not set — follow docs/RUNBOOK.md §Rollback manually."
+            exit 1
+          fi
+          curl -fsS -X POST "$RENDER_ROLLBACK_HOOK"
+          echo "::warning::Rolled back to previous API release. DB migrations are forward-only — see RUNBOOK."

@@ -19,6 +19,7 @@ dependencies = [
     "boto3>=1.34",
     "httpx>=0.27",
     "structlog>=24.1",
+    "sentry-sdk>=2.0",  # prod crash reporting (spec §8 observability); no-op without DSN
     "python-multipart>=0.0.9",
     "email-validator>=2.2",
 ]
