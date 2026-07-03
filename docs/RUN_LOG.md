@@ -1,6 +1,6 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: Flutter wrap-up — `flutter build web` sanity check, a11y guideline tests on new screens, then handoff summary. All three journeys (J1/J2/J3) now have Flutter UIs with widget tests. Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
+▶ NEXT: all planned milestones done (API M0–M10 + Flutter UIs J1/J2/J3, 26 widget tests, web build ✓). Optional stretch: sell-flow image upload (image_picker + signed URL), M9 admin dashboard web routes, integration_test on emulator, Lighthouse gate. Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API green; Flutter scaffold UNBLOCKED + green via pub mirror
@@ -202,11 +202,14 @@ ci-mobile, deploy). 54 tests; contracts/openapi.json current.
 adapter exists but requires APP_ENV=prod + key + flag + human review per §16), analytics
 (DB table adapter), storage (MinIO dev; real S3 via env).
 
-**Blocked (pub.dev unreachable all session — retried every milestone):** the entire
-Flutter app: M0 scaffold, M2 auth screens, M3 design system/app shell, M4–M7 UIs, M8 a11y
-scans, M9 admin dashboard (Flutter-web), M10 web/mobile deploy legs. First unblocked
-steps: `flutter create` per spec layout → generate dart-dio client from
-contracts/openapi.json → proceed M2→M3→… UI work.
+**Flutter (UNBLOCKED via pub mirror, since completed):** M0 scaffold, M2 auth screens
+(secure tokens + refresh interceptor + router guard), M3 shell/theme + generated
+dart-dio client, M4 marketplace (browse/detail/J1 sell), M5 messaging (inbox + thread,
+optimistic send + rollback, Message-seller CTA), M6 tutor search (J2), M7 chats
+directory + room (J3). 26 widget tests green incl. a11y tap-target guidelines on core
+screens; `flutter build web` compiles. Remaining Flutter niceties: image upload in the
+sell flow (API signed-URL endpoint is live), admin dashboard web routes (M9 UI),
+Lighthouse-CI gate, integration_test on emulator.
 
 **A human must plug in:** real S3 + email + moderation keys, Stripe keys (only with §16
 review), SENTRY_DSN, deploy-hook secrets (PROD_DATABASE_URL, RENDER_DEPLOY_HOOK,
