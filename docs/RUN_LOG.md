@@ -1,12 +1,12 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: Flutter M3 — design system widgets (§6.2) + dio auth/refresh interceptors + generate the Dart API client from contracts/openapi.json; then M2 auth screens. pub.dev blocker SOLVED via official mirror (PUB_HOSTED_URL=https://pub.flutter-io.cn — exported in Makefile).
+▶ NEXT: Flutter M4 — marketplace browse (GET /listings via generated client, infinite scroll, skeletons) + listing detail; then tutoring/chats/messaging UIs (M5–M7 Flutter). Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API green; Flutter scaffold UNBLOCKED + green via pub mirror
 - [x] M1 — Data model & seed
-- [x] M2 — Auth & identity — API done; Flutter screens TODO(blocked): pub.dev
-- [ ] M3 — Design system + app shell (Flutter-blocked)
+- [x] M2 — Auth & identity — API done; Flutter done (c8ef080): generated campus_api client (§2.3), secure tokens, refresh interceptor, auth screens + router guard, 9 widget tests green
+- [x] M3 — Design system + app shell — theme tokens, shell, generated client wired; widget library grows per-feature
 - [x] M4 — Marketplace core (J1 + browse) — API done; Flutter UI TODO(blocked)
 - [x] M5 — Messaging + reputation — API done; Flutter UI TODO(blocked)
 - [x] M6 — Tutoring — API done; Flutter UI TODO(blocked)
@@ -232,3 +232,16 @@ credentials, production CAMPUS_EMAIL_DOMAIN, instructor GitHub invite.
   reading API_BASE_URL dart-define.
 - Tests: 3 widget tests incl. tab switching and a11y tap-target/labeled guidelines ✓.
 - `make ci-mobile` green (format ✓ analyze 0 issues ✓ tests ✓); `flutter build web` ✓.
+
+### Flutter M2 — auth & identity UI (commit c8ef080)
+- Generated typed client from contracts/openapi.json via openapi-generator dart-dio
+  (`apps/mobile/api_client`, package `campus_api`) — spec §2.3, no hand-written models.
+- TokenStorage on flutter_secure_storage (§8); AuthInterceptor (QueuedInterceptor):
+  Bearer attach, transparent 401 → refresh-rotate → retry once, clear tokens on refresh failure.
+- Login / register (.edu enforced) / verify-code screens, inline validation (§6.3);
+  AuthController bootstraps session from storage; go_router guard redirects anon → /login.
+- Profile screen shows identity + reputation "x.x ★ (n)" + sign out.
+- 9 widget tests green (guard redirect, form validation, sign-out, a11y guidelines);
+  flutter analyze 0 issues; `flutter build web` compiles.
+- Gotcha logged: Makefile env exports don't reach standalone shells — export the pub
+  mirror vars explicitly before flutter commands.
