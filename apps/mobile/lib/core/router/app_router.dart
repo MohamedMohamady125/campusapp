@@ -4,6 +4,7 @@ import 'package:campusconnect/features/auth/presentation/register_screen.dart';
 import 'package:campusconnect/features/auth/presentation/verify_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chats_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_screen.dart';
+import 'package:campusconnect/features/marketplace/presentation/listing_detail_screen.dart';
 import 'package:campusconnect/features/profile/presentation/profile_screen.dart';
 import 'package:campusconnect/features/tutoring/presentation/tutor_search_screen.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +52,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/market',
                 builder: (_, _) => const BrowseScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'listing/:id',
+                    builder: (_, state) => ListingDetailScreen(
+                      listingId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
