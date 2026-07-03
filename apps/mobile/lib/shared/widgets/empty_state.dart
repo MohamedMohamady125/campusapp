@@ -7,7 +7,7 @@ class EmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    required this.actionLabel,
+    this.actionLabel,
     this.onAction,
     super.key,
   });
@@ -15,7 +15,7 @@ class EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;
-  final String actionLabel;
+  final String? actionLabel;
   final VoidCallback? onAction;
 
   @override
@@ -40,8 +40,10 @@ class EmptyState extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.xl),
-            FilledButton(onPressed: onAction, child: Text(actionLabel)),
+            if (actionLabel != null) ...[
+              const SizedBox(height: AppSpacing.xl),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+            ],
           ],
         ),
       ),
