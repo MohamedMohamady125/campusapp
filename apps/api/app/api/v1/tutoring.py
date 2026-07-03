@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache_get_json, cache_set_json
 from app.core.deps import get_current_user
 from app.db.session import get_session
 from app.models import User
@@ -20,6 +21,8 @@ from app.schemas.user import UserPublicResponse
 from app.services.tutoring_service import TutoringService
 
 router = APIRouter(tags=["tutoring"])
+
+TUTOR_SEARCH_CACHE_TTL_SECONDS = 30  # M8: ranked search is read-heavy; short TTL
 
 
 def _service(session: AsyncSession = Depends(get_session)) -> TutoringService:
@@ -61,8 +64,12 @@ async def ranked_tutors(
     _: User = Depends(get_current_user),
     svc: TutoringService = Depends(_service),
 ) -> TutorSearchResponse:
+    cache_key = f"tutors:{course.strip().upper()}"
+    cached = await cache_get_json(cache_key)
+    if cached is not None:
+        return TutorSearchResponse.model_validate(cached)
     matched_course, ranked = await svc.ranked_tutors(course_code=course)
-    return TutorSearchResponse(
+    response = TutorSearchResponse(
         course=CourseResponse.model_validate(matched_course),
         items=[
             RankedTutorResponse(
@@ -76,3 +83,7 @@ async def ranked_tutors(
             for r, offering in ranked
         ],
     )
+    await cache_set_json(
+        cache_key, response.model_dump(mode="json"), ttl_seconds=TUTOR_SEARCH_CACHE_TTL_SECONDS
+    )
+    return response

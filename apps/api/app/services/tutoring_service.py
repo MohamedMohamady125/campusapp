@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache_invalidate_prefix
 from app.core.errors import ConflictError, ForbiddenError, NotFoundError
 from app.models import Course, TutorOffering, User
 from app.repositories.tutoring_repo import TutoringRepository
@@ -38,6 +39,7 @@ class TutoringService:
         )
         self._repo.add(offering)
         await self._session.commit()
+        await cache_invalidate_prefix(f"tutors:{course.code.upper()}")
         result = await self._repo.get_offering(offering.id)
         assert result is not None
         return result
@@ -50,6 +52,7 @@ class TutoringService:
             raise ForbiddenError("You can only remove your own offerings.", code="NOT_OWNER")
         offering.active = False
         await self._session.commit()
+        await cache_invalidate_prefix(f"tutors:{offering.course.code.upper()}")
 
     async def ranked_tutors(
         self, *, course_code: str

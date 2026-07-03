@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://campus:campus@localhost:5434/campusconnect"
     redis_url: str = "redis://localhost:6380/0"
 
-    jwt_secret: str = "dev-secret-do-not-use-in-prod"
+    jwt_secret: str = "dev-secret-do-not-use-in-prod-0123456789ab"  # >=32 bytes (RFC 7518 §3.2)
     access_token_ttl_minutes: int = 15
     refresh_token_ttl_days: int = 30
     campus_email_domain: str = "campus.edu"

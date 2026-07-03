@@ -22,6 +22,7 @@ from app.models import AuditLog, Chat, ChatMembership, ChatMessage, Notification
 from app.models.enums import ChatRole, ChatVisibility
 from app.repositories.chat_repo import ChatRepository, NotificationRepository
 from app.schemas.chat import ChatCreateRequest
+from app.services.realtime import hub
 
 CHAT_MESSAGE_LIMIT = 30  # anti-spam (spec §8)
 CHAT_MESSAGE_WINDOW_SECONDS = 60
@@ -128,6 +129,17 @@ class ChatService:
         await self._fan_out_notifications(chat_id=chat_id, message=message)
         await self._session.commit()
         await self._session.refresh(message)
+        hub.publish(
+            chat_id,
+            {
+                "type": "chat_message",
+                "chat_id": str(chat_id),
+                "message_id": str(message.id),
+                "sender_id": str(message.sender_id),
+                "body": message.body,
+                "created_at": message.created_at.isoformat(),
+            },
+        )
         return message
 
     async def _fan_out_notifications(self, *, chat_id: uuid.UUID, message: ChatMessage) -> None:

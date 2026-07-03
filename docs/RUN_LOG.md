@@ -1,6 +1,6 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: M8 — hardening (Redis caching, index/query audit, k6 smoke, owasp.md checklist, dependency scans, WS behind flags.realtime). Flutter still blocked on pub.dev — retry each milestone.
+▶ NEXT: M9 — monetization & analytics rails, all behind flags (promoted_listings, tutor_premium, escrow, partner_slots — ship dark). Analytics event taxonomy §13. Flutter still blocked on pub.dev — retry each milestone.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API side green; Flutter scaffold TODO(blocked): pub.dev unreachable
@@ -11,7 +11,7 @@
 - [x] M5 — Messaging + reputation — API done; Flutter UI TODO(blocked)
 - [x] M6 — Tutoring — API done; Flutter UI TODO(blocked)
 - [x] M7 — Community chats — API done; Flutter UI TODO(blocked)
-- [ ] M8 — Hardening: perf, security, a11y
+- [x] M8 — Hardening: perf, security — API done; a11y + Flutter scans TODO(blocked)
 - [ ] M9 — Monetization & analytics rails (flags OFF)
 - [ ] M10 — Deploy & docs
 
@@ -109,3 +109,29 @@
 - Acceptance: E2E J3 (browse→join→post) ✓; mod delete/mute/ban with audit entries ✓;
   notifications fire per preferences ✓; caps + visibility ✓.
 - Lane green: ruff ✓ mypy strict ✓ 43 tests ✓. OpenAPI re-exported.
+
+### M8 — Hardening (API ✅; a11y/Flutter scans blocked)
+- Security headers: pure-ASGI middleware (nosniff, DENY frames, no-referrer, HSTS 2y,
+  permissions-policy) — leaves WebSocket scopes untouched.
+- GET /flags (spec §4.1 Meta) + flag_service.is_enabled(session, key, user_id=None):
+  deterministic sha256 rollout bucketing per (flag, user); partial rollouts stay dark for
+  anonymous callers. invalidate_flags_cache() for M9 admin writes.
+- app/core/cache.py: Redis JSON cache w/ TTL + delete_prefix; in-memory fallback in test env
+  (mirrors rate_limit.py pattern); reset_cache() wired into conftest. Consumers: flags (30s),
+  tutor ranked search (30s, key tutors:{CODE}, invalidated on offering create/deactivate).
+- WebSocket /api/v1/ws/chats/{id}?token= behind **flags.realtime** (dark by default): close
+  codes 4401/4403/4404 mirror HTTP; re-validates token + flag + membership + ban; in-process
+  ChatHub pub/sub — chat_service publishes after commit. TODO(post-v1): Redis pub/sub for
+  multi-worker fan-out. Flutter ws transport TODO(blocked): pub.dev.
+- Index/query audit: all hot paths already covered by composite indexes (chat_messages
+  chat_id+created_at, notifications user_id+created_at, messages conversation_id+created_at,
+  listings GIN tsvector + trgm + status/created + category/price, offerings course+active,
+  ratings/reports/audit) — no new migration needed.
+- docs/owasp.md: Top-10 checklist complete; open items flagged for M10 (disable /docs in
+  prod, init Sentry, CI pip-audit lane). pip-audit: **no known vulnerabilities**.
+- infra/k6/smoke.js (5 VUs/30s, p95<250ms per §7, error rate<1%) + `make k6-smoke`;
+  `make audit-api` runs pip-audit.
+- JWT dev/default secrets lengthened to ≥32 bytes (RFC 7518 §3.2 warning gone in prod paths).
+- Tests +5 (48 total): headers, flags endpoint + cache staleness/reset, rollout determinism,
+  WS gating (dark without flag, 4401 bad token, live message over WS after flag on —
+  starlette TestClient), tutor-search cache invalidation on offering create.

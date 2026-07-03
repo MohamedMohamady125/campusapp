@@ -418,6 +418,29 @@
         "title": "CourseResponse",
         "type": "object"
       },
+      "FlagItem": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "rollout_percent": {
+            "title": "Rollout Percent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "enabled",
+          "rollout_percent"
+        ],
+        "title": "FlagItem",
+        "type": "object"
+      },
       "ForgotPasswordRequest": {
         "properties": {
           "email": {
@@ -3317,6 +3340,31 @@
         "summary": "Autocomplete Courses",
         "tags": [
           "tutoring"
+        ]
+      }
+    },
+    "/api/v1/flags": {
+      "get": {
+        "operationId": "get_flags_api_v1_flags_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FlagItem"
+                  },
+                  "title": "Response Get Flags Api V1 Flags Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Flags",
+        "tags": [
+          "meta"
         ]
       }
     },

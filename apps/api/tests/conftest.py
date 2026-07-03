@@ -27,6 +27,7 @@ from sqlalchemy import text  # noqa: E402
 from sqlalchemy.ext.asyncio import create_async_engine  # noqa: E402
 
 import app.models  # noqa: E402
+from app.core.cache import reset_cache  # noqa: E402
 from app.core.rate_limit import reset_rate_limits  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import async_session_factory  # noqa: E402
@@ -60,6 +61,7 @@ def _setup_database() -> None:
 @pytest.fixture(autouse=True)
 async def _clean_tables() -> AsyncIterator[None]:
     reset_rate_limits()
+    reset_cache()
     yield
     tables = ", ".join(t.name for t in Base.metadata.sorted_tables)
     async with async_session_factory() as session:

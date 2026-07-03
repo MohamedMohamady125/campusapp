@@ -1,5 +1,6 @@
 .PHONY: dev infra-up infra-down api install-api lint-api type-api test-api ci-api \
-        export-openapi check-openapi analyze-mobile test-mobile ci-mobile ci seed migrate
+        export-openapi check-openapi analyze-mobile test-mobile ci-mobile ci seed migrate \
+        k6-smoke audit-api
 
 PY := apps/api/.venv/bin/python
 PIP := apps/api/.venv/bin/pip
@@ -50,6 +51,14 @@ check-openapi: install-api
 	(echo "contracts/openapi.json is stale — run 'make export-openapi' and commit." && exit 1)
 
 ci-api: lint-api type-api test-api check-openapi
+
+# ── Hardening (M8) ──────────────────────────────────────────────────
+k6-smoke:
+	k6 run infra/k6/smoke.js -e BASE_URL=$${BASE_URL:-http://localhost:8000}
+
+audit-api: install-api
+	cd apps/api && .venv/bin/python -m pip_audit --skip-editable || \
+	(.venv/bin/pip install -q pip-audit && .venv/bin/python -m pip_audit --skip-editable)
 
 # ── Mobile quality lane ─────────────────────────────────────────────
 analyze-mobile:
