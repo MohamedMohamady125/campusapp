@@ -140,4 +140,12 @@ void main() {
     expect(field.controller!.text, 'Anyone here?');
     expect(chats.messages, isEmpty);
   });
+
+  testWidgets('chat directory meets a11y tap-target guidelines', (
+    tester,
+  ) async {
+    await openDirectory(tester);
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+  });
 }

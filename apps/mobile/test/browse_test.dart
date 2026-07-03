@@ -158,6 +158,17 @@ void main() {
     expect(repo.createdCents, 950);
     expect(find.text('Marketplace'), findsOneWidget); // back on browse
   });
+
+  testWidgets('browse meets a11y tap-target guidelines', (tester) async {
+    final repo = _FakeListingsRepository([
+      ListingsPage(items: [_listing('l1', 'Calc Textbook', 2500)]),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+  });
 }
 
 // --- J1 sell flow ---

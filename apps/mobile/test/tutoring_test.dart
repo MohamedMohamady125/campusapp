@@ -134,4 +134,17 @@ void main() {
     expect(find.text('Search by course code'), findsOneWidget);
     expect(tutoring.lastCourseQuery, isNull);
   });
+
+  testWidgets('ranked tutors meets a11y tap-target guidelines', (
+    tester,
+  ) async {
+    await openTutors(tester);
+    await tester.enterText(find.byType(TextField), 'CS250');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CS250').last);
+    await tester.pumpAndSettle();
+
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+  });
 }
