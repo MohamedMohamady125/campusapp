@@ -1,6 +1,6 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: Flutter M5 — messaging UI (conversations list + thread, polling provider, optimistic send + rollback §6.3) and wire the "Message seller" CTA; then M6 tutor search + M7 chats UIs. Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
+▶ NEXT: Flutter wrap-up — `flutter build web` sanity check, a11y guideline tests on new screens, then handoff summary. All three journeys (J1/J2/J3) now have Flutter UIs with widget tests. Note: background shells lose Makefile env — `export PUB_HOSTED_URL=https://pub.flutter-io.cn FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` before any flutter/dart pub command.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API green; Flutter scaffold UNBLOCKED + green via pub mirror
@@ -8,9 +8,9 @@
 - [x] M2 — Auth & identity — API done; Flutter done (c8ef080): generated campus_api client (§2.3), secure tokens, refresh interceptor, auth screens + router guard, 9 widget tests green
 - [x] M3 — Design system + app shell — theme tokens, shell, generated client wired; widget library grows per-feature
 - [x] M4 — Marketplace core (J1 + browse) — API done; Flutter done (27b9a68 + 8417cd7): browse grid + skeletons + category chips, detail w/ seller reputation, J1 sell form; 14 widget tests green
-- [x] M5 — Messaging + reputation — API done; Flutter UI TODO(blocked)
-- [x] M6 — Tutoring — API done; Flutter UI TODO(blocked)
-- [x] M7 — Community chats — API done; Flutter UI TODO(blocked)
+- [x] M5 — Messaging + reputation — API done; Flutter done (f6b0646): inbox + thread, polling, optimistic send + rollback, Message-seller CTA
+- [x] M6 — Tutoring — API done; Flutter done (b17e5b3): course autocomplete → ranked tutor cards → message-tutor CTA
+- [x] M7 — Community chats — API done; Flutter done (8dbd376): directory → join → room with optimistic post
 - [x] M8 — Hardening: perf, security — API done; a11y + Flutter scans TODO(blocked)
 - [x] M9 — Monetization & analytics rails (flags OFF) — API done; admin dashboard UI TODO(blocked)
 - [x] M10 — Deploy & docs — API side done; web/mobile deploy legs guarded + TODO(blocked)
@@ -258,3 +258,15 @@ credentials, production CAMPUS_EMAIL_DOMAIN, instructor GitHub invite.
   analyze 0 issues. Gotchas: lazy ListView children below fold need
   `scrollUntilVisible` in tests; DropdownButtonFormField uses `initialValue` (SDK 3.29).
 - Tagged m4-marketplace-flutter.
+
+### Flutter M5–M7 — messaging, tutoring, chats UIs (f6b0646, b17e5b3, 8dbd376)
+- M5: conversations inbox (Messages tab in Chats), thread screen with 5s polling
+  (§7.4), optimistic send + rollback restoring the composer text (§6.3),
+  mark-read on load; "Message seller" CTA opens a listing-context conversation.
+- M6 (J2): course-code autocomplete → ranked tutor cards (reputation, grade/term
+  chip, blurb) → "Message <name>" opens a tutoring-context conversation.
+  EmptyState actionLabel made optional (guidance-only empty states).
+- M7 (J3): Groups tab = chat directory; tap joins idempotently (409 → success)
+  and opens the room; room mirrors thread controller (poll + optimistic post).
+- 23 widget tests green across all journeys; analyze 0 issues.
+- Tagged m5-messaging-flutter, m6-tutoring-flutter, m7-chats-flutter.
