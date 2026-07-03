@@ -10,6 +10,7 @@ from app.api.v1.health import router as health_router
 from app.api.v1.listings import router as listings_router
 from app.api.v1.ratings import router as ratings_router
 from app.api.v1.reports import router as reports_router
+from app.api.v1.tutoring import router as tutoring_router
 from app.api.v1.users import router as users_router
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(conversations_router, prefix="/api/v1")
     app.include_router(ratings_router, prefix="/api/v1")
     app.include_router(reports_router, prefix="/api/v1")
+    app.include_router(tutoring_router, prefix="/api/v1")
 
     return app
 

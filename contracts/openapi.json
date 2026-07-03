@@ -113,6 +113,35 @@
         "title": "ConversationResponse",
         "type": "object"
       },
+      "CourseResponse": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "department": {
+            "title": "Department",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "title",
+          "department"
+        ],
+        "title": "CourseResponse",
+        "type": "object"
+      },
       "ForgotPasswordRequest": {
         "properties": {
           "email": {
@@ -537,6 +566,144 @@
         ],
         "title": "ModerationStatus",
         "type": "string"
+      },
+      "OfferingCreateRequest": {
+        "properties": {
+          "blurb": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blurb"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "grade_received": {
+            "enum": [
+              "A+",
+              "A",
+              "A-",
+              "B+",
+              "B",
+              "B-"
+            ],
+            "title": "Grade Received",
+            "type": "string"
+          },
+          "term_taken": {
+            "pattern": "^\\d{4}-(spring|summer|fall)$",
+            "title": "Term Taken",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "term_taken",
+          "grade_received"
+        ],
+        "title": "OfferingCreateRequest",
+        "type": "object"
+      },
+      "OfferingResponse": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "blurb": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blurb"
+          },
+          "course": {
+            "$ref": "#/components/schemas/CourseResponse"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "grade_received": {
+            "title": "Grade Received",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "term_taken": {
+            "title": "Term Taken",
+            "type": "string"
+          },
+          "tutor_id": {
+            "format": "uuid",
+            "title": "Tutor Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tutor_id",
+          "course",
+          "term_taken",
+          "grade_received",
+          "blurb",
+          "active",
+          "created_at"
+        ],
+        "title": "OfferingResponse",
+        "type": "object"
+      },
+      "RankedTutorResponse": {
+        "properties": {
+          "offering": {
+            "$ref": "#/components/schemas/OfferingResponse"
+          },
+          "recency_norm": {
+            "title": "Recency Norm",
+            "type": "number"
+          },
+          "reputation_norm": {
+            "title": "Reputation Norm",
+            "type": "number"
+          },
+          "responsiveness_norm": {
+            "title": "Responsiveness Norm",
+            "type": "number"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "tutor": {
+            "$ref": "#/components/schemas/UserPublicResponse"
+          }
+        },
+        "required": [
+          "tutor",
+          "offering",
+          "score",
+          "reputation_norm",
+          "recency_norm",
+          "responsiveness_norm"
+        ],
+        "title": "RankedTutorResponse",
+        "type": "object"
       },
       "RatingContext": {
         "enum": [
@@ -968,6 +1135,26 @@
           "refresh_token"
         ],
         "title": "TokenResponse",
+        "type": "object"
+      },
+      "TutorSearchResponse": {
+        "properties": {
+          "course": {
+            "$ref": "#/components/schemas/CourseResponse"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RankedTutorResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "course",
+          "items"
+        ],
+        "title": "TutorSearchResponse",
         "type": "object"
       },
       "UserMeResponse": {
@@ -2082,6 +2269,59 @@
         ]
       }
     },
+    "/api/v1/courses": {
+      "get": {
+        "operationId": "autocomplete_courses_api_v1_courses_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 50,
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CourseResponse"
+                  },
+                  "title": "Response Autocomplete Courses Api V1 Courses Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Autocomplete Courses",
+        "tags": [
+          "tutoring"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "health_api_v1_health_get",
@@ -2655,6 +2895,142 @@
         "summary": "Create Report",
         "tags": [
           "reports"
+        ]
+      }
+    },
+    "/api/v1/tutoring/offerings": {
+      "post": {
+        "operationId": "create_offering_api_v1_tutoring_offerings_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferingCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Offering",
+        "tags": [
+          "tutoring"
+        ]
+      }
+    },
+    "/api/v1/tutoring/offerings/{offering_id}": {
+      "delete": {
+        "operationId": "delete_offering_api_v1_tutoring_offerings__offering_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offering_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offering Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Offering",
+        "tags": [
+          "tutoring"
+        ]
+      }
+    },
+    "/api/v1/tutoring/tutors": {
+      "get": {
+        "operationId": "ranked_tutors_api_v1_tutoring_tutors_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "course",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 2,
+              "title": "Course",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TutorSearchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ranked Tutors",
+        "tags": [
+          "tutoring"
         ]
       }
     },

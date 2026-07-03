@@ -1,6 +1,6 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: M6 — tutoring API (course autocomplete, tutor offerings, ranked search §5.1 with neutral-prior cold start). Flutter still blocked on pub.dev — retry each milestone.
+▶ NEXT: M7 — community chats API (directory, create/join/leave with caps + visibility, chat messaging, moderation with AuditLog, notifications + preferences). Flutter still blocked on pub.dev — retry each milestone.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API side green; Flutter scaffold TODO(blocked): pub.dev unreachable
@@ -9,7 +9,7 @@
 - [ ] M3 — Design system + app shell (Flutter-blocked)
 - [x] M4 — Marketplace core (J1 + browse) — API done; Flutter UI TODO(blocked)
 - [x] M5 — Messaging + reputation — API done; Flutter UI TODO(blocked)
-- [ ] M6 — Tutoring
+- [x] M6 — Tutoring — API done; Flutter UI TODO(blocked)
 - [ ] M7 — Community chats
 - [ ] M8 — Hardening: perf, security, a11y
 - [ ] M9 — Monetization & analytics rails (flags OFF)
@@ -78,3 +78,18 @@
   profile immediately) ✓; cross-user conversation access 403 ✓.
 - Lane green: ruff ✓ mypy strict ✓ 30 tests ✓. OpenAPI re-exported.
 - Note: framework boundary validation returns envelope 400 (not FastAPI's default 422).
+
+### M6 — Tutoring (API ✅, Flutter blocked)
+- Endpoints §4.1: GET /courses (autocomplete: code prefix + title substring, limit 10),
+  POST/DELETE /tutoring/offerings (unique per tutor+course → 409 ALREADY_OFFERING; delete
+  deactivates, owner-only 403 NOT_OWNER), GET /tutoring/tutors?course=CS250 (ranked §5.1).
+- Ranking §5.1 in pure module app/services/tutor_ranking.py (unit-testable, no DB):
+  0.60*reputation + 0.30*recency + 0.10*responsiveness, all min-max normalized over the
+  candidate pool. Responsiveness = median reply latency last 30 days (computed from M5
+  messages), inverted; tutors with no data get the pool median (neutral prior — never
+  floored to last). Degenerate all-equal pools norm to 1.0 (nobody penalized).
+  Tie-break: rating_count desc → last_active_at desc. Weights live in app/core/scoring.py.
+- Acceptance: E2E J2 (course code → ranked list → message top tutor via M5 conversation
+  with tutoring context) ✓; ranking unit tests assert weights + tie-breaks ✓; new tutor not
+  floored ✓.
+- Lane green: ruff ✓ mypy strict ✓ 39 tests ✓. OpenAPI re-exported.
