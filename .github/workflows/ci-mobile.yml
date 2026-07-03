@@ -1,0 +1,34 @@
+name: ci-mobile
+
+on:
+  push:
+    paths: ["apps/mobile/**", "contracts/**", ".github/workflows/ci-mobile.yml", "Makefile"]
+  pull_request:
+    paths: ["apps/mobile/**", "contracts/**", ".github/workflows/ci-mobile.yml", "Makefile"]
+
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.3"
+          channel: stable
+          cache: true
+      - name: Pub get
+        run: cd apps/mobile && flutter pub get
+      - name: Format check
+        run: cd apps/mobile && dart format --set-exit-if-changed lib test
+      - name: Analyze
+        run: cd apps/mobile && flutter analyze
+      - name: Tests
+        run: cd apps/mobile && flutter test --coverage
+      - name: Build web (compile proof)
+        run: cd apps/mobile && flutter build web
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-coverage
+          path: apps/mobile/coverage/lcov.info
+          if-no-files-found: ignore

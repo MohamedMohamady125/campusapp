@@ -1,0 +1,64 @@
+name: ci-api
+
+on:
+  push:
+    paths: ["apps/api/**", "contracts/**", ".github/workflows/ci-api.yml", "Makefile"]
+  pull_request:
+    paths: ["apps/api/**", "contracts/**", ".github/workflows/ci-api.yml", "Makefile"]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: campus
+          POSTGRES_PASSWORD: campus
+          POSTGRES_DB: campusconnect
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U campus"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6380:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql+asyncpg://campus:campus@localhost:5433/campusconnect
+      REDIS_URL: redis://localhost:6380/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          python -m venv apps/api/.venv
+          apps/api/.venv/bin/pip install --upgrade pip
+          apps/api/.venv/bin/pip install -e "apps/api[dev]"
+      - name: Lint
+        run: make lint-api
+      - name: Type-check
+        run: make type-api
+      - name: Migrations up-to-date
+        run: |
+          cd apps/api && .venv/bin/alembic upgrade head
+          .venv/bin/alembic check
+        continue-on-error: false
+      - name: Tests
+        run: make test-api
+      - name: OpenAPI contract fresh
+        run: make check-openapi
+      - name: Dependency audit
+        run: apps/api/.venv/bin/pip-audit --skip-editable || true
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/.coverage
+          if-no-files-found: ignore

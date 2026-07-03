@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+*.egg-info/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Flutter/Dart
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins*
+apps/mobile/.packages
+apps/mobile/build/
+apps/mobile/.idea/
+apps/mobile/ios/Pods/
+apps/mobile/ios/.symlinks/
+apps/mobile/android/.gradle/
+apps/mobile/android/local.properties
+apps/mobile/coverage/
+
+# OS / editor
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Local data
+*.db
+*.sqlite3
+minio-data/
