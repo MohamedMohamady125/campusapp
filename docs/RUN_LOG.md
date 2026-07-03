@@ -1,6 +1,6 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: M7 — community chats API (directory, create/join/leave with caps + visibility, chat messaging, moderation with AuditLog, notifications + preferences). Flutter still blocked on pub.dev — retry each milestone.
+▶ NEXT: M8 — hardening (Redis caching, index/query audit, k6 smoke, owasp.md checklist, dependency scans, WS behind flags.realtime). Flutter still blocked on pub.dev — retry each milestone.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API side green; Flutter scaffold TODO(blocked): pub.dev unreachable
@@ -10,7 +10,7 @@
 - [x] M4 — Marketplace core (J1 + browse) — API done; Flutter UI TODO(blocked)
 - [x] M5 — Messaging + reputation — API done; Flutter UI TODO(blocked)
 - [x] M6 — Tutoring — API done; Flutter UI TODO(blocked)
-- [ ] M7 — Community chats
+- [x] M7 — Community chats — API done; Flutter UI TODO(blocked)
 - [ ] M8 — Hardening: perf, security, a11y
 - [ ] M9 — Monetization & analytics rails (flags OFF)
 - [ ] M10 — Deploy & docs
@@ -93,3 +93,19 @@
   with tutoring context) ✓; ranking unit tests assert weights + tie-breaks ✓; new tutor not
   floored ✓.
 - Lane green: ruff ✓ mypy strict ✓ 39 tests ✓. OpenAPI re-exported.
+
+### M7 — Community chats (API ✅, Flutter blocked)
+- Endpoints §4.1: GET /chats (mine), GET /chats/directory (private hidden), POST /chats
+  (auto-slug w/ uniquing, creator becomes owner), join/leave, chat messages (cursor),
+  mod actions delete/mute/ban, notifications feed + read + preferences.
+- Rules: member_cap enforced (422 CHAT_FULL); private → 403 PRIVATE_CHAT; request
+  visibility gated 422 JOIN_REQUIRES_APPROVAL (TODO: approval queue post-v1); banned users
+  cannot rejoin (403 BANNED); owner cannot leave; owner cannot be moderated; muted members
+  blocked from posting (403 MUTED); chat spam rate-limited 30/min.
+- Moderation: every delete/mute/ban writes AuditLog (action, target, metadata).
+- Notifications: per-event fan-out to members on new chat message, honoring per-type
+  preferences (default enabled); GET /notifications returns unread_count for bell badge;
+  POST /notifications/read marks selected/all.
+- Acceptance: E2E J3 (browse→join→post) ✓; mod delete/mute/ban with audit entries ✓;
+  notifications fire per preferences ✓; caps + visibility ✓.
+- Lane green: ruff ✓ mypy strict ✓ 43 tests ✓. OpenAPI re-exported.
