@@ -1,9 +1,9 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: API v1 complete (v1.0.0-rc1). Remaining work is Flutter-only and blocked on pub.dev — when the network unblocks: bootstrap apps/mobile (M0), generate the dart-dio client from contracts/openapi.json, then M2/M3/M4… UI milestones in order. See "Handoff summary" at the bottom of this log.
+▶ NEXT: Flutter M3 — design system widgets (§6.2) + dio auth/refresh interceptors + generate the Dart API client from contracts/openapi.json; then M2 auth screens. pub.dev blocker SOLVED via official mirror (PUB_HOSTED_URL=https://pub.flutter-io.cn — exported in Makefile).
 
 ## Plan checklist
-- [x] M0 — Foundation (repo, tooling, CI skeleton) — API side green; Flutter scaffold TODO(blocked): pub.dev unreachable
+- [x] M0 — Foundation (repo, tooling, CI skeleton) — API green; Flutter scaffold UNBLOCKED + green via pub mirror
 - [x] M1 — Data model & seed
 - [x] M2 — Auth & identity — API done; Flutter screens TODO(blocked): pub.dev
 - [ ] M3 — Design system + app shell (Flutter-blocked)
@@ -215,3 +215,20 @@ credentials, production CAMPUS_EMAIL_DOMAIN, instructor GitHub invite.
 
 **How to run:** `make dev` (API :8000 + Postgres/Redis/MinIO/Mailhog) → `make seed` →
 `make ci` for the full verification lane. Ops: docs/RUNBOOK.md.
+
+### Flutter M0 — scaffold UNBLOCKED (pub mirror)
+- Root cause found: pub.dev's GCP IP is blocked from this network while the rest of the
+  internet works. Official community mirror pub.flutter-io.cn + storage.flutter-io.cn is
+  reachable → exported PUB_HOSTED_URL / FLUTTER_STORAGE_BASE_URL in the Makefile
+  (overridable; GitHub CI still uses pub.dev).
+- `flutter create` (ios/android/web, org edu.campus) ✓. Deps per spec §2.1 pinned to the
+  Riverpod v2 + freezed v2 codegen line (build_runner ^2.4 — 2.15's build 4.x conflicts
+  with the v2 generators; json_annotation ^4.9 for freezed 2.5 compat).
+- Strict lints: very_good_analysis (flutter_lints dropped), generated files excluded.
+- Spec layout started: core/{env,theme,router,network} + features/{marketplace,tutoring,
+  chats,profile}/presentation + shared/widgets. Material 3 seeded light+dark themes with
+  spacing/radius tokens (§6.1); go_router StatefulShellRoute bottom nav (Market/Tutors/
+  Chats/Profile, §6.3 thumb zone); EmptyState widget (never a dead end); dio provider
+  reading API_BASE_URL dart-define.
+- Tests: 3 widget tests incl. tab switching and a11y tap-target/labeled guidelines ✓.
+- `make ci-mobile` green (format ✓ analyze 0 issues ✓ tests ✓); `flutter build web` ✓.

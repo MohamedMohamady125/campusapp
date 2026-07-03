@@ -5,6 +5,11 @@
 PY := apps/api/.venv/bin/python
 PIP := apps/api/.venv/bin/pip
 
+# pub.dev is unreachable from some networks; the official community mirror works.
+# Override with `make PUB_HOSTED_URL=https://pub.dev …` when unrestricted.
+export PUB_HOSTED_URL ?= https://pub.flutter-io.cn
+export FLUTTER_STORAGE_BASE_URL ?= https://storage.flutter-io.cn
+
 # ── Setup ────────────────────────────────────────────────────────────
 apps/api/.venv:
 	python3.12 -m venv apps/api/.venv
