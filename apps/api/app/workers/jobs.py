@@ -11,12 +11,11 @@ import structlog
 from sqlalchemy import CursorResult, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.scoring import GLOBAL_MEAN_SEED
 from app.models import Listing, Rating, VerificationCode
 from app.models.enums import ListingStatus
 
 log = structlog.get_logger()
-
-GLOBAL_MEAN_SEED = 4.0  # spec §5.2: m seeded to 4.0
 
 
 async def expire_listings_job(session: AsyncSession) -> int:

@@ -1,6 +1,7 @@
 """Shared FastAPI dependencies: auth, roles (spec §8 AuthZ central policy layer)."""
 
 import uuid
+from typing import Any
 
 import jwt as pyjwt
 from fastapi import Depends
@@ -35,7 +36,7 @@ async def get_current_user(
     return user
 
 
-def require_role(*roles: UserRole) -> object:
+def require_role(*roles: UserRole) -> Any:  # FastAPI Depends marker
     async def _checker(user: User = Depends(get_current_user)) -> User:
         if user.role not in roles:
             raise ForbiddenError("Insufficient permissions.", code="INSUFFICIENT_ROLE")

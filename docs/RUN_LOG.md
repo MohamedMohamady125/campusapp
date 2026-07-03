@@ -1,6 +1,6 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: M5 — messaging + reputation API (conversations/messages, rating submission with Bayesian §5.2 inside the rating transaction). Flutter still blocked on pub.dev — retry each milestone.
+▶ NEXT: M6 — tutoring API (course autocomplete, tutor offerings, ranked search §5.1 with neutral-prior cold start). Flutter still blocked on pub.dev — retry each milestone.
 
 ## Plan checklist
 - [x] M0 — Foundation (repo, tooling, CI skeleton) — API side green; Flutter scaffold TODO(blocked): pub.dev unreachable
@@ -8,7 +8,7 @@
 - [x] M2 — Auth & identity — API done; Flutter screens TODO(blocked): pub.dev
 - [ ] M3 — Design system + app shell (Flutter-blocked)
 - [x] M4 — Marketplace core (J1 + browse) — API done; Flutter UI TODO(blocked)
-- [ ] M5 — Messaging + reputation
+- [x] M5 — Messaging + reputation — API done; Flutter UI TODO(blocked)
 - [ ] M6 — Tutoring
 - [ ] M7 — Community chats
 - [ ] M8 — Hardening: perf, security, a11y
@@ -60,3 +60,21 @@
   purge_verification_codes. Job bodies are plain async fns, tested idempotent.
 - N+1 guard: selectinload(seller, images) + query-count assertion test (≤5 SELECTs).
 - Lane green: ruff ✓ mypy strict ✓ 19 tests ✓. OpenAPI re-exported.
+
+### M5 — Messaging + reputation (API ✅, Flutter blocked)
+- Conversations §4.1: get-or-create per (context, participant pair) — no duplicate threads;
+  participant-gated (403 NOT_PARTICIPANT on cross-user access); keyset-cursor pagination on
+  conversation list + messages; POST /read sets last_read_at + marks others' messages read.
+  Message spam rate-limited (30/min per user, spec §8).
+- Ratings §5.2: POST /ratings validates context (real listing), blocks self-rating (422
+  SELF_RATING) and double-rating (409 ALREADY_RATED via unique (rater, context));
+  cached reputation_score + rating_count recomputed **inside the rating transaction** with
+  Bayesian (C*m + sum)/(C + n), C=8, m=live global mean seeded 4.0. Constants centralized
+  in app/core/scoring.py (also holds §5.1 weights for M6); jobs.py imports from there.
+- Reports: POST /reports; GET/PATCH /admin/reports gated by require_role(moderator, admin);
+  every status change writes an AuditLog row.
+- Acceptance: two users exchange messages E2E ✓; reputation unit tests incl. cold-start
+  (neutral prior, 2×5★ < 200×4.8★) ✓; rating updates cached score in txn (visible on
+  profile immediately) ✓; cross-user conversation access 403 ✓.
+- Lane green: ruff ✓ mypy strict ✓ 30 tests ✓. OpenAPI re-exported.
+- Note: framework boundary validation returns envelope 400 (not FastAPI's default 422).
