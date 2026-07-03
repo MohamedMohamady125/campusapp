@@ -63,8 +63,16 @@ class ListingDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(listingDetailProvider(listingId));
+    final loaded = detail.valueOrNull;
     return Scaffold(
       appBar: AppBar(title: const Text('Listing')),
+      // Airbnb-style sticky CTA bar: price + primary action always reachable.
+      bottomNavigationBar: loaded == null
+          ? null
+          : _StickyCtaBar(
+              listing: loaded,
+              onMessage: () => _messageSeller(context, ref, loaded),
+            ),
       body: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => EmptyState(
@@ -79,32 +87,27 @@ class ListingDetailScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: [
-              AspectRatio(
-                aspectRatio: 4 / 3,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Icon(
-                    listingCategoryIcons[listing.category] ?? Icons.category,
-                    size: 64,
-                    color: scheme.onSurfaceVariant,
+              Hero(
+                tag: 'listing-image-${listing.id}',
+                child: AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
+                    child: Icon(
+                      listingCategoryIcons[listing.category] ?? Icons.category,
+                      size: 64,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.lg),
               Text(
                 listing.title,
                 style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                formatPrice(listing.priceCents),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w700,
-                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Wrap(
@@ -130,14 +133,58 @@ class ListingDetailScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.lg),
               _SellerCard(seller: listing.seller),
               const SizedBox(height: AppSpacing.lg),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Sticky bottom action bar: price on the left, primary CTA on the right,
+/// always in the thumb zone (spec §6.3).
+class _StickyCtaBar extends StatelessWidget {
+  const _StickyCtaBar({required this.listing, required this.onMessage});
+
+  final ListingResponse listing;
+  final VoidCallback onMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        border: Border(top: BorderSide(color: scheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  formatPrice(listing.priceCents),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
               FilledButton.icon(
-                onPressed: () => _messageSeller(context, ref, listing),
+                onPressed: onMessage,
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: const Text('Message seller'),
               ),
             ],
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -173,7 +220,11 @@ class _SellerCard extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.star, size: 16),
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 16,
+                        color: Color(0xFFF59E0B),
+                      ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         '${seller.reputationScore.toStringAsFixed(1)}'

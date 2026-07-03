@@ -2,6 +2,7 @@ import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_controller.dart';
 import 'package:campusconnect/shared/widgets/empty_state.dart';
+import 'package:campusconnect/shared/widgets/motion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -106,8 +107,10 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                     childAspectRatio: 0.72,
                   ),
                   itemCount: state.items.length,
-                  itemBuilder: (context, i) =>
-                      _ListingCard(listing: state.items[i]),
+                  itemBuilder: (context, i) => FadeSlideIn(
+                    index: i,
+                    child: _ListingCard(listing: state.items[i]),
+                  ),
                 ),
               ),
             if (state.loadingMore)
@@ -187,6 +190,7 @@ class _ListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // Depop-style card: edge-to-edge image, price overlay chip, terse title.
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -195,35 +199,56 @@ class _ListingCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: ColoredBox(
-                color: scheme.surfaceContainerHighest,
-                child: Icon(
-                  listingCategoryIcons[listing.category] ?? Icons.category,
-                  size: 40,
-                  color: scheme.onSurfaceVariant,
+              child: Hero(
+                tag: 'listing-image-${listing.id}',
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ColoredBox(
+                      color: scheme.surfaceContainerHighest,
+                      child: Icon(
+                        listingCategoryIcons[listing.category] ??
+                            Icons.category,
+                        size: 40,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Positioned(
+                      left: AppSpacing.sm,
+                      bottom: AppSpacing.sm,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: scheme.surface.withValues(alpha: 0.92),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(color: scheme.outlineVariant),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.xs,
+                          ),
+                          child: Text(
+                            formatPrice(listing.priceCents),
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  color: scheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    listing.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    formatPrice(listing.priceCents),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              child: Text(
+                listing.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
           ],

@@ -4,6 +4,7 @@ import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/chats/data/chats_repository.dart';
+import 'package:campusconnect/shared/widgets/chat_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -135,7 +136,6 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(chatRoomControllerProvider(widget.chatId));
     final myId = ref.watch(authControllerProvider).user?.id;
-    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.title ?? 'Chat')),
@@ -152,68 +152,15 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                       itemBuilder: (context, i) {
                         final msg =
                             state.messages[state.messages.length - 1 - i];
-                        final mine = msg.senderId == myId;
-                        return Align(
-                          alignment: mine
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.only(
-                              bottom: AppSpacing.sm,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                              vertical: AppSpacing.sm,
-                            ),
-                            constraints: BoxConstraints(
-                              maxWidth: MediaQuery.sizeOf(context).width * 0.75,
-                            ),
-                            decoration: BoxDecoration(
-                              color: mine
-                                  ? scheme.primaryContainer
-                                  : scheme.surfaceContainerHigh,
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                            ),
-                            child: Text(
-                              msg.body,
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(
-                                    color: mine
-                                        ? scheme.onPrimaryContainer
-                                        : scheme.onSurface,
-                                  ),
-                            ),
-                          ),
+                        return ChatBubble(
+                          body: msg.body,
+                          isMine: msg.senderId == myId,
+                          pending: msg.id.startsWith('local-'),
                         );
                       },
                     ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.xs,
-                AppSpacing.sm,
-                AppSpacing.sm,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _composer,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(hintText: 'Message…'),
-                      onSubmitted: (_) => _send().ignore(),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  IconButton.filled(
-                    tooltip: 'Send',
-                    onPressed: () => _send().ignore(),
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
-              ),
-            ),
+            ChatComposer(controller: _composer, onSend: _send),
           ],
         ),
       ),

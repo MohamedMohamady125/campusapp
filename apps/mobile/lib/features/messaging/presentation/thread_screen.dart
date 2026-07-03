@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/messaging/presentation/thread_controller.dart';
+import 'package:campusconnect/shared/widgets/chat_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -77,88 +77,17 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
                       itemBuilder: (context, i) {
                         final msg =
                             state.messages[state.messages.length - 1 - i];
-                        return _MessageBubble(
-                          message: msg,
+                        return ChatBubble(
+                          body: msg.body,
                           isMine: msg.senderId == myId,
+                          pending: msg.id.startsWith('local-'),
                         );
                       },
                     ),
             ),
-            _Composer(controller: _composer, onSend: _send),
+            ChatComposer(controller: _composer, onSend: _send),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message, required this.isMine});
-
-  final AppSchemasConversationMessageResponse message;
-  final bool isMine;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: isMine ? scheme.primaryContainer : scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        child: Text(
-          message.body,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: isMine ? scheme.onPrimaryContainer : scheme.onSurface,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Composer extends StatelessWidget {
-  const _Composer({required this.controller, required this.onSend});
-
-  final TextEditingController controller;
-  final Future<void> Function() onSend;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.xs,
-        AppSpacing.sm,
-        AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(hintText: 'Message…'),
-              onSubmitted: (_) => onSend().ignore(),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          IconButton.filled(
-            tooltip: 'Send',
-            onPressed: () => onSend().ignore(),
-            icon: const Icon(Icons.send),
-          ),
-        ],
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/features/chats/data/chats_repository.dart';
 import 'package:campusconnect/shared/widgets/empty_state.dart';
+import 'package:campusconnect/shared/widgets/motion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -66,25 +67,32 @@ class ChatDirectoryList extends ConsumerWidget {
                 itemCount: chats.length,
                 itemBuilder: (context, i) {
                   final chat = chats[i];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      child: Text(
-                        chat.name.isEmpty ? '#' : chat.name[0].toUpperCase(),
+                  final scheme = Theme.of(context).colorScheme;
+                  return FadeSlideIn(
+                    index: i,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: scheme.primaryContainer,
+                        foregroundColor: scheme.onPrimaryContainer,
+                        child: Text(
+                          chat.name.isEmpty ? '#' : chat.name[0].toUpperCase(),
+                        ),
                       ),
+                      title: Text(chat.name),
+                      subtitle: Text(
+                        chat.description?.isNotEmpty ?? false
+                            ? chat.description!
+                            : '${chat.memberCount}/${chat.memberCap} members',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: Icon(
+                        _visibilityIcons[chat.visibility] ?? Icons.public,
+                        size: 20,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                      onTap: () => _openChat(context, ref, chat),
                     ),
-                    title: Text(chat.name),
-                    subtitle: Text(
-                      chat.description?.isNotEmpty ?? false
-                          ? chat.description!
-                          : '${chat.memberCount}/${chat.memberCap} members',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: Icon(
-                      _visibilityIcons[chat.visibility] ?? Icons.public,
-                      size: 20,
-                    ),
-                    onTap: () => _openChat(context, ref, chat),
                   );
                 },
               ),

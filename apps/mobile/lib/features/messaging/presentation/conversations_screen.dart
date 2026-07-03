@@ -2,6 +2,7 @@ import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
 import 'package:campusconnect/shared/widgets/empty_state.dart';
+import 'package:campusconnect/shared/widgets/motion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -57,23 +58,30 @@ class ConversationsList extends ConsumerWidget {
                 (p) => p.id != myId,
                 orElse: () => convo.participants.first,
               );
-              return ListTile(
-                leading: CircleAvatar(
-                  child: Text(
-                    other.displayName.isEmpty
-                        ? '?'
-                        : other.displayName[0].toUpperCase(),
+              final scheme = Theme.of(context).colorScheme;
+              return FadeSlideIn(
+                index: i,
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: scheme.primaryContainer,
+                    foregroundColor: scheme.onPrimaryContainer,
+                    child: Text(
+                      other.displayName.isEmpty
+                          ? '?'
+                          : other.displayName[0].toUpperCase(),
+                    ),
                   ),
-                ),
-                title: Text(other.displayName),
-                subtitle: Text(convo.contextType.name),
-                trailing: Icon(
-                  _contextIcons[convo.contextType] ?? Icons.person_outline,
-                  size: 20,
-                ),
-                onTap: () => context.go(
-                  '/chats/conversation/${convo.id}',
-                  extra: other.displayName,
+                  title: Text(other.displayName),
+                  subtitle: Text(convo.contextType.name),
+                  trailing: Icon(
+                    _contextIcons[convo.contextType] ?? Icons.person_outline,
+                    size: 20,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                  onTap: () => context.go(
+                    '/chats/conversation/${convo.id}',
+                    extra: other.displayName,
+                  ),
                 ),
               );
             },

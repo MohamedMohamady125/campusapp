@@ -25,6 +25,12 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         CircleAvatar(
                           radius: 28,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                           child: Text(
                             user.displayName.isEmpty
                                 ? '?'
@@ -47,7 +53,11 @@ class ProfileScreen extends ConsumerWidget {
                               const SizedBox(height: AppSpacing.xs),
                               Row(
                                 children: [
-                                  const Icon(Icons.star, size: 16),
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    size: 16,
+                                    color: Color(0xFFF59E0B),
+                                  ),
                                   const SizedBox(width: AppSpacing.xs),
                                   Text(
                                     '${user.reputationScore.toStringAsFixed(1)}'

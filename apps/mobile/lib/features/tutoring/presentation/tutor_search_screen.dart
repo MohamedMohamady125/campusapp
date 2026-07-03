@@ -4,6 +4,7 @@ import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
 import 'package:campusconnect/features/tutoring/data/tutoring_repository.dart';
 import 'package:campusconnect/shared/widgets/empty_state.dart';
+import 'package:campusconnect/shared/widgets/motion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -180,23 +181,35 @@ class _RankedTutors extends ConsumerWidget {
           : ListView.builder(
               padding: const EdgeInsets.all(AppSpacing.md),
               itemCount: items.length,
-              itemBuilder: (context, i) =>
-                  _TutorCard(ranked: items[i], onMessage: onMessage),
+              itemBuilder: (context, i) => FadeSlideIn(
+                index: i,
+                child: _TutorCard(
+                  ranked: items[i],
+                  rank: i + 1,
+                  onMessage: onMessage,
+                ),
+              ),
             ),
     );
   }
 }
 
 class _TutorCard extends StatelessWidget {
-  const _TutorCard({required this.ranked, required this.onMessage});
+  const _TutorCard({
+    required this.ranked,
+    required this.rank,
+    required this.onMessage,
+  });
 
   final RankedTutorResponse ranked;
+  final int rank;
   final Future<void> Function(RankedTutorResponse) onMessage;
 
   @override
   Widget build(BuildContext context) {
     final tutor = ranked.tutor;
     final offering = ranked.offering;
+    final scheme = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Padding(
@@ -206,12 +219,42 @@ class _TutorCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  child: Text(
-                    tutor.displayName.isEmpty
-                        ? '?'
-                        : tutor.displayName[0].toUpperCase(),
-                  ),
+                // Rank-forward: badge over avatar (design brief §patterns).
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: scheme.primaryContainer,
+                      foregroundColor: scheme.onPrimaryContainer,
+                      child: Text(
+                        tutor.displayName.isEmpty
+                            ? '?'
+                            : tutor.displayName[0].toUpperCase(),
+                      ),
+                    ),
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: scheme.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: scheme.surface, width: 2),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Text(
+                            '$rank',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: scheme.onPrimary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -224,7 +267,11 @@ class _TutorCard extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          const Icon(Icons.star, size: 16),
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 16,
+                            color: Color(0xFFF59E0B),
+                          ),
                           const SizedBox(width: AppSpacing.xs),
                           Text(
                             '${tutor.reputationScore.toStringAsFixed(1)}'
