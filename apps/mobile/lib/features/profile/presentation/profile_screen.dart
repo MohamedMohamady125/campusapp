@@ -2,6 +2,7 @@ import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Profile: shows the signed-in user (one identity, one reputation — spec §1)
 /// and the sign-out action.
@@ -76,6 +77,13 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                FilledButton.tonalIcon(
+                  onPressed: () =>
+                      context.go('/profile/my-listings'),
+                  icon: const Icon(Icons.storefront_outlined),
+                  label: const Text('My Listings'),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 OutlinedButton.icon(
                   onPressed: () =>
                       ref.read(authControllerProvider.notifier).logOut(),

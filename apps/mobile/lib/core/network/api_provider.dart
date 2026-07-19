@@ -82,6 +82,18 @@ final campusApiProvider = Provider<CampusApi>((ref) {
       receiveTimeout: const Duration(seconds: 20),
     ),
   );
+  // Strip empty/null query params — the generated client serializes optional
+  // params as empty strings which the server rejects as invalid.
+  dio.interceptors.add(
+    InterceptorsWrapper(
+      onRequest: (options, handler) {
+        options.queryParameters.removeWhere(
+          (_, v) => v == null || v == 'null' || v == '',
+        );
+        handler.next(options);
+      },
+    ),
+  );
   dio.interceptors.add(AuthInterceptor(storage, dio));
   return CampusApi(dio: dio);
 });

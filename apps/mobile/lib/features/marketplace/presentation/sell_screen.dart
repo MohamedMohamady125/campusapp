@@ -25,6 +25,7 @@ class _SellScreenState extends ConsumerState<SellScreen> {
   ListingCategory _category = ListingCategory.textbooks;
   ListingCondition _condition = ListingCondition.good;
   bool _submitting = false;
+  final List<String> _photoLabels = [];
 
   static const _categoryLabels = <ListingCategory, String>{
     ListingCategory.textbooks: 'Textbooks',
@@ -99,6 +100,21 @@ class _SellScreenState extends ConsumerState<SellScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Photo upload area
+                _PhotoUploadArea(
+                  photos: _photoLabels,
+                  onAdd: () {
+                    setState(() {
+                      _photoLabels.add(
+                        'Photo ${_photoLabels.length + 1}',
+                      );
+                    });
+                  },
+                  onRemove: (i) {
+                    setState(() => _photoLabels.removeAt(i));
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 TextFormField(
                   controller: _title,
                   textCapitalization: TextCapitalization.sentences,
@@ -179,6 +195,156 @@ class _SellScreenState extends ConsumerState<SellScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PhotoUploadArea extends StatelessWidget {
+  const _PhotoUploadArea({
+    required this.photos,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final List<String> photos;
+  final VoidCallback onAdd;
+  final ValueChanged<int> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Photos',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        SizedBox(
+          height: 100,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (var i = 0; i < photos.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(
+                    right: AppSpacing.sm,
+                  ),
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color:
+                              scheme.surfaceContainerHighest,
+                          borderRadius:
+                              BorderRadius.circular(
+                            AppRadius.md,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image,
+                              color:
+                                  scheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(
+                              height: AppSpacing.xs,
+                            ),
+                            Text(
+                              photos[i],
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: GestureDetector(
+                          onTap: () => onRemove(i),
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor:
+                                scheme.error,
+                            foregroundColor:
+                                scheme.onError,
+                            child: const Icon(
+                              Icons.close,
+                              size: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (photos.length < 5)
+                GestureDetector(
+                  onTap: onAdd,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: scheme.outlineVariant,
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(
+                        AppRadius.md,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo_outlined,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(
+                          height: AppSpacing.xs,
+                        ),
+                        Text(
+                          'Add photo',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                color: scheme.primary,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (photos.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.xs,
+            ),
+            child: Text(
+              'Photos upload via signed URL to S3. '
+              'Pending moderation review.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -47,10 +47,11 @@ def create_app() -> FastAPI:
 
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=1024)
+    # In dev, allow any origin so Flutter web on any port works.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origin_list,
-        allow_credentials=True,
+        allow_origins=["*"] if not settings.is_prod else settings.cors_origin_list,
+        allow_credentials=settings.is_prod,
         allow_methods=["*"],
         allow_headers=["*"],
     )

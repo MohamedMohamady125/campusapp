@@ -1,7 +1,9 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/core/theme/app_theme.dart';
+import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/marketplace/data/listings_repository.dart';
+import 'package:campusconnect/features/marketplace/presentation/browse_controller.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_screen.dart';
 import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
 import 'package:campusconnect/shared/widgets/empty_state.dart';
@@ -15,15 +17,13 @@ listingDetailProvider = FutureProvider.autoDispose
       (ref, id) => ref.watch(listingsRepositoryProvider).fetchListing(id),
     );
 
-/// Listing detail (spec §6.4): gallery placeholder, seller card with
-/// reputation, "Message seller" CTA (wires to messaging in M5 UI).
+/// Listing detail (spec §6.4): image carousel, seller card with
+/// reputation, "Message seller" CTA, owner actions (mark sold, edit, delete).
 class ListingDetailScreen extends ConsumerWidget {
   const ListingDetailScreen({required this.listingId, super.key});
 
   final String listingId;
 
-  /// Opens (or reuses) the listing-context conversation with the seller
-  /// and jumps into the thread (J1 → M5 handoff).
   Future<void> _messageSeller(
     BuildContext context,
     WidgetRef ref,
@@ -52,6 +52,65 @@ class ListingDetailScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _markSold(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(listingsRepositoryProvider).markSold(listingId);
+      ref.invalidate(listingDetailProvider(listingId));
+      await ref.read(browseControllerProvider.notifier).refresh();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Marked as sold!')),
+        );
+      }
+    } on Object catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(apiErrorMessage(e))),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteListing(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove listing?'),
+        content: const Text('This listing will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await ref.read(listingsRepositoryProvider).deleteListing(listingId);
+      await ref.read(browseControllerProvider.notifier).refresh();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Listing removed.')),
+        );
+        context.go('/market');
+      }
+    } on Object catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(apiErrorMessage(e))),
+        );
+      }
+    }
+  }
+
   static const _conditionLabels = <ListingCondition, String>{
     ListingCondition.new_: 'New',
     ListingCondition.likeNew: 'Like new',
@@ -64,15 +123,72 @@ class ListingDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(listingDetailProvider(listingId));
     final loaded = detail.valueOrNull;
+    final currentUserId = ref.watch(authControllerProvider).user?.id;
+    final isOwner = loaded != null && loaded.seller.id == currentUserId;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Listing')),
-      // Airbnb-style sticky CTA bar: price + primary action always reachable.
+      appBar: AppBar(
+        title: const Text('Listing'),
+        actions: isOwner
+            ? [
+                PopupMenuButton<String>(
+                  onSelected: (action) async {
+                    switch (action) {
+                      case 'sold':
+                        await _markSold(context, ref);
+                      case 'edit':
+                        context.go(
+                          '/market/listing/$listingId/edit',
+                        );
+                      case 'delete':
+                        await _deleteListing(context, ref);
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    if (loaded.status == ListingStatus.active)
+                      const PopupMenuItem(
+                        value: 'sold',
+                        child: ListTile(
+                          leading: Icon(Icons.check_circle_outline),
+                          title: Text('Mark as sold'),
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: ListTile(
+                        leading: Icon(Icons.edit_outlined),
+                        title: Text('Edit'),
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: ListTile(
+                        leading: Icon(Icons.delete_outline, color: Colors.red),
+                        title: Text(
+                          'Remove',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ),
+              ]
+            : null,
+      ),
       bottomNavigationBar: loaded == null
           ? null
-          : _StickyCtaBar(
-              listing: loaded,
-              onMessage: () => _messageSeller(context, ref, loaded),
-            ),
+          : isOwner
+              ? _OwnerCtaBar(listing: loaded)
+              : _StickyCtaBar(
+                  listing: loaded,
+                  onMessage: () => _messageSeller(context, ref, loaded),
+                ),
       body: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => EmptyState(
@@ -87,23 +203,8 @@ class ListingDetailScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: [
-              Hero(
-                tag: 'listing-image-${listing.id}',
-                child: AspectRatio(
-                  aspectRatio: 4 / 3,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
-                    child: Icon(
-                      listingCategoryIcons[listing.category] ?? Icons.category,
-                      size: 64,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ),
+              // Image carousel
+              _ImageCarousel(listing: listing),
               const SizedBox(height: AppSpacing.lg),
               Text(
                 listing.title,
@@ -121,7 +222,9 @@ class ListingDetailScreen extends ConsumerWidget {
                   if (listing.status != ListingStatus.active)
                     Chip(
                       label: Text(listing.status.name.toUpperCase()),
-                      backgroundColor: scheme.errorContainer,
+                      backgroundColor: listing.status == ListingStatus.sold
+                          ? scheme.tertiaryContainer
+                          : scheme.errorContainer,
                     ),
                 ],
               ),
@@ -141,8 +244,146 @@ class ListingDetailScreen extends ConsumerWidget {
   }
 }
 
-/// Sticky bottom action bar: price on the left, primary CTA on the right,
-/// always in the thumb zone (spec §6.3).
+/// Image carousel with page indicator dots.
+class _ImageCarousel extends StatefulWidget {
+  const _ImageCarousel({required this.listing});
+
+  final ListingResponse listing;
+
+  @override
+  State<_ImageCarousel> createState() => _ImageCarouselState();
+}
+
+class _ImageCarouselState extends State<_ImageCarousel> {
+  final _controller = PageController();
+  int _current = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final images = widget.listing.images;
+    final count = images.isEmpty ? 1 : images.length;
+
+    return Column(
+      children: [
+        Hero(
+          tag: 'listing-image-${widget.listing.id}',
+          child: AspectRatio(
+            aspectRatio: 4 / 3,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: images.isEmpty
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest,
+                      ),
+                      child: Icon(
+                        listingCategoryIcons[widget.listing.category] ??
+                            Icons.category,
+                        size: 64,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    )
+                  : PageView.builder(
+                      controller: _controller,
+                      itemCount: count,
+                      onPageChanged: (i) => setState(() => _current = i),
+                      itemBuilder: (_, i) {
+                        final img = images[i];
+                        return DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest,
+                          ),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Icon(
+                                listingCategoryIcons[
+                                        widget.listing.category] ??
+                                    Icons.category,
+                                size: 64,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              Positioned(
+                                bottom: AppSpacing.sm,
+                                right: AppSpacing.sm,
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    color:
+                                        scheme.surface.withValues(alpha: 0.85),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.sm),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.sm,
+                                      vertical: AppSpacing.xs,
+                                    ),
+                                    child: Text(
+                                      'Photo ${i + 1}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (img.moderationStatus !=
+                                  ModerationStatus.approved)
+                                Positioned(
+                                  top: AppSpacing.sm,
+                                  left: AppSpacing.sm,
+                                  child: Chip(
+                                    avatar: const Icon(
+                                      Icons.hourglass_top,
+                                      size: 16,
+                                    ),
+                                    label: const Text('Pending review'),
+                                    backgroundColor:
+                                        scheme.tertiaryContainer,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ),
+        ),
+        if (count > 1) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              count,
+              (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: _current == i ? 20 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: _current == i
+                      ? scheme.primary
+                      : scheme.outlineVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Sticky bottom CTA for non-owners.
 class _StickyCtaBar extends StatelessWidget {
   const _StickyCtaBar({required this.listing, required this.onMessage});
 
@@ -160,10 +401,7 @@ class _StickyCtaBar extends StatelessWidget {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.md,
+            AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md,
           ),
           child: Row(
             children: [
@@ -181,6 +419,58 @@ class _StickyCtaBar extends StatelessWidget {
                 onPressed: onMessage,
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: const Text('Message seller'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Sticky bottom bar for listing owners showing status.
+class _OwnerCtaBar extends StatelessWidget {
+  const _OwnerCtaBar({required this.listing});
+
+  final ListingResponse listing;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        border: Border(top: BorderSide(color: scheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  formatPrice(listing.priceCents),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Chip(
+                avatar: Icon(
+                  listing.status == ListingStatus.sold
+                      ? Icons.check_circle
+                      : Icons.storefront,
+                  size: 18,
+                ),
+                label: Text(
+                  listing.status == ListingStatus.sold
+                      ? 'Sold'
+                      : 'Your listing',
+                ),
               ),
             ],
           ),

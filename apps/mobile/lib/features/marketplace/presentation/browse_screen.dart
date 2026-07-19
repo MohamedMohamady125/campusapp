@@ -72,6 +72,9 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
               ),
             ),
             SliverToBoxAdapter(child: _CategoryChips(state: state)),
+            SliverToBoxAdapter(
+              child: _PriceFilter(state: state),
+            ),
             if (state.loading)
               const _SkeletonGrid()
             else if (state.error != null)
@@ -162,6 +165,96 @@ class _CategoryChips extends ConsumerWidget {
                 onSelected: (on) =>
                     controller.setCategory(on ? entry.key : null).ignore(),
               ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriceFilter extends ConsumerStatefulWidget {
+  const _PriceFilter({required this.state});
+
+  final BrowseState state;
+
+  @override
+  ConsumerState<_PriceFilter> createState() =>
+      _PriceFilterState();
+}
+
+class _PriceFilterState extends ConsumerState<_PriceFilter> {
+  RangeValues _range = const RangeValues(0, 500);
+  bool _active = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final s = widget.state;
+    if (s.minPrice != null || s.maxPrice != null) {
+      _active = true;
+      _range = RangeValues(
+        (s.minPrice ?? 0) / 100,
+        (s.maxPrice ?? 50000) / 100,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller =
+        ref.read(browseControllerProvider.notifier);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              FilterChip(
+                label: Text(
+                  _active
+                      ? '\$${_range.start.round()}'
+                          ' – '
+                          '\$${_range.end.round()}'
+                      : 'Price range',
+                ),
+                avatar: const Icon(
+                  Icons.attach_money,
+                  size: 18,
+                ),
+                selected: _active,
+                onSelected: (on) {
+                  setState(() => _active = on);
+                  if (!on) {
+                    controller
+                        .setPriceRange(null, null)
+                        .ignore();
+                  }
+                },
+              ),
+            ],
+          ),
+          if (_active)
+            RangeSlider(
+              values: _range,
+              max: 500,
+              divisions: 50,
+              labels: RangeLabels(
+                '\$${_range.start.round()}',
+                '\$${_range.end.round()}',
+              ),
+              onChanged: (v) =>
+                  setState(() => _range = v),
+              onChangeEnd: (v) {
+                controller
+                    .setPriceRange(
+                      v.start.round() * 100,
+                      v.end.round() * 100,
+                    )
+                    .ignore();
+              },
             ),
         ],
       ),

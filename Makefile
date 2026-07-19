@@ -26,10 +26,10 @@ infra-down:
 	docker compose -f infra/docker-compose.yml down
 
 dev: install-api infra-up migrate
-	cd apps/api && .venv/bin/uvicorn app.main:app --reload --port 8000
+	cd apps/api && .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 api: install-api
-	cd apps/api && .venv/bin/uvicorn app.main:app --reload --port 8000
+	cd apps/api && .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 migrate: install-api
 	cd apps/api && .venv/bin/alembic upgrade head

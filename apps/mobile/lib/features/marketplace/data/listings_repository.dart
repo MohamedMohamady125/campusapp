@@ -22,11 +22,15 @@ class ListingsRepository {
   Future<ListingsPage> fetchPage({
     String? query,
     ListingCategory? category,
+    int? minPrice,
+    int? maxPrice,
     String? cursor,
   }) async {
     final res = await _listings.listListingsApiV1ListingsGet(
       q: (query == null || query.isEmpty) ? null : query,
       category: category,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
       cursor: cursor,
     );
     final page = res.data!;
@@ -61,6 +65,55 @@ class ListingsRepository {
       ),
     );
     return res.data!;
+  }
+
+  Future<ListingResponse> markSold(String id) async {
+    final res = await _listings.markSoldApiV1ListingsListingIdMarkSoldPost(
+      listingId: id,
+    );
+    return res.data!;
+  }
+
+  Future<void> deleteListing(String id) async {
+    await _listings.deleteListingApiV1ListingsListingIdDelete(listingId: id);
+  }
+
+  Future<ListingResponse> updateListing({
+    required String id,
+    String? title,
+    String? description,
+    int? priceCents,
+    ListingCategory? category,
+    ListingCondition? condition,
+  }) async {
+    final res = await _listings.updateListingApiV1ListingsListingIdPatch(
+      listingId: id,
+      listingUpdateRequest: ListingUpdateRequest(
+        (b) => b
+          ..title = title
+          ..description = description
+          ..priceCents = priceCents
+          ..category = category
+          ..condition = condition,
+      ),
+    );
+    return res.data!;
+  }
+
+  /// Fetch all listings, then filter client-side to the current user's.
+  /// Good enough for demo; a server-side filter would be better at scale.
+  Future<List<ListingResponse>> fetchMyListings(String userId) async {
+    final allItems = <ListingResponse>[];
+    String? cursor;
+    // Fetch up to 3 pages (60 items) to find the user's listings.
+    for (var i = 0; i < 3; i++) {
+      final res = await _listings.listListingsApiV1ListingsGet(cursor: cursor);
+      final page = res.data!;
+      allItems.addAll(page.items);
+      cursor = page.nextCursor;
+      if (cursor == null) break;
+    }
+    return allItems.where((l) => l.seller.id == userId).toList();
   }
 }
 
