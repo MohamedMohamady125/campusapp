@@ -11,16 +11,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-final AutoDisposeFutureProviderFamily<ListingResponse, String>
-listingDetailProvider = FutureProvider.autoDispose
-    .family<ListingResponse, String>(
-      (ref, id) => ref.watch(listingsRepositoryProvider).fetchListing(id),
-    );
+final AutoDisposeFutureProviderFamily<ListingResponse,
+        String> listingDetailProvider =
+    FutureProvider.autoDispose
+        .family<ListingResponse, String>(
+  (ref, id) => ref
+      .watch(listingsRepositoryProvider)
+      .fetchListing(id),
+);
 
-/// Listing detail (spec §6.4): image carousel, seller card with
-/// reputation, "Message seller" CTA, owner actions (mark sold, edit, delete).
+/// Listing detail (spec S6.4): image carousel, seller
+/// card with reputation, "Message seller" CTA, owner
+/// actions (mark sold, edit, delete).
 class ListingDetailScreen extends ConsumerWidget {
-  const ListingDetailScreen({required this.listingId, super.key});
+  const ListingDetailScreen({
+    required this.listingId,
+    super.key,
+  });
 
   final String listingId;
 
@@ -45,21 +52,30 @@ class ListingDetailScreen extends ConsumerWidget {
       }
     } on Object catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(apiErrorMessage(e))),
+        );
       }
     }
   }
 
-  Future<void> _markSold(BuildContext context, WidgetRef ref) async {
+  Future<void> _markSold(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     try {
-      await ref.read(listingsRepositoryProvider).markSold(listingId);
+      await ref
+          .read(listingsRepositoryProvider)
+          .markSold(listingId);
       ref.invalidate(listingDetailProvider(listingId));
-      await ref.read(browseControllerProvider.notifier).refresh();
+      await ref
+          .read(browseControllerProvider.notifier)
+          .refresh();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Marked as sold!')),
+          const SnackBar(
+            content: Text('Marked as sold!'),
+          ),
         );
       }
     } on Object catch (e) {
@@ -71,12 +87,17 @@ class ListingDetailScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _deleteListing(BuildContext context, WidgetRef ref) async {
+  Future<void> _deleteListing(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Remove listing?'),
-        content: const Text('This listing will be permanently removed.'),
+        content: const Text(
+          'This listing will be permanently removed.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -85,7 +106,8 @@ class ListingDetailScreen extends ConsumerWidget {
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
+              backgroundColor:
+                  Theme.of(ctx).colorScheme.error,
             ),
             child: const Text('Remove'),
           ),
@@ -94,11 +116,17 @@ class ListingDetailScreen extends ConsumerWidget {
     );
     if (confirm != true) return;
     try {
-      await ref.read(listingsRepositoryProvider).deleteListing(listingId);
-      await ref.read(browseControllerProvider.notifier).refresh();
+      await ref
+          .read(listingsRepositoryProvider)
+          .deleteListing(listingId);
+      await ref
+          .read(browseControllerProvider.notifier)
+          .refresh();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Listing removed.')),
+          const SnackBar(
+            content: Text('Listing removed.'),
+          ),
         );
         context.go('/market');
       }
@@ -111,7 +139,8 @@ class ListingDetailScreen extends ConsumerWidget {
     }
   }
 
-  static const _conditionLabels = <ListingCondition, String>{
+  static const _conditionLabels =
+      <ListingCondition, String>{
     ListingCondition.new_: 'New',
     ListingCondition.likeNew: 'Like new',
     ListingCondition.good: 'Good',
@@ -119,64 +148,131 @@ class ListingDetailScreen extends ConsumerWidget {
     ListingCondition.poor: 'Poor',
   };
 
+  static const _conditionIcons =
+      <ListingCondition, IconData>{
+    ListingCondition.new_: Icons.fiber_new_rounded,
+    ListingCondition.likeNew: Icons.auto_awesome,
+    ListingCondition.good: Icons.thumb_up_alt_outlined,
+    ListingCondition.fair: Icons.thumbs_up_down_outlined,
+    ListingCondition.poor: Icons.warning_amber_rounded,
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final detail = ref.watch(listingDetailProvider(listingId));
+    final detail = ref.watch(
+      listingDetailProvider(listingId),
+    );
     final loaded = detail.valueOrNull;
-    final currentUserId = ref.watch(authControllerProvider).user?.id;
-    final isOwner = loaded != null && loaded.seller.id == currentUserId;
+    final currentUserId =
+        ref.watch(authControllerProvider).user?.id;
+    final isOwner =
+        loaded != null && loaded.seller.id == currentUserId;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Listing'),
+        backgroundColor: Colors.transparent,
+        leading: Padding(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surface
+                  .withValues(alpha: 0.85),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.pop(),
+            ),
+          ),
+        ),
         actions: isOwner
             ? [
-                PopupMenuButton<String>(
-                  onSelected: (action) async {
-                    switch (action) {
-                      case 'sold':
-                        await _markSold(context, ref);
-                      case 'edit':
-                        context.go(
-                          '/market/listing/$listingId/edit',
-                        );
-                      case 'delete':
-                        await _deleteListing(context, ref);
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    if (loaded.status == ListingStatus.active)
-                      const PopupMenuItem(
-                        value: 'sold',
-                        child: ListTile(
-                          leading: Icon(Icons.check_circle_outline),
-                          title: Text('Mark as sold'),
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: ListTile(
-                        leading: Icon(Icons.edit_outlined),
-                        title: Text('Edit'),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
+                Padding(
+                  padding: const EdgeInsets.all(
+                    AppSpacing.sm,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withValues(alpha: 0.85),
+                      shape: BoxShape.circle,
                     ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: ListTile(
-                        leading: Icon(Icons.delete_outline, color: Colors.red),
-                        title: Text(
-                          'Remove',
-                          style: TextStyle(color: Colors.red),
+                    child: PopupMenuButton<String>(
+                      onSelected: (action) async {
+                        switch (action) {
+                          case 'sold':
+                            await _markSold(
+                              context,
+                              ref,
+                            );
+                          case 'edit':
+                            context.go(
+                              '/market/listing'
+                              '/$listingId/edit',
+                            );
+                          case 'delete':
+                            await _deleteListing(
+                              context,
+                              ref,
+                            );
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        if (loaded.status ==
+                            ListingStatus.active)
+                          const PopupMenuItem(
+                            value: 'sold',
+                            child: ListTile(
+                              leading: Icon(
+                                Icons
+                                    .check_circle_outline,
+                              ),
+                              title: Text(
+                                'Mark as sold',
+                              ),
+                              dense: true,
+                              contentPadding:
+                                  EdgeInsets.zero,
+                            ),
+                          ),
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.edit_outlined,
+                            ),
+                            title: Text('Edit'),
+                            dense: true,
+                            contentPadding:
+                                EdgeInsets.zero,
+                          ),
                         ),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                            ),
+                            title: Text(
+                              'Remove',
+                              style: TextStyle(
+                                color: Colors.red,
+                              ),
+                            ),
+                            dense: true,
+                            contentPadding:
+                                EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ]
             : null,
@@ -187,71 +283,224 @@ class ListingDetailScreen extends ConsumerWidget {
               ? _OwnerCtaBar(listing: loaded)
               : _StickyCtaBar(
                   listing: loaded,
-                  onMessage: () => _messageSeller(context, ref, loaded),
+                  onMessage: () => _messageSeller(
+                    context,
+                    ref,
+                    loaded,
+                  ),
                 ),
       body: detail.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
         error: (_, _) => EmptyState(
           icon: Icons.cloud_off,
           title: 'Could not load this listing',
-          message: 'It may have been removed, or you are offline.',
+          message:
+              'It may have been removed, or you are offline.',
           actionLabel: 'Retry',
-          onAction: () => ref.invalidate(listingDetailProvider(listingId)),
+          onAction: () => ref.invalidate(
+            listingDetailProvider(listingId),
+          ),
         ),
-        data: (listing) {
-          final scheme = Theme.of(context).colorScheme;
-          return ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            children: [
-              // Image carousel
-              _ImageCarousel(listing: listing),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                listing.title,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.sm,
-                children: [
-                  Chip(
-                    label: Text(
-                      _conditionLabels[listing.condition] ?? 'Unknown',
-                    ),
-                  ),
-                  if (listing.status != ListingStatus.active)
-                    Chip(
-                      label: Text(listing.status.name.toUpperCase()),
-                      backgroundColor: listing.status == ListingStatus.sold
-                          ? scheme.tertiaryContainer
-                          : scheme.errorContainer,
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                listing.description,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _SellerCard(seller: listing.seller),
-              const SizedBox(height: AppSpacing.lg),
-            ],
-          );
-        },
+        data: (listing) => _DetailBody(
+          listing: listing,
+          conditionLabels: _conditionLabels,
+          conditionIcons: _conditionIcons,
+        ),
       ),
     );
   }
 }
 
-/// Image carousel with page indicator dots.
+// -- Detail body (extracted for readability) ----------
+class _DetailBody extends StatelessWidget {
+  const _DetailBody({
+    required this.listing,
+    required this.conditionLabels,
+    required this.conditionIcons,
+  });
+
+  final ListingResponse listing;
+  final Map<ListingCondition, String> conditionLabels;
+  final Map<ListingCondition, IconData> conditionIcons;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        // -- Hero image carousel --------------------
+        _ImageCarousel(listing: listing),
+
+        // -- Content below image --------------------
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.lg,
+          ),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                listing.title,
+                style: tt.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Chips row: condition + status
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _StyledChip(
+                    icon: conditionIcons[
+                            listing.condition] ??
+                        Icons.info_outline,
+                    label: conditionLabels[
+                            listing.condition] ??
+                        'Unknown',
+                    backgroundColor:
+                        scheme.surfaceContainerHigh,
+                    foregroundColor:
+                        scheme.onSurface,
+                  ),
+                  if (listing.status !=
+                      ListingStatus.active)
+                    _StyledChip(
+                      icon: listing.status ==
+                              ListingStatus.sold
+                          ? Icons.check_circle
+                          : Icons.block,
+                      label: listing.status.name
+                          .toUpperCase(),
+                      backgroundColor:
+                          listing.status ==
+                                  ListingStatus.sold
+                              ? scheme
+                                  .tertiaryContainer
+                              : scheme.errorContainer,
+                      foregroundColor:
+                          listing.status ==
+                                  ListingStatus.sold
+                              ? scheme
+                                  .onTertiaryContainer
+                              : scheme
+                                  .onErrorContainer,
+                    ),
+                ],
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+
+              // Description section
+              Text(
+                'Description',
+                style: tt.titleSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                listing.description,
+                style: tt.bodyLarge?.copyWith(
+                  height: 1.6,
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.xxl),
+
+              // Seller section header
+              Text(
+                'Seller',
+                style: tt.titleSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Seller card
+              _SellerCard(seller: listing.seller),
+
+              // Bottom padding for sticky bar
+              const SizedBox(height: AppSpacing.xl),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// -- Styled chip with icon for condition/status -------
+class _StyledChip extends StatelessWidget {
+  const _StyledChip({
+    required this.icon,
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(
+          AppRadius.pill,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: foregroundColor),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .labelMedium
+                ?.copyWith(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Image carousel with page indicator dots and taller
+/// aspect ratio for premium feel.
 class _ImageCarousel extends StatefulWidget {
   const _ImageCarousel({required this.listing});
 
   final ListingResponse listing;
 
   @override
-  State<_ImageCarousel> createState() => _ImageCarouselState();
+  State<_ImageCarousel> createState() =>
+      _ImageCarouselState();
 }
 
 class _ImageCarouselState extends State<_ImageCarousel> {
@@ -267,125 +516,231 @@ class _ImageCarouselState extends State<_ImageCarousel> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final images = widget.listing.images;
     final count = images.isEmpty ? 1 : images.length;
+    final topPad = MediaQuery.of(context).padding.top;
 
-    return Column(
+    return Stack(
       children: [
+        // Main image area - taller for premium feel
         Hero(
           tag: 'listing-image-${widget.listing.id}',
-          child: AspectRatio(
-            aspectRatio: 4 / 3,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              child: images.isEmpty
-                  ? DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHighest,
-                      ),
-                      child: Icon(
-                        listingCategoryIcons[widget.listing.category] ??
-                            Icons.category,
-                        size: 64,
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    )
-                  : PageView.builder(
-                      controller: _controller,
-                      itemCount: count,
-                      onPageChanged: (i) => setState(() => _current = i),
-                      itemBuilder: (_, i) {
-                        final img = images[i];
-                        return DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: scheme.surfaceContainerHighest,
-                          ),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Icon(
-                                listingCategoryIcons[
-                                        widget.listing.category] ??
-                                    Icons.category,
-                                size: 64,
-                                color: scheme.onSurfaceVariant,
-                              ),
-                              Positioned(
-                                bottom: AppSpacing.sm,
-                                right: AppSpacing.sm,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    color:
-                                        scheme.surface.withValues(alpha: 0.85),
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.sm),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.sm,
-                                      vertical: AppSpacing.xs,
-                                    ),
-                                    child: Text(
-                                      'Photo ${i + 1}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (img.moderationStatus !=
-                                  ModerationStatus.approved)
-                                Positioned(
-                                  top: AppSpacing.sm,
-                                  left: AppSpacing.sm,
-                                  child: Chip(
-                                    avatar: const Icon(
-                                      Icons.hourglass_top,
-                                      size: 16,
-                                    ),
-                                    label: const Text('Pending review'),
-                                    backgroundColor:
-                                        scheme.tertiaryContainer,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        );
-                      },
+          child: SizedBox(
+            height: 380 + topPad,
+            width: double.infinity,
+            child: images.isEmpty
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: scheme
+                          .surfaceContainerHighest,
                     ),
-            ),
+                    child: Column(
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      children: [
+                        SizedBox(height: topPad),
+                        Icon(
+                          listingCategoryIcons[
+                                  widget.listing
+                                      .category] ??
+                              Icons.category,
+                          size: 80,
+                          color: scheme.onSurfaceVariant
+                              .withValues(alpha: 0.35),
+                        ),
+                      ],
+                    ),
+                  )
+                : PageView.builder(
+                    controller: _controller,
+                    itemCount: count,
+                    onPageChanged: (i) =>
+                        setState(() => _current = i),
+                    itemBuilder: (_, i) {
+                      final img = images[i];
+                      return ColoredBox(
+                        color: scheme
+                            .surfaceContainerHighest,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Icon(
+                              listingCategoryIcons[
+                                      widget.listing
+                                          .category] ??
+                                  Icons.category,
+                              size: 80,
+                              color: scheme
+                                  .onSurfaceVariant
+                                  .withValues(
+                                alpha: 0.35,
+                              ),
+                            ),
+                            if (img.moderationStatus !=
+                                ModerationStatus
+                                    .approved)
+                              Positioned(
+                                top: topPad +
+                                    AppSpacing.xxxl,
+                                left: AppSpacing.lg,
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets
+                                          .symmetric(
+                                    horizontal:
+                                        AppSpacing.md,
+                                    vertical:
+                                        AppSpacing.sm,
+                                  ),
+                                  decoration:
+                                      BoxDecoration(
+                                    color: scheme
+                                        .tertiaryContainer,
+                                    borderRadius:
+                                        BorderRadius
+                                            .circular(
+                                      AppRadius.pill,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize:
+                                        MainAxisSize
+                                            .min,
+                                    children: [
+                                      Icon(
+                                        Icons
+                                            .hourglass_top,
+                                        size: 14,
+                                        color: scheme
+                                            .onTertiaryContainer,
+                                      ),
+                                      const SizedBox(
+                                        width:
+                                            AppSpacing
+                                                .xs,
+                                      ),
+                                      Text(
+                                        'Pending review',
+                                        style: tt
+                                            .labelSmall
+                                            ?.copyWith(
+                                          color: scheme
+                                              .onTertiaryContainer,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
           ),
         ),
-        if (count > 1) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              count,
-              (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: _current == i ? 20 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: _current == i
-                      ? scheme.primary
-                      : scheme.outlineVariant,
+
+        // Bottom gradient overlay
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 60,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    scheme.surface
+                        .withValues(alpha: 0.8),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
+
+        // Page dots
+        if (count > 1)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: AppSpacing.lg,
+            child: Row(
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              children: List.generate(
+                count,
+                (i) => AnimatedContainer(
+                  duration: const Duration(
+                    milliseconds: 250,
+                  ),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 3,
+                  ),
+                  width: _current == i ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    borderRadius:
+                        BorderRadius.circular(4),
+                    color: _current == i
+                        ? scheme.primary
+                        : scheme.onSurface
+                            .withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // Photo counter badge
+        if (count > 1)
+          Positioned(
+            right: AppSpacing.lg,
+            bottom: AppSpacing.lg,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.xs + 1,
+              ),
+              decoration: BoxDecoration(
+                color: scheme.surface
+                    .withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(
+                  AppRadius.pill,
+                ),
+                border: Border.all(
+                  color: scheme.outlineVariant,
+                ),
+              ),
+              child: Text(
+                '${_current + 1} / $count',
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ),
       ],
     );
   }
 }
 
-/// Sticky bottom CTA for non-owners.
+/// Sticky bottom CTA for non-owners with premium
+/// styling.
 class _StickyCtaBar extends StatelessWidget {
-  const _StickyCtaBar({required this.listing, required this.onMessage});
+  const _StickyCtaBar({
+    required this.listing,
+    required this.onMessage,
+  });
 
   final ListingResponse listing;
   final VoidCallback onMessage;
@@ -393,32 +748,75 @@ class _StickyCtaBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
+    final tt = Theme.of(context).textTheme;
+    return Container(
       decoration: BoxDecoration(
         color: scheme.surface,
-        border: Border(top: BorderSide(color: scheme.outlineVariant)),
+        border: Border(
+          top: BorderSide(
+            color: scheme.outlineVariant,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.shadow
+                .withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md,
+            AppSpacing.xl,
+            AppSpacing.md,
+            AppSpacing.xl,
+            AppSpacing.md,
           ),
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  formatPrice(listing.priceCents),
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Price',
+                      style: tt.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: AppSpacing.xs,
+                    ),
+                    Text(
+                      formatPrice(
+                        listing.priceCents,
+                      ),
+                      style: tt.titleLarge?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
               FilledButton.icon(
                 onPressed: onMessage,
-                icon: const Icon(Icons.chat_bubble_outline),
+                icon: const Icon(
+                  Icons.chat_bubble_outline,
+                ),
                 label: const Text('Message seller'),
+                style: FilledButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.md,
+                  ),
+                ),
               ),
             ],
           ),
@@ -437,39 +835,108 @@ class _OwnerCtaBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
+    final tt = Theme.of(context).textTheme;
+    return Container(
       decoration: BoxDecoration(
         color: scheme.surface,
-        border: Border(top: BorderSide(color: scheme.outlineVariant)),
+        border: Border(
+          top: BorderSide(
+            color: scheme.outlineVariant,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.shadow
+                .withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md,
+            AppSpacing.xl,
+            AppSpacing.md,
+            AppSpacing.xl,
+            AppSpacing.md,
           ),
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  formatPrice(listing.priceCents),
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your listing',
+                      style: tt.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: AppSpacing.xs,
+                    ),
+                    Text(
+                      formatPrice(
+                        listing.priceCents,
+                      ),
+                      style: tt.titleLarge?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              Chip(
-                avatar: Icon(
-                  listing.status == ListingStatus.sold
-                      ? Icons.check_circle
-                      : Icons.storefront,
-                  size: 18,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
                 ),
-                label: Text(
-                  listing.status == ListingStatus.sold
-                      ? 'Sold'
-                      : 'Your listing',
+                decoration: BoxDecoration(
+                  color: listing.status ==
+                          ListingStatus.sold
+                      ? scheme.tertiaryContainer
+                      : scheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(
+                    AppRadius.pill,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      listing.status ==
+                              ListingStatus.sold
+                          ? Icons.check_circle
+                          : Icons.storefront,
+                      size: 18,
+                      color: listing.status ==
+                              ListingStatus.sold
+                          ? scheme.onTertiaryContainer
+                          : scheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(
+                      width: AppSpacing.sm,
+                    ),
+                    Text(
+                      listing.status ==
+                              ListingStatus.sold
+                          ? 'Sold'
+                          : 'Active',
+                      style: tt.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: listing.status ==
+                                ListingStatus.sold
+                            ? scheme
+                                .onTertiaryContainer
+                            : scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -480,6 +947,7 @@ class _OwnerCtaBar extends StatelessWidget {
   }
 }
 
+// -- Seller card with larger avatar and better layout -
 class _SellerCard extends StatelessWidget {
   const _SellerCard({required this.seller});
 
@@ -487,47 +955,117 @@ class _SellerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          children: [
-            CircleAvatar(
+    final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(
+          AppRadius.lg,
+        ),
+        border: Border.all(
+          color: scheme.outlineVariant,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Larger avatar with gradient ring
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  scheme.primary,
+                  scheme.tertiary,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 26,
+              backgroundColor: scheme.surface,
               child: Text(
                 seller.displayName.isEmpty
                     ? '?'
-                    : seller.displayName[0].toUpperCase(),
+                    : seller.displayName[0]
+                        .toUpperCase(),
+                style: tt.titleLarge?.copyWith(
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    seller.displayName,
-                    style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(width: AppSpacing.lg),
+
+          // Seller info
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  seller.displayName,
+                  style: tt.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
+                ),
+                const SizedBox(
+                  height: AppSpacing.xs,
+                ),
+                Row(
+                  children: [
+                    // Star rating
+                    ...List.generate(
+                      5,
+                      (i) => Icon(
+                        i <
+                                seller.reputationScore
+                                    .round()
+                            ? Icons.star_rounded
+                            : Icons
+                                .star_outline_rounded,
                         size: 16,
-                        color: Color(0xFFF59E0B),
+                        color:
+                            const Color(0xFFF59E0B),
                       ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        '${seller.reputationScore.toStringAsFixed(1)}'
-                        ' (${seller.ratingCount})',
-                        style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(
+                      width: AppSpacing.sm,
+                    ),
+                    Text(
+                      seller.reputationScore
+                          .toStringAsFixed(1),
+                      style: tt.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                    const SizedBox(
+                      width: AppSpacing.xs,
+                    ),
+                    Text(
+                      '(${seller.ratingCount})',
+                      style: tt.bodySmall?.copyWith(
+                        color:
+                            scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // Chevron
+          Icon(
+            Icons.chevron_right_rounded,
+            color: scheme.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }

@@ -121,7 +121,8 @@ class BrowseController extends Notifier<BrowseState> {
         items: [...state.items, ...page.items],
         nextCursor: () => page.nextCursor,
       );
-    } on Object {
+    } on Object catch (e) {
+      debugPrint('BrowseController.loadMore ERROR: $e');
       state = state._copyWith(loadingMore: false);
     }
   }

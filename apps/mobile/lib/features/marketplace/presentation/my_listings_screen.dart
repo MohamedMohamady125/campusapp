@@ -12,13 +12,18 @@ import 'package:go_router/go_router.dart';
 
 final AutoDisposeFutureProvider<List<ListingResponse>>
     myListingsProvider =
-    FutureProvider.autoDispose<List<ListingResponse>>((ref) {
-  final userId = ref.watch(authControllerProvider).user?.id;
+    FutureProvider.autoDispose<List<ListingResponse>>(
+        (ref) {
+  final userId =
+      ref.watch(authControllerProvider).user?.id;
   if (userId == null) return [];
-  return ref.watch(listingsRepositoryProvider).fetchMyListings(userId);
+  return ref
+      .watch(listingsRepositoryProvider)
+      .fetchMyListings(userId);
 });
 
-/// Shows the current user's listings with quick actions.
+/// Shows the current user's listings with quick
+/// actions.
 class MyListingsScreen extends ConsumerWidget {
   const MyListingsScreen({super.key});
 
@@ -28,18 +33,26 @@ class MyListingsScreen extends ConsumerWidget {
     String id,
   ) async {
     try {
-      await ref.read(listingsRepositoryProvider).markSold(id);
+      await ref
+          .read(listingsRepositoryProvider)
+          .markSold(id);
       ref.invalidate(myListingsProvider);
-      await ref.read(browseControllerProvider.notifier).refresh();
+      await ref
+          .read(browseControllerProvider.notifier)
+          .refresh();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Marked as sold!')),
+          const SnackBar(
+            content: Text('Marked as sold!'),
+          ),
         );
       }
     } on Object catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(apiErrorMessage(e))),
+          SnackBar(
+            content: Text(apiErrorMessage(e)),
+          ),
         );
       }
     }
@@ -55,17 +68,21 @@ class MyListingsScreen extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Remove listing?'),
         content: const Text(
-          'This listing will be permanently removed.',
+          'This listing will be permanently'
+          ' removed.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () =>
+                Navigator.pop(ctx, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () =>
+                Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
+              backgroundColor:
+                  Theme.of(ctx).colorScheme.error,
             ),
             child: const Text('Remove'),
           ),
@@ -74,18 +91,26 @@ class MyListingsScreen extends ConsumerWidget {
     );
     if (confirm != true) return;
     try {
-      await ref.read(listingsRepositoryProvider).deleteListing(id);
+      await ref
+          .read(listingsRepositoryProvider)
+          .deleteListing(id);
       ref.invalidate(myListingsProvider);
-      await ref.read(browseControllerProvider.notifier).refresh();
+      await ref
+          .read(browseControllerProvider.notifier)
+          .refresh();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Listing removed.')),
+          const SnackBar(
+            content: Text('Listing removed.'),
+          ),
         );
       }
     } on Object catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(apiErrorMessage(e))),
+          SnackBar(
+            content: Text(apiErrorMessage(e)),
+          ),
         );
       }
     }
@@ -94,23 +119,31 @@ class MyListingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final listings = ref.watch(myListingsProvider);
+    final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Listings')),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton:
+          FloatingActionButton.extended(
         onPressed: () => context.go('/market/sell'),
-        icon: const Icon(Icons.add_a_photo_outlined),
+        icon: const Icon(
+          Icons.add_a_photo_outlined,
+        ),
         label: const Text('Sell'),
       ),
       body: listings.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
         error: (_, _) => EmptyState(
           icon: Icons.cloud_off,
           title: 'Could not load your listings',
-          message: 'Check your connection and try again.',
+          message:
+              'Check your connection and try again.',
           actionLabel: 'Retry',
-          onAction: () => ref.invalidate(myListingsProvider),
+          onAction: () =>
+              ref.invalidate(myListingsProvider),
         ),
         data: (items) {
           if (items.isEmpty) {
@@ -119,160 +152,344 @@ class MyListingsScreen extends ConsumerWidget {
               title: 'No listings yet',
               message: 'Post something to sell!',
               actionLabel: 'Sell something',
-              onAction: () => context.go('/market/sell'),
+              onAction: () =>
+                  context.go('/market/sell'),
             );
           }
           return RefreshIndicator(
             onRefresh: () async =>
                 ref.invalidate(myListingsProvider),
             child: ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(
+                AppSpacing.lg,
+              ),
               itemCount: items.length,
               separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(
+                height: AppSpacing.md,
+              ),
               itemBuilder: (context, i) {
                 final listing = items[i];
-                final scheme = Theme.of(context).colorScheme;
-                return Card(
-                  child: InkWell(
-                    onTap: () => context.go(
-                      '/market/listing/${listing.id}',
-                    ),
-                    borderRadius: BorderRadius.circular(
-                      AppRadius.md,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(
-                        AppSpacing.md,
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color:
-                                  scheme.surfaceContainerHighest,
-                              borderRadius:
-                                  BorderRadius.circular(
-                                AppRadius.sm,
-                              ),
-                            ),
-                            child: Icon(
-                              listingCategoryIcons[
-                                      listing.category] ??
-                                  Icons.category,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  listing.title,
-                                  maxLines: 1,
-                                  overflow:
-                                      TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall,
-                                ),
-                                const SizedBox(
-                                  height: AppSpacing.xs,
-                                ),
-                                Row(
-                                  children: [
-                                    Text(
-                                      formatPrice(
-                                        listing.priceCents,
-                                      ),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color:
-                                                scheme.primary,
-                                            fontWeight:
-                                                FontWeight.w600,
-                                          ),
-                                    ),
-                                    const SizedBox(
-                                      width: AppSpacing.sm,
-                                    ),
-                                    if (listing.status ==
-                                        ListingStatus.sold)
-                                      Chip(
-                                        label: const Text(
-                                          'SOLD',
-                                        ),
-                                        labelStyle:
-                                            Theme.of(context)
-                                                .textTheme
-                                                .labelSmall,
-                                        backgroundColor: scheme
-                                            .tertiaryContainer,
-                                        padding:
-                                            EdgeInsets.zero,
-                                        visualDensity:
-                                            VisualDensity
-                                                .compact,
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (listing.status ==
-                              ListingStatus.active)
-                            PopupMenuButton<String>(
-                              onSelected: (action) async {
-                                switch (action) {
-                                  case 'sold':
-                                    await _markSold(
-                                      context,
-                                      ref,
-                                      listing.id,
-                                    );
-                                  case 'edit':
-                                    context.go(
-                                      '/market/listing/'
-                                      '${listing.id}',
-                                    );
-                                  case 'delete':
-                                    await _deleteListing(
-                                      context,
-                                      ref,
-                                      listing.id,
-                                    );
-                                }
-                              },
-                              itemBuilder: (_) => const [
-                                PopupMenuItem(
-                                  value: 'sold',
-                                  child: Text('Mark sold'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'edit',
-                                  child: Text('Edit'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('Remove'),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
+                final isSold = listing.status ==
+                    ListingStatus.sold;
+                return _ListingCard(
+                  listing: listing,
+                  isSold: isSold,
+                  scheme: scheme,
+                  tt: tt,
+                  onTap: () => context.go(
+                    '/market/listing/${listing.id}',
+                  ),
+                  onMarkSold: () => _markSold(
+                    context,
+                    ref,
+                    listing.id,
+                  ),
+                  onEdit: () => context.go(
+                    '/market/listing/${listing.id}',
+                  ),
+                  onDelete: () => _deleteListing(
+                    context,
+                    ref,
+                    listing.id,
                   ),
                 );
               },
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// -- Premium listing card --
+class _ListingCard extends StatelessWidget {
+  const _ListingCard({
+    required this.listing,
+    required this.isSold,
+    required this.scheme,
+    required this.tt,
+    required this.onTap,
+    required this.onMarkSold,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final ListingResponse listing;
+  final bool isSold;
+  final ColorScheme scheme;
+  final TextTheme tt;
+  final VoidCallback onTap;
+  final VoidCallback onMarkSold;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(
+          AppRadius.lg,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(
+            AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              // Large thumbnail
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: isSold
+                      ? scheme
+                          .surfaceContainerHighest
+                          .withAlpha(180)
+                      : scheme
+                          .surfaceContainerHighest,
+                  borderRadius:
+                      BorderRadius.circular(
+                    AppRadius.md,
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        listingCategoryIcons[
+                                listing.category] ??
+                            Icons.category,
+                        color: isSold
+                            ? scheme
+                                .onSurfaceVariant
+                                .withAlpha(100)
+                            : scheme
+                                .onSurfaceVariant,
+                        size: 32,
+                      ),
+                    ),
+                    // Sold overlay
+                    if (isSold)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black
+                                .withAlpha(30),
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                              AppRadius.md,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            listing.title,
+                            maxLines: 1,
+                            overflow: TextOverflow
+                                .ellipsis,
+                            style: tt.titleSmall
+                                ?.copyWith(
+                              fontWeight:
+                                  FontWeight.w600,
+                              color: isSold
+                                  ? scheme
+                                      .onSurfaceVariant
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        _StatusBadge(
+                          isSold: isSold,
+                          scheme: scheme,
+                          tt: tt,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: AppSpacing.xs,
+                    ),
+                    Text(
+                      formatPrice(
+                        listing.priceCents,
+                      ),
+                      style:
+                          tt.titleMedium?.copyWith(
+                        color: isSold
+                            ? scheme
+                                .onSurfaceVariant
+                            : scheme.primary,
+                        fontWeight: FontWeight.w700,
+                        decoration: isSold
+                            ? TextDecoration
+                                .lineThrough
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: AppSpacing.sm,
+                    ),
+                    // Category label
+                    Row(
+                      children: [
+                        Icon(
+                          listingCategoryIcons[
+                                  listing
+                                      .category] ??
+                              Icons.category,
+                          size: 14,
+                          color: scheme
+                              .onSurfaceVariant,
+                        ),
+                        const SizedBox(
+                          width: AppSpacing.xs,
+                        ),
+                        Text(
+                          listing.category.name,
+                          style: tt.labelSmall
+                              ?.copyWith(
+                            color: scheme
+                                .onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Actions menu
+              if (!isSold)
+                PopupMenuButton<String>(
+                  onSelected: (action) {
+                    switch (action) {
+                      case 'sold':
+                        onMarkSold();
+                      case 'edit':
+                        onEdit();
+                      case 'delete':
+                        onDelete();
+                    }
+                  },
+                  icon: Icon(
+                    Icons.more_vert_rounded,
+                    color:
+                        scheme.onSurfaceVariant,
+                  ),
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: 'sold',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons
+                                .check_circle_outline,
+                            size: 18,
+                          ),
+                          SizedBox(
+                            width: AppSpacing.sm,
+                          ),
+                          Text('Mark sold'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                          ),
+                          SizedBox(
+                            width: AppSpacing.sm,
+                          ),
+                          Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons
+                                .delete_outline_rounded,
+                            size: 18,
+                          ),
+                          SizedBox(
+                            width: AppSpacing.sm,
+                          ),
+                          Text('Remove'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -- Status badge --
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.isSold,
+    required this.scheme,
+    required this.tt,
+  });
+
+  final bool isSold;
+  final ColorScheme scheme;
+  final TextTheme tt;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSold
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFF22C55E);
+    final label = isSold ? 'SOLD' : 'ACTIVE';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(
+          AppRadius.sm,
+        ),
+        border: Border.all(
+          color: color.withAlpha(80),
+        ),
+      ),
+      child: Text(
+        label,
+        style: tt.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 10,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
