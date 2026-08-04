@@ -1,6 +1,14 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: all planned milestones done + premium UI overhaul shipped (fa278e5); optional stretch below unchanged.
+▶ NEXT: whole.md design-system spec implemented and green (495b798 + 2f31f05); optional stretch below unchanged.
+
+## 2026-08-04 — whole.md UI/UX reference spec executed (user request)
+
+- New `lib/design_system/` layer per whole.md: `theme/app_tokens.dart` + `app_theme.dart` + `material.dart` barrel; 12 shared components (§10): ListingCard, TutorCard, ReputationChip, VerifiedAvatar, CourseCodeChip, MessageBubble, Composer, ChatListRow, EmptyState, SafetyCard, ReportSheet, Skeletons.
+- All §12 screens rewired to the design system; exact §13.2 empty-state copy ("Nothing listed yet" / "No messages yet" …), §14 voice (sentence case, no exclamation marks), ambient trust line once per surface, ratings always shown with count via ReputationChip (never bare averages), browse header "Market" (§12.2).
+- A11y (WCAG 2.2 AA): androidTapTargetGuideline + labeledTapTargetGuideline pass on auth, shell, browse, chats; GestureDetector links → 48×48 TextButtons; tooltips on icon-only buttons; removed MergeSemantics that blocked label merge-up on TutorCard.
+- Test infra fix: flutter_secure_storage's channel never resolves in widget tests → every dio call hung in AuthInterceptor. Added `test/flutter_test_config.dart` mocking the channel globally. Also: pump one frame between enterText and tapping Send (composer enables via setState), scrollUntilVisible for below-fold targets, spec-copy assertions.
+- Verified: dart format clean, flutter analyze 0 issues, 26/26 widget tests green.
 
 ## 2026-07-03 — Premium UI/UX overhaul (user request)
 
