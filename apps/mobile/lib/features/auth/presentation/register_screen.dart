@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
@@ -12,12 +13,10 @@ class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  ConsumerState<RegisterScreen> createState() =>
-      _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState
-    extends ConsumerState<RegisterScreen>
+class _RegisterScreenState extends ConsumerState<RegisterScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
@@ -39,7 +38,7 @@ class _RegisterScreenState
       parent: _fadeCtrl,
       curve: Curves.easeOut,
     );
-    _fadeCtrl.forward();
+    unawaited(_fadeCtrl.forward());
   }
 
   @override
@@ -79,8 +78,7 @@ class _RegisterScreenState
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: DecoratedBox(
@@ -96,8 +94,7 @@ class _RegisterScreenState
                   ]
                 : [
                     cs.primary.withValues(alpha: 0.06),
-                    cs.primaryContainer
-                        .withValues(alpha: 0.04),
+                    cs.primaryContainer.withValues(alpha: 0.04),
                     cs.surface,
                   ],
             stops: const [0.0, 0.35, 1.0],
@@ -113,15 +110,12 @@ class _RegisterScreenState
               child: FadeTransition(
                 opacity: _fadeAnim,
                 child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: 400),
+                  constraints: const BoxConstraints(maxWidth: 400),
                   child: Form(
                     key: _formKey,
-                    autovalidateMode:
-                        AutovalidateMode.onUserInteraction,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(
                           height: AppSpacing.lg,
@@ -134,26 +128,22 @@ class _RegisterScreenState
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
-                                end:
-                                    Alignment.bottomRight,
+                                end: Alignment.bottomRight,
                                 colors: [
                                   cs.primary,
                                   cs.tertiary,
                                 ],
                               ),
-                              borderRadius:
-                                  BorderRadius.circular(
+                              borderRadius: BorderRadius.circular(
                                 AppRadius.xl,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: cs.primary
-                                      .withValues(
+                                  color: cs.primary.withValues(
                                     alpha: 0.25,
                                   ),
                                   blurRadius: 20,
-                                  offset:
-                                      const Offset(0, 6),
+                                  offset: const Offset(0, 6),
                                 ),
                               ],
                             ),
@@ -170,8 +160,7 @@ class _RegisterScreenState
                         // --- Title ---
                         Text(
                           'Create your account',
-                          style: tt.headlineMedium
-                              ?.copyWith(
+                          style: tt.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
                           ),
@@ -193,10 +182,8 @@ class _RegisterScreenState
                         // --- Display name ---
                         TextFormField(
                           controller: _name,
-                          textCapitalization:
-                              TextCapitalization.words,
-                          textInputAction:
-                              TextInputAction.next,
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                             labelText: 'Display name',
                             hintText: 'How others see you',
@@ -206,11 +193,9 @@ class _RegisterScreenState
                               size: 20,
                             ),
                           ),
-                          validator: (v) =>
-                              (v == null ||
-                                      v.trim().length < 2)
-                                  ? 'Enter your name'
-                                  : null,
+                          validator: (v) => (v == null || v.trim().length < 2)
+                              ? 'Enter your name'
+                              : null,
                         ),
                         const SizedBox(
                           height: AppSpacing.lg,
@@ -218,16 +203,13 @@ class _RegisterScreenState
                         // --- Email ---
                         TextFormField(
                           controller: _email,
-                          keyboardType:
-                              TextInputType.emailAddress,
-                          textInputAction:
-                              TextInputAction.next,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
                           autofillHints: const [
                             AutofillHints.email,
                           ],
                           decoration: InputDecoration(
-                            labelText:
-                                'Campus email (.edu)',
+                            labelText: 'Campus email (.edu)',
                             hintText: 'you@campus.edu',
                             prefixIcon: Icon(
                               Icons.email_outlined,
@@ -236,8 +218,7 @@ class _RegisterScreenState
                             ),
                           ),
                           validator: (v) {
-                            final value =
-                                v?.trim() ?? '';
+                            final value = v?.trim() ?? '';
                             if (value.isEmpty) {
                               return 'Enter your '
                                   'campus email';
@@ -260,54 +241,47 @@ class _RegisterScreenState
                         TextFormField(
                           controller: _password,
                           obscureText: _obscurePassword,
-                          textInputAction:
-                              TextInputAction.done,
+                          textInputAction: TextInputAction.done,
                           autofillHints: const [
                             AutofillHints.newPassword,
                           ],
                           decoration: InputDecoration(
                             labelText: 'Password',
-                            helperText:
-                                'At least 8 characters',
+                            helperText: 'At least 8 characters',
                             prefixIcon: Icon(
                               Icons.lock_outline_rounded,
                               color: cs.onSurfaceVariant,
                               size: 20,
                             ),
                             suffixIcon: IconButton(
+                              tooltip: _obscurePassword
+                                  ? 'Show password'
+                                  : 'Hide password',
                               icon: Icon(
                                 _obscurePassword
-                                    ? Icons
-                                        .visibility_outlined
-                                    : Icons
-                                        .visibility_off_outlined,
-                                color:
-                                    cs.onSurfaceVariant,
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: cs.onSurfaceVariant,
                                 size: 20,
                               ),
                               onPressed: () => setState(
-                                () => _obscurePassword =
-                                    !_obscurePassword,
+                                () => _obscurePassword = !_obscurePassword,
                               ),
                             ),
                           ),
-                          validator: (v) =>
-                              (v == null || v.length < 8)
-                                  ? 'Use at least '
-                                      '8 characters'
-                                  : null,
+                          validator: (v) => (v == null || v.length < 8)
+                              ? 'Use at least '
+                                    '8 characters'
+                              : null,
                           onFieldSubmitted: (_) =>
-                              _submitting
-                                  ? null
-                                  : _submit(),
+                              _submitting ? null : _submit(),
                         ),
                         const SizedBox(
                           height: AppSpacing.xl,
                         ),
                         // --- Terms notice ---
                         Padding(
-                          padding:
-                              const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.sm,
                           ),
                           child: Text(
@@ -315,8 +289,7 @@ class _RegisterScreenState
                             'agree to our Terms of Service '
                             'and Privacy Policy.',
                             style: tt.bodySmall?.copyWith(
-                              color: cs.onSurfaceVariant
-                                  .withValues(alpha: 0.7),
+                              color: cs.onSurfaceVariant.withValues(alpha: 0.7),
                               height: 1.4,
                             ),
                             textAlign: TextAlign.center,
@@ -329,15 +302,10 @@ class _RegisterScreenState
                         SizedBox(
                           height: 52,
                           child: FilledButton(
-                            onPressed: _submitting
-                                ? null
-                                : _submit,
-                            style:
-                                FilledButton.styleFrom(
-                              shape:
-                                  RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(
+                            onPressed: _submitting ? null : _submit,
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
                               ),
@@ -345,22 +313,16 @@ class _RegisterScreenState
                             child: _submitting
                                 ? const SizedBox.square(
                                     dimension: 22,
-                                    child:
-                                        CircularProgressIndicator(
+                                    child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
-                                      color:
-                                          Colors.white,
+                                      color: Colors.white,
                                     ),
                                   )
                                 : Text(
                                     'Create account',
-                                    style: tt.labelLarge
-                                        ?.copyWith(
-                                      color:
-                                          cs.onPrimary,
-                                      fontWeight:
-                                          FontWeight
-                                              .w700,
+                                    style: tt.labelLarge?.copyWith(
+                                      color: cs.onPrimary,
+                                      fontWeight: FontWeight.w700,
                                       fontSize: 16,
                                     ),
                                   ),
@@ -371,29 +333,32 @@ class _RegisterScreenState
                         ),
                         // --- Sign in link ---
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              'Already have an account? ',
-                              style: tt.bodyMedium
-                                  ?.copyWith(
-                                color:
-                                    cs.onSurfaceVariant,
+                            Flexible(
+                              child: Text(
+                                'Already have an account? ',
+                                overflow: TextOverflow.ellipsis,
+                                style: tt.bodyMedium?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
                               ),
                             ),
-                            GestureDetector(
-                              onTap: _submitting
+                            TextButton(
+                              onPressed: _submitting
                                   ? null
-                                  : () => context
-                                      .go('/login'),
+                                  : () => context.go('/login'),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.xs,
+                                ),
+                                minimumSize: const Size(48, 48),
+                              ),
                               child: Text(
                                 'Sign in',
-                                style: tt.bodyMedium
-                                    ?.copyWith(
+                                style: tt.bodyMedium?.copyWith(
                                   color: cs.primary,
-                                  fontWeight:
-                                      FontWeight.w700,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),

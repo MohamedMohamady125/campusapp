@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
@@ -12,8 +13,7 @@ class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() =>
-      _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen>
@@ -37,7 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       parent: _fadeCtrl,
       curve: Curves.easeOut,
     );
-    _fadeCtrl.forward();
+    unawaited(_fadeCtrl.forward());
   }
 
   @override
@@ -73,8 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: DecoratedBox(
@@ -90,8 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ]
                 : [
                     cs.primary.withValues(alpha: 0.06),
-                    cs.primaryContainer
-                        .withValues(alpha: 0.04),
+                    cs.primaryContainer.withValues(alpha: 0.04),
                     cs.surface,
                   ],
             stops: const [0.0, 0.35, 1.0],
@@ -107,15 +105,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               child: FadeTransition(
                 opacity: _fadeAnim,
                 child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: 400),
+                  constraints: const BoxConstraints(maxWidth: 400),
                   child: Form(
                     key: _formKey,
-                    autovalidateMode:
-                        AutovalidateMode.onUserInteraction,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: AppSpacing.xl),
                         // --- Logo ---
@@ -132,19 +127,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   cs.tertiary,
                                 ],
                               ),
-                              borderRadius:
-                                  BorderRadius.circular(
+                              borderRadius: BorderRadius.circular(
                                 AppRadius.xl,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: cs.primary
-                                      .withValues(
+                                  color: cs.primary.withValues(
                                     alpha: 0.3,
                                   ),
                                   blurRadius: 24,
-                                  offset:
-                                      const Offset(0, 8),
+                                  offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
@@ -161,8 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         // --- Title ---
                         Text(
                           'CampusConnect',
-                          style: tt.headlineMedium
-                              ?.copyWith(
+                          style: tt.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
                           ),
@@ -184,13 +175,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         // --- Email field ---
                         TextFormField(
                           controller: _email,
-                          keyboardType:
-                              TextInputType.emailAddress,
+                          keyboardType: TextInputType.emailAddress,
                           autofillHints: const [
                             AutofillHints.email,
                           ],
-                          textInputAction:
-                              TextInputAction.next,
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                             labelText: 'Campus email',
                             hintText: 'you@campus.edu',
@@ -201,8 +190,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
                           ),
                           validator: (v) {
-                            final value =
-                                v?.trim() ?? '';
+                            final value = v?.trim() ?? '';
                             if (value.isEmpty) {
                               return 'Enter your email';
                             }
@@ -223,8 +211,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           autofillHints: const [
                             AutofillHints.password,
                           ],
-                          textInputAction:
-                              TextInputAction.done,
+                          textInputAction: TextInputAction.done,
                           decoration: InputDecoration(
                             labelText: 'Password',
                             prefixIcon: Icon(
@@ -233,38 +220,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               size: 20,
                             ),
                             suffixIcon: IconButton(
+                              tooltip: _obscurePassword
+                                  ? 'Show password'
+                                  : 'Hide password',
                               icon: Icon(
                                 _obscurePassword
-                                    ? Icons
-                                        .visibility_outlined
-                                    : Icons
-                                        .visibility_off_outlined,
-                                color:
-                                    cs.onSurfaceVariant,
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: cs.onSurfaceVariant,
                                 size: 20,
                               ),
                               onPressed: () => setState(
-                                () => _obscurePassword =
-                                    !_obscurePassword,
+                                () => _obscurePassword = !_obscurePassword,
                               ),
                             ),
                           ),
-                          validator: (v) =>
-                              (v == null || v.isEmpty)
-                                  ? 'Enter your password'
-                                  : null,
+                          validator: (v) => (v == null || v.isEmpty)
+                              ? 'Enter your password'
+                              : null,
                           onFieldSubmitted: (_) =>
-                              _submitting
-                                  ? null
-                                  : _submit(),
+                              _submitting ? null : _submit(),
                         ),
                         // --- Forgot password ---
                         Align(
-                          alignment:
-                              Alignment.centerRight,
+                          alignment: Alignment.centerRight,
                           child: Padding(
-                            padding:
-                                const EdgeInsets.only(
+                            padding: const EdgeInsets.only(
                               top: AppSpacing.sm,
                             ),
                             child: TextButton(
@@ -273,26 +254,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   : () => context.go(
                                       '/forgot-password',
                                     ),
-                              style:
-                                  TextButton.styleFrom(
-                                padding:
-                                    const EdgeInsets
-                                        .symmetric(
-                                  horizontal:
-                                      AppSpacing.sm,
-                                  vertical:
-                                      AppSpacing.xs,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                  vertical: AppSpacing.xs,
                                 ),
-                                minimumSize:
-                                    const Size(48, 36),
+                                minimumSize: const Size(48, 36),
                               ),
                               child: Text(
                                 'Forgot password?',
-                                style: tt.bodySmall
-                                    ?.copyWith(
+                                style: tt.bodySmall?.copyWith(
                                   color: cs.primary,
-                                  fontWeight:
-                                      FontWeight.w600,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -305,15 +278,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         SizedBox(
                           height: 52,
                           child: FilledButton(
-                            onPressed: _submitting
-                                ? null
-                                : _submit,
-                            style:
-                                FilledButton.styleFrom(
-                              shape:
-                                  RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(
+                            onPressed: _submitting ? null : _submit,
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
                               ),
@@ -321,22 +289,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             child: _submitting
                                 ? const SizedBox.square(
                                     dimension: 22,
-                                    child:
-                                        CircularProgressIndicator(
+                                    child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
-                                      color:
-                                          Colors.white,
+                                      color: Colors.white,
                                     ),
                                   )
                                 : Text(
                                     'Sign in',
-                                    style: tt.labelLarge
-                                        ?.copyWith(
-                                      color:
-                                          cs.onPrimary,
-                                      fontWeight:
-                                          FontWeight
-                                              .w700,
+                                    style: tt.labelLarge?.copyWith(
+                                      color: cs.onPrimary,
+                                      fontWeight: FontWeight.w700,
                                       fontSize: 16,
                                     ),
                                   ),
@@ -347,29 +309,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         // --- Register link ---
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'New here? ',
-                              style: tt.bodyMedium
-                                  ?.copyWith(
-                                color:
-                                    cs.onSurfaceVariant,
+                              style: tt.bodyMedium?.copyWith(
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
-                            GestureDetector(
-                              onTap: _submitting
+                            TextButton(
+                              onPressed: _submitting
                                   ? null
-                                  : () => context
-                                      .go('/register'),
+                                  : () => context.go('/register'),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.xs,
+                                ),
+                                minimumSize: const Size(48, 48),
+                              ),
                               child: Text(
                                 'Create an account',
-                                style: tt.bodyMedium
-                                    ?.copyWith(
+                                style: tt.bodyMedium?.copyWith(
                                   color: cs.primary,
-                                  fontWeight:
-                                      FontWeight.w700,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),

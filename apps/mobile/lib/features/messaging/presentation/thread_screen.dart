@@ -1,14 +1,17 @@
 import 'dart:async';
 
-import 'package:campusconnect/core/theme/app_theme.dart';
+import 'package:campusconnect/design_system/components/composer.dart';
+import 'package:campusconnect/design_system/components/message_bubble.dart';
+import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
+import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/messaging/presentation/thread_controller.dart';
-import 'package:campusconnect/shared/widgets/chat_ui.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// One conversation thread (M5, spec §6.4): reversed message list,
-/// composer with optimistic send + rollback, smart polling (§7.4).
+/// One conversation thread (spec §12.4): reversed message list with
+/// spec §10.5 bubbles, optimistic send + input restore on rollback,
+/// smart polling (§7.4).
 class ThreadScreen extends ConsumerStatefulWidget {
   const ThreadScreen({required this.conversationId, this.title, super.key});
 
@@ -17,6 +20,13 @@ class ThreadScreen extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ThreadScreen> createState() => _ThreadScreenState();
+}
+
+/// `3:07 PM`-style label without pulling in intl.
+String _timeLabel(DateTime t) {
+  final hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
+  final minute = t.minute.toString().padLeft(2, '0');
+  return '$hour:$minute ${t.hour < 12 ? 'AM' : 'PM'}';
 }
 
 class _ThreadScreenState extends ConsumerState<ThreadScreen> {
@@ -41,18 +51,15 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
     super.dispose();
   }
 
-  Future<void> _send() async {
-    final body = _composer.text.trim();
-    if (body.isEmpty) return;
+  Future<void> _send(String body) async {
     final myId = ref.read(authControllerProvider).user?.id ?? '';
-    _composer.clear();
     final ok = await ref
         .read(threadControllerProvider(widget.conversationId).notifier)
         .send(body, myId);
     if (!ok && mounted) {
-      _composer.text = body; // restore input on rollback (§6.3)
+      _composer.text = body; // preserve input on rollback (spec §6.3)
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Message failed to send. Try again.')),
+        const SnackBar(content: Text("That didn't send. Try again.")),
       );
     }
   }
@@ -61,6 +68,7 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(threadControllerProvider(widget.conversationId));
     final myId = ref.watch(authControllerProvider).user?.id;
+    final tokens = context.tokens;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.title ?? 'Conversation')),
@@ -69,23 +77,40 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
           children: [
             Expanded(
               child: state.loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? ListView(
+                      children: const [
+                        ListRowSkeleton(),
+                        ListRowSkeleton(),
+                        ListRowSkeleton(),
+                      ],
+                    )
                   : ListView.builder(
                       reverse: true,
-                      padding: const EdgeInsets.all(AppSpacing.md),
+                      padding: EdgeInsets.all(tokens.space4),
                       itemCount: state.messages.length,
                       itemBuilder: (context, i) {
                         final msg =
                             state.messages[state.messages.length - 1 - i];
-                        return ChatBubble(
-                          body: msg.body,
-                          isMine: msg.senderId == myId,
-                          pending: msg.id.startsWith('local-'),
+                        final pending = msg.id.startsWith('local-');
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: tokens.space2),
+                          child: MessageBubble(
+                            body: msg.body,
+                            isMine: msg.senderId == myId,
+                            status: pending
+                                ? MessageStatus.sending
+                                : MessageStatus.sent,
+                            showTimestamp: pending || i == 0,
+                            timestamp: _timeLabel(msg.createdAt.toLocal()),
+                          ),
                         );
                       },
                     ),
             ),
-            ChatComposer(controller: _composer, onSend: _send),
+            Composer(
+              controller: _composer,
+              onSend: (body) => _send(body).ignore(),
+            ),
           ],
         ),
       ),

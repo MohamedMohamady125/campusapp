@@ -15,12 +15,10 @@ class EditListingScreen extends ConsumerStatefulWidget {
   final String listingId;
 
   @override
-  ConsumerState<EditListingScreen> createState() =>
-      _EditListingScreenState();
+  ConsumerState<EditListingScreen> createState() => _EditListingScreenState();
 }
 
-class _EditListingScreenState
-    extends ConsumerState<EditListingScreen> {
+class _EditListingScreenState extends ConsumerState<EditListingScreen> {
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _description = TextEditingController();
@@ -66,8 +64,7 @@ class _EditListingScreenState
   }
 
   int? _parsePriceCents(String raw) {
-    final value =
-        double.tryParse(raw.trim().replaceFirst(r'$', ''));
+    final value = double.tryParse(raw.trim().replaceFirst(r'$', ''));
     if (value == null || value < 0) return null;
     return (value * 100).round();
   }
@@ -93,9 +90,7 @@ class _EditListingScreenState
       ref.invalidate(
         listingDetailProvider(widget.listingId),
       );
-      await ref
-          .read(browseControllerProvider.notifier)
-          .refresh();
+      await ref.read(browseControllerProvider.notifier).refresh();
       if (mounted) context.pop();
     } on Object catch (e) {
       if (!mounted) return;
@@ -116,8 +111,7 @@ class _EditListingScreenState
     return Scaffold(
       appBar: AppBar(title: const Text('Edit listing')),
       body: detail.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text('Failed to load: ${apiErrorMessage(e)}'),
         ),
@@ -128,39 +122,33 @@ class _EditListingScreenState
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Form(
                 key: _formKey,
-                autovalidateMode:
-                    AutovalidateMode.onUserInteraction,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     TextFormField(
                       controller: _title,
-                      textCapitalization:
-                          TextCapitalization.sentences,
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: const InputDecoration(
                         labelText: 'Title',
                       ),
-                      validator: (v) =>
-                          (v == null || v.trim().length < 3)
-                              ? 'Give it a short title'
-                              : null,
+                      validator: (v) => (v == null || v.trim().length < 3)
+                          ? 'Give it a short title'
+                          : null,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _price,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(
+                      keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       decoration: const InputDecoration(
                         labelText: 'Price',
                         prefixText: r'$ ',
                       ),
-                      validator: (v) =>
-                          _parsePriceCents(v ?? '') == null
-                              ? 'Enter a valid price'
-                              : null,
+                      validator: (v) => _parsePriceCents(v ?? '') == null
+                          ? 'Enter a valid price'
+                          : null,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     DropdownButtonFormField<ListingCategory>(
@@ -169,8 +157,7 @@ class _EditListingScreenState
                         labelText: 'Category',
                       ),
                       items: [
-                        for (final e
-                            in _categoryLabels.entries)
+                        for (final e in _categoryLabels.entries)
                           DropdownMenuItem(
                             value: e.key,
                             child: Text(e.value),
@@ -187,8 +174,7 @@ class _EditListingScreenState
                         labelText: 'Condition',
                       ),
                       items: [
-                        for (final e
-                            in _conditionLabels.entries)
+                        for (final e in _conditionLabels.entries)
                           DropdownMenuItem(
                             value: e.key,
                             child: Text(e.value),
@@ -202,25 +188,21 @@ class _EditListingScreenState
                     TextFormField(
                       controller: _description,
                       maxLines: 4,
-                      textCapitalization:
-                          TextCapitalization.sentences,
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: const InputDecoration(
                         labelText: 'Description',
                       ),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty)
-                              ? 'Add a short description'
-                              : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Add a short description'
+                          : null,
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     FilledButton(
-                      onPressed:
-                          _submitting ? null : _submit,
+                      onPressed: _submitting ? null : _submit,
                       child: _submitting
                           ? const SizedBox.square(
                               dimension: 20,
-                              child:
-                                  CircularProgressIndicator(
+                              child: CircularProgressIndicator(
                                 strokeWidth: 2,
                               ),
                             )

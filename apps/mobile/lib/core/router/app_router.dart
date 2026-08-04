@@ -5,8 +5,8 @@ import 'package:campusconnect/features/auth/presentation/verify_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chat_room_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chats_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_screen.dart';
-import 'package:campusconnect/features/marketplace/presentation/listing_detail_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/edit_listing_screen.dart';
+import 'package:campusconnect/features/marketplace/presentation/listing_detail_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/my_listings_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/sell_screen.dart';
 import 'package:campusconnect/features/messaging/presentation/thread_screen.dart';
@@ -70,10 +70,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                     routes: [
                       GoRoute(
                         path: 'edit',
-                        builder: (_, state) =>
-                            EditListingScreen(
-                          listingId:
-                              state.pathParameters['id']!,
+                        builder: (_, state) => EditListingScreen(
+                          listingId: state.pathParameters['id']!,
                         ),
                       ),
                     ],
@@ -122,8 +120,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'my-listings',
-                    builder: (_, _) =>
-                        const MyListingsScreen(),
+                    builder: (_, _) => const MyListingsScreen(),
                   ),
                 ],
               ),

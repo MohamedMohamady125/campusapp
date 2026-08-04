@@ -38,19 +38,17 @@ class BrowseState {
     List<ListingResponse>? items,
     String? Function()? nextCursor,
     String? Function()? error,
-  }) =>
-      BrowseState(
-        items: items ?? this.items,
-        nextCursor:
-            nextCursor != null ? nextCursor() : this.nextCursor,
-        loading: loading ?? this.loading,
-        loadingMore: loadingMore ?? this.loadingMore,
-        error: error != null ? error() : this.error,
-        query: query,
-        category: category,
-        minPrice: minPrice,
-        maxPrice: maxPrice,
-      );
+  }) => BrowseState(
+    items: items ?? this.items,
+    nextCursor: nextCursor != null ? nextCursor() : this.nextCursor,
+    loading: loading ?? this.loading,
+    loadingMore: loadingMore ?? this.loadingMore,
+    error: error != null ? error() : this.error,
+    query: query,
+    category: category,
+    minPrice: minPrice,
+    maxPrice: maxPrice,
+  );
 }
 
 class BrowseController extends Notifier<BrowseState> {
@@ -71,8 +69,7 @@ class BrowseController extends Notifier<BrowseState> {
     );
   }
 
-  ListingsRepository get _repo =>
-      ref.read(listingsRepositoryProvider);
+  ListingsRepository get _repo => ref.read(listingsRepositoryProvider);
 
   Future<void> refresh() async {
     state = state._copyWith(
@@ -95,16 +92,14 @@ class BrowseController extends Notifier<BrowseState> {
       debugPrint('BrowseController.refresh ERROR: $e');
       state = state._copyWith(
         loading: false,
-        error: () => e.toString(),
+        error: e.toString,
       );
     }
   }
 
   Future<void> loadMore() async {
     final cursor = state.nextCursor;
-    if (cursor == null ||
-        state.loadingMore ||
-        state.loading) {
+    if (cursor == null || state.loadingMore || state.loading) {
       return;
     }
     state = state._copyWith(loadingMore: true);

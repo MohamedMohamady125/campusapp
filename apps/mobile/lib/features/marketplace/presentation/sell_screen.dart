@@ -15,8 +15,7 @@ class SellScreen extends ConsumerStatefulWidget {
   const SellScreen({super.key});
 
   @override
-  ConsumerState<SellScreen> createState() =>
-      _SellScreenState();
+  ConsumerState<SellScreen> createState() => _SellScreenState();
 }
 
 class _SellScreenState extends ConsumerState<SellScreen> {
@@ -24,10 +23,8 @@ class _SellScreenState extends ConsumerState<SellScreen> {
   final _title = TextEditingController();
   final _description = TextEditingController();
   final _price = TextEditingController();
-  ListingCategory _category =
-      ListingCategory.textbooks;
-  ListingCondition _condition =
-      ListingCondition.good;
+  ListingCategory _category = ListingCategory.textbooks;
+  ListingCondition _condition = ListingCondition.good;
   bool _submitting = false;
   final List<String> _photoLabels = [];
 
@@ -42,8 +39,7 @@ class _SellScreenState extends ConsumerState<SellScreen> {
     return 0;
   }
 
-  static const _categoryLabels =
-      <ListingCategory, String>{
+  static const _categoryLabels = <ListingCategory, String>{
     ListingCategory.textbooks: 'Textbooks',
     ListingCategory.furniture: 'Furniture',
     ListingCategory.electronics: 'Electronics',
@@ -52,8 +48,7 @@ class _SellScreenState extends ConsumerState<SellScreen> {
     ListingCategory.other: 'Other',
   };
 
-  static const _conditionLabels =
-      <ListingCondition, String>{
+  static const _conditionLabels = <ListingCondition, String>{
     ListingCondition.new_: 'New',
     ListingCondition.likeNew: 'Like new',
     ListingCondition.good: 'Good',
@@ -86,20 +81,17 @@ class _SellScreenState extends ConsumerState<SellScreen> {
           .createListing(
             title: _title.text.trim(),
             description: _description.text.trim(),
-            priceCents:
-                _parsePriceCents(_price.text)!,
+            priceCents: _parsePriceCents(_price.text)!,
             category: _category,
             condition: _condition,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Listing posted!'),
+          content: Text('Listing posted.'),
         ),
       );
-      await ref
-          .read(browseControllerProvider.notifier)
-          .refresh();
+      await ref.read(browseControllerProvider.notifier).refresh();
       if (mounted) context.go('/market');
     } on Object catch (e) {
       if (!mounted) return;
@@ -140,17 +132,13 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                 ),
                 child: Form(
                   key: _formKey,
-                  autovalidateMode:
-                      AutovalidateMode
-                          .onUserInteraction,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Section: Photos
                       _SectionLabel(
-                        icon: Icons
-                            .camera_alt_outlined,
+                        icon: Icons.camera_alt_outlined,
                         label: 'Photos',
                         tt: tt,
                         scheme: scheme,
@@ -190,24 +178,18 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                       ),
                       TextFormField(
                         controller: _title,
-                        textCapitalization:
-                            TextCapitalization
-                                .sentences,
-                        decoration:
-                            const InputDecoration(
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
                           labelText: 'Title',
-                          hintText: 'e.g. Calculus:'
+                          hintText:
+                              'e.g. Calculus:'
                               ' Early Transcendentals',
                         ),
-                        validator: (v) =>
-                            (v == null ||
-                                    v.trim().length <
-                                        3)
-                                ? 'Give it a short'
-                                    ' title'
-                                : null,
-                        onChanged: (_) =>
-                            setState(() {}),
+                        validator: (v) => (v == null || v.trim().length < 3)
+                            ? 'Give it a short'
+                                  ' title'
+                            : null,
+                        onChanged: (_) => setState(() {}),
                       ),
                       const SizedBox(
                         height: AppSpacing.md,
@@ -218,55 +200,42 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                             child: TextFormField(
                               controller: _price,
                               keyboardType:
-                                  const TextInputType
-                                      .numberWithOptions(
-                                decimal: true,
-                              ),
-                              decoration:
-                                  const InputDecoration(
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: const InputDecoration(
                                 labelText: 'Price',
                                 prefixText: r'$ ',
                               ),
                               validator: (v) =>
                                   _parsePriceCents(
-                                            v ?? '',
-                                          ) ==
-                                          null
-                                      ? 'Enter a'
-                                          ' price'
-                                      : null,
-                              onChanged: (_) =>
-                                  setState(() {}),
+                                        v ?? '',
+                                      ) ==
+                                      null
+                                  ? 'Enter a'
+                                        ' price'
+                                  : null,
+                              onChanged: (_) => setState(() {}),
                             ),
                           ),
                           const SizedBox(
                             width: AppSpacing.md,
                           ),
                           Expanded(
-                            child:
-                                DropdownButtonFormField<
-                                    ListingCondition>(
-                              initialValue:
-                                  _condition,
-                              decoration:
-                                  const InputDecoration(
-                                labelText:
-                                    'Condition',
+                            child: DropdownButtonFormField<ListingCondition>(
+                              initialValue: _condition,
+                              decoration: const InputDecoration(
+                                labelText: 'Condition',
                               ),
                               items: [
-                                for (final e
-                                    in _conditionLabels
-                                        .entries)
+                                for (final e in _conditionLabels.entries)
                                   DropdownMenuItem(
                                     value: e.key,
-                                    child:
-                                        Text(e.value),
+                                    child: Text(e.value),
                                   ),
                               ],
-                              onChanged: (v) =>
-                                  setState(
-                                () => _condition =
-                                    v ?? _condition,
+                              onChanged: (v) => setState(
+                                () => _condition = v ?? _condition,
                               ),
                             ),
                           ),
@@ -275,25 +244,20 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                       const SizedBox(
                         height: AppSpacing.md,
                       ),
-                      DropdownButtonFormField<
-                          ListingCategory>(
+                      DropdownButtonFormField<ListingCategory>(
                         initialValue: _category,
-                        decoration:
-                            const InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Category',
                         ),
                         items: [
-                          for (final e
-                              in _categoryLabels
-                                  .entries)
+                          for (final e in _categoryLabels.entries)
                             DropdownMenuItem(
                               value: e.key,
                               child: Text(e.value),
                             ),
                         ],
                         onChanged: (v) => setState(
-                          () => _category =
-                              v ?? _category,
+                          () => _category = v ?? _category,
                         ),
                       ),
                       const SizedBox(
@@ -302,8 +266,7 @@ class _SellScreenState extends ConsumerState<SellScreen> {
 
                       // Section: Description
                       _SectionLabel(
-                        icon: Icons
-                            .description_outlined,
+                        icon: Icons.description_outlined,
                         label: 'Description',
                         tt: tt,
                         scheme: scheme,
@@ -314,22 +277,17 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                       TextFormField(
                         controller: _description,
                         maxLines: 4,
-                        textCapitalization:
-                            TextCapitalization
-                                .sentences,
-                        decoration:
-                            const InputDecoration(
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
                           labelText: 'Description',
                           hintText:
                               'Condition details,'
                               ' pickup spot...',
                           alignLabelWithHint: true,
                         ),
-                        validator: (v) => (v ==
-                                    null ||
-                                v.trim().isEmpty)
+                        validator: (v) => (v == null || v.trim().isEmpty)
                             ? 'Add a short'
-                                ' description'
+                                  ' description'
                             : null,
                       ),
                       const SizedBox(
@@ -340,56 +298,36 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                       SizedBox(
                         height: 52,
                         child: FilledButton(
-                          onPressed: _submitting
-                              ? null
-                              : _submit,
-                          style:
-                              FilledButton.styleFrom(
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(
+                          onPressed: _submitting ? null : _submit,
+                          style: FilledButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
                                 AppRadius.lg,
                               ),
                             ),
-                            textStyle:
-                                tt.titleSmall
-                                    ?.copyWith(
-                              fontWeight:
-                                  FontWeight.w700,
+                            textStyle: tt.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           child: _submitting
-                              ? const SizedBox
-                                  .square(
+                              ? const SizedBox.square(
                                   dimension: 22,
-                                  child:
-                                      CircularProgressIndicator(
+                                  child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color:
-                                        Colors.white,
+                                    color: Colors.white,
                                   ),
                                 )
-                              : Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment
-                                          .center,
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(
-                                      Icons
-                                          .rocket_launch_rounded,
+                                    Icon(
+                                      Icons.rocket_launch_rounded,
                                       size: 20,
                                     ),
-                                    const SizedBox(
-                                      width:
-                                          AppSpacing
-                                              .sm,
+                                    SizedBox(
+                                      width: AppSpacing.sm,
                                     ),
-                                    Text(
-                                      'Post Listing'
-                                          .toUpperCase(),
-                                    ),
+                                    Text('Post listing'),
                                   ],
                                 ),
                         ),
@@ -454,10 +392,8 @@ class _StepIndicator extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: i <= currentStep
                         ? scheme.primary
-                        : scheme.outlineVariant
-                            .withAlpha(80),
-                    borderRadius:
-                        BorderRadius.circular(1),
+                        : scheme.outlineVariant.withAlpha(80),
+                    borderRadius: BorderRadius.circular(1),
                   ),
                 ),
               ),
@@ -504,13 +440,10 @@ class _StepDot extends StatelessWidget {
           height: isCurrent ? 28 : 24,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isActive
-                ? scheme.primary
-                : scheme.surfaceContainerHighest,
+            color: isActive ? scheme.primary : scheme.surfaceContainerHighest,
             border: isCurrent
                 ? Border.all(
-                    color: scheme.primary
-                        .withAlpha(80),
+                    color: scheme.primary.withAlpha(80),
                     width: 3,
                   )
                 : null,
@@ -519,9 +452,7 @@ class _StepDot extends StatelessWidget {
             child: Text(
               '${index + 1}',
               style: tt.labelSmall?.copyWith(
-                color: isActive
-                    ? scheme.onPrimary
-                    : scheme.onSurfaceVariant,
+                color: isActive ? scheme.onPrimary : scheme.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
                 fontSize: 11,
               ),
@@ -532,12 +463,8 @@ class _StepDot extends StatelessWidget {
         Text(
           label,
           style: tt.labelSmall?.copyWith(
-            color: isActive
-                ? scheme.primary
-                : scheme.onSurfaceVariant,
-            fontWeight: isCurrent
-                ? FontWeight.w700
-                : FontWeight.w500,
+            color: isActive ? scheme.primary : scheme.onSurfaceVariant,
+            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
             fontSize: 10,
           ),
         ),
@@ -608,23 +535,19 @@ class _PhotoUploadArea extends StatelessWidget {
           child: Container(
             height: 160,
             decoration: BoxDecoration(
-              color:
-                  scheme.primary.withAlpha(12),
-              borderRadius:
-                  BorderRadius.circular(
+              color: scheme.primary.withAlpha(12),
+              borderRadius: BorderRadius.circular(
                 AppRadius.lg,
               ),
             ),
             child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: scheme.primary
-                        .withAlpha(25),
+                    color: scheme.primary.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -650,8 +573,7 @@ class _PhotoUploadArea extends StatelessWidget {
                   'Up to 5 photos. '
                   'Tap to get started.',
                   style: tt.bodySmall?.copyWith(
-                    color:
-                        scheme.onSurfaceVariant,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -670,9 +592,7 @@ class _PhotoUploadArea extends StatelessWidget {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              for (var i = 0;
-                  i < photos.length;
-                  i++)
+              for (var i = 0; i < photos.length; i++)
                 Padding(
                   padding: const EdgeInsets.only(
                     right: AppSpacing.sm,
@@ -683,36 +603,26 @@ class _PhotoUploadArea extends StatelessWidget {
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: scheme
-                              .surfaceContainerHighest,
-                          borderRadius:
-                              BorderRadius.circular(
+                          color: scheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(
                             AppRadius.md,
                           ),
                         ),
                         child: Column(
-                          mainAxisAlignment:
-                              MainAxisAlignment
-                                  .center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons
-                                  .image_rounded,
-                              color: scheme
-                                  .onSurfaceVariant,
+                              Icons.image_rounded,
+                              color: scheme.onSurfaceVariant,
                               size: 28,
                             ),
                             const SizedBox(
-                              height:
-                                  AppSpacing.xs,
+                              height: AppSpacing.xs,
                             ),
                             Text(
                               photos[i],
-                              style: tt
-                                  .labelSmall
-                                  ?.copyWith(
-                                color: scheme
-                                    .onSurfaceVariant,
+                              style: tt.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -722,22 +632,16 @@ class _PhotoUploadArea extends StatelessWidget {
                         top: 4,
                         right: 4,
                         child: GestureDetector(
-                          onTap: () =>
-                              onRemove(i),
+                          onTap: () => onRemove(i),
                           child: Container(
                             width: 24,
                             height: 24,
-                            decoration:
-                                BoxDecoration(
-                              color:
-                                  scheme.error,
-                              shape:
-                                  BoxShape.circle,
+                            decoration: BoxDecoration(
+                              color: scheme.error,
+                              shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors
-                                      .black
-                                      .withAlpha(
+                                  color: Colors.black.withAlpha(
                                     40,
                                   ),
                                   blurRadius: 4,
@@ -747,8 +651,7 @@ class _PhotoUploadArea extends StatelessWidget {
                             child: Icon(
                               Icons.close,
                               size: 14,
-                              color:
-                                  scheme.onError,
+                              color: scheme.onError,
                             ),
                           ),
                         ),
@@ -761,45 +664,34 @@ class _PhotoUploadArea extends StatelessWidget {
                   onTap: onAdd,
                   child: CustomPaint(
                     painter: _DashedBorderPainter(
-                      color: scheme.primary
-                          .withAlpha(100),
+                      color: scheme.primary.withAlpha(100),
                       radius: AppRadius.md,
                     ),
                     child: Container(
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: scheme.primary
-                            .withAlpha(8),
-                        borderRadius:
-                            BorderRadius.circular(
+                        color: scheme.primary.withAlpha(8),
+                        borderRadius: BorderRadius.circular(
                           AppRadius.md,
                         ),
                       ),
                       child: Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment
-                                .center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons
-                                .add_photo_alternate_outlined,
-                            color:
-                                scheme.primary,
+                            Icons.add_photo_alternate_outlined,
+                            color: scheme.primary,
                             size: 24,
                           ),
                           const SizedBox(
-                            height:
-                                AppSpacing.xs,
+                            height: AppSpacing.xs,
                           ),
                           Text(
                             'Add more',
-                            style: tt.labelSmall
-                                ?.copyWith(
-                              color:
-                                  scheme.primary,
-                              fontWeight:
-                                  FontWeight.w600,
+                            style: tt.labelSmall?.copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -870,6 +762,5 @@ class _DashedBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(
     _DashedBorderPainter old,
-  ) =>
-      old.color != color || old.radius != radius;
+  ) => old.color != color || old.radius != radius;
 }
