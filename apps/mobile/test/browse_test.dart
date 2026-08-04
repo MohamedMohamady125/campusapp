@@ -43,6 +43,8 @@ class _FakeListingsRepository implements ListingsRepository {
   Future<ListingsPage> fetchPage({
     String? query,
     ListingCategory? category,
+    int? minPrice,
+    int? maxPrice,
     String? cursor,
   }) async {
     lastQuery = query;
@@ -64,6 +66,26 @@ class _FakeListingsRepository implements ListingsRepository {
     required ListingCategory category,
     required ListingCondition condition,
   }) async => throw UnimplementedError();
+
+  @override
+  Future<ListingResponse> markSold(String id) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> deleteListing(String id) async {}
+
+  @override
+  Future<ListingResponse> updateListing({
+    required String id,
+    String? title,
+    String? description,
+    int? priceCents,
+    ListingCategory? category,
+    ListingCondition? condition,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<List<ListingResponse>> fetchMyListings(String userId) async => [];
 }
 
 Widget _app(_FakeListingsRepository repo) => ProviderScope(
@@ -82,7 +104,7 @@ void main() {
       ListingsPage(
         items: [
           _listing('l1', 'Calc Textbook', 2500),
-          _listing('l2', 'Desk Lamp', 900),
+          _listing('l2', 'Desk Lamp', 950),
         ],
       ),
     ]);
@@ -90,9 +112,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Calc Textbook'), findsOneWidget);
-    expect(find.text(r'$25.00'), findsOneWidget);
+    expect(find.text(r'$25'), findsOneWidget); // whole dollars, no .00
     expect(find.text('Desk Lamp'), findsOneWidget);
-    expect(find.text(r'$9.00'), findsOneWidget);
+    expect(find.text(r'$9.50'), findsOneWidget);
   });
 
   testWidgets('empty feed shows actionable empty state', (tester) async {
@@ -100,8 +122,9 @@ void main() {
     await tester.pumpWidget(_app(repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('No listings yet'), findsOneWidget);
-    expect(find.text('Sell something'), findsOneWidget);
+    // Spec §13.2 copy — never a dead end.
+    expect(find.text('Nothing listed yet'), findsOneWidget);
+    expect(find.text('Post a listing'), findsWidgets);
   });
 
   testWidgets('category chip filters trigger a refetch', (tester) async {
@@ -130,9 +153,10 @@ void main() {
 
     // Seller card sits below the fold in the lazy ListView — scroll to it.
     await tester.scrollUntilVisible(find.text('Sara Seller'), 200);
-    expect(find.text('Sara Seller'), findsOneWidget);
-    expect(find.text('4.6 (12)'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('Message seller'), 200);
+    expect(find.text('Sara Seller'), findsWidgets);
+    // Rating always shows count, truncated 1-decimal (spec §4.2).
+    expect(find.text('4.6'), findsWidgets);
+    expect(find.text(' · 12 ratings'), findsOneWidget);
     expect(find.text('Message seller'), findsOneWidget);
   });
 
@@ -143,7 +167,7 @@ void main() {
     await tester.pumpWidget(_app(repo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Sell something'));
+    await tester.tap(find.text('Post a listing').first);
     await tester.pumpAndSettle();
     expect(find.text('Post listing'), findsOneWidget);
 
@@ -151,12 +175,15 @@ void main() {
     await tester.enterText(fields.at(0), 'Desk Lamp');
     await tester.enterText(fields.at(1), '9.50');
     await tester.enterText(fields.at(2), 'Warm light, barely used.');
+    // The submit button sits below the fold on the test surface.
+    await tester.ensureVisible(find.text('Post listing'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Post listing'));
     await tester.pumpAndSettle();
 
     expect(repo.createdTitle, 'Desk Lamp');
     expect(repo.createdCents, 950);
-    expect(find.text('Marketplace'), findsOneWidget); // back on browse
+    expect(find.text('Market'), findsWidgets); // back on browse
   });
 
   testWidgets('browse meets a11y tap-target guidelines', (tester) async {

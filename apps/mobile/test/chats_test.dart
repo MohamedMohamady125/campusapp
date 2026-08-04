@@ -115,6 +115,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'Hey everyone!');
+    await tester.pump(); // rebuild enables the send button
     await tester.tap(find.byTooltip('Send'));
     await tester.pump();
 
@@ -132,10 +133,11 @@ void main() {
     chats.failSend = true;
 
     await tester.enterText(find.byType(TextField), 'Anyone here?');
+    await tester.pump(); // rebuild enables the send button
     await tester.tap(find.byTooltip('Send'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Message failed to send. Try again.'), findsOneWidget);
+    expect(find.text("That didn't send. Try again."), findsOneWidget);
     final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.controller!.text, 'Anyone here?');
     expect(chats.messages, isEmpty);

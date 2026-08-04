@@ -47,7 +47,9 @@ void main() {
     await tester.pumpWidget(_app(anonState));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('New here? Create an account'));
+    await tester.ensureVisible(find.text('Create an account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create an account'));
     await tester.pumpAndSettle();
     expect(find.text('Create account'), findsWidgets);
 
@@ -66,7 +68,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Marketplace'), findsOneWidget);
+    expect(find.text('Search listings'), findsOneWidget);
   });
 
   testWidgets('sign out returns to login', (tester) async {
@@ -75,6 +77,7 @@ void main() {
 
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Sign out'), 200);
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
 

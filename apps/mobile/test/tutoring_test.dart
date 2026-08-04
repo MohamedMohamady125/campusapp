@@ -106,8 +106,10 @@ void main() {
     expect(tutoring.lastRankedCourse, 'CS250');
     expect(find.text('Amr Tutor'), findsOneWidget);
     expect(find.text('Bella Tutor'), findsOneWidget);
-    expect(find.text('4.8 (20)'), findsNWidgets(2));
-    expect(find.text('A · Fall 2025'), findsNWidgets(2));
+    // ReputationChip renders value and count separately (spec §4.2).
+    expect(find.text('4.8'), findsNWidgets(2));
+    expect(find.text(' · 20'), findsNWidgets(2));
+    expect(find.text('CS250 · A · Fall 2025'), findsNWidgets(2));
   });
 
   testWidgets('J2: message tutor opens a conversation thread', (
@@ -119,7 +121,7 @@ void main() {
     await tester.tap(find.text('CS250').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Message Amr'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Message').first);
     await tester.pumpAndSettle();
 
     // Landed on the thread screen for the created conversation.
@@ -131,7 +133,7 @@ void main() {
     await openTutors(tester);
     await tester.enterText(find.byType(TextField), 'C');
     await tester.pumpAndSettle();
-    expect(find.text('Search by course code'), findsOneWidget);
+    expect(find.textContaining('Type a course code'), findsOneWidget);
     expect(tutoring.lastCourseQuery, isNull);
   });
 

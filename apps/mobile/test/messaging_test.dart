@@ -50,6 +50,7 @@ void main() {
     await _openThread(tester);
 
     await tester.enterText(find.byType(TextField), 'Yes, still here!');
+    await tester.pump(); // rebuild enables the send button
     await tester.tap(find.byTooltip('Send'));
     await tester.pump(); // one frame — before the fake network resolves
 
@@ -69,11 +70,12 @@ void main() {
     await _openThread(tester);
 
     await tester.enterText(find.byType(TextField), 'Hello?');
+    await tester.pump(); // rebuild enables the send button
     await tester.tap(find.byTooltip('Send'));
     await tester.pumpAndSettle();
 
     // Bubble rolled back; text restored in the composer for retry (§6.3).
-    expect(find.text('Message failed to send. Try again.'), findsOneWidget);
+    expect(find.text("That didn't send. Try again."), findsOneWidget);
     final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.controller!.text, 'Hello?');
     expect(repo.messages, isEmpty);

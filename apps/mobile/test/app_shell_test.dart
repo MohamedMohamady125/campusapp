@@ -28,11 +28,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
+    // 'Market' also appears as the browse screen header (spec §12.2).
     for (final label in ['Market', 'Tutors', 'Chats', 'Profile']) {
-      expect(find.text(label), findsOneWidget);
+      expect(find.text(label), findsWidgets);
     }
     // Marketplace is the initial branch (J1 first).
-    expect(find.text('Marketplace'), findsOneWidget);
+    expect(find.text('Search listings'), findsOneWidget);
   });
 
   testWidgets('tab taps switch branches', (tester) async {
@@ -41,7 +42,8 @@ void main() {
 
     await tester.tap(find.text('Tutors'));
     await tester.pumpAndSettle();
-    expect(find.text('Find a tutor'), findsOneWidget);
+    // App bar title + the guidance empty-state title (spec §12.5).
+    expect(find.text('Find a tutor'), findsWidgets);
 
     await tester.tap(find.text('Chats'));
     await tester.pumpAndSettle();
@@ -51,6 +53,8 @@ void main() {
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
     expect(find.text('Test Student'), findsOneWidget);
+    // Sign out sits below the fold on the small test surface.
+    await tester.scrollUntilVisible(find.text('Sign out'), 200);
     expect(find.text('Sign out'), findsOneWidget);
   });
 
