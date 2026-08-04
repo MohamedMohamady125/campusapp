@@ -4,8 +4,8 @@ import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
 /// Avatar sizes (spec §10.1).
 enum AvatarSize {
-  xs(24),
-  sm(32),
+  xs(18),
+  sm(24),
   md(40),
   lg(56),
   xl(96);

@@ -62,26 +62,35 @@ class ReputationChip extends StatelessWidget {
     }
 
     final value = formatRating(rating!);
-    final countLabel = variant == ReputationVariant.compact
-        ? '$ratingCount'
-        : '$ratingCount ratings';
+    final compact = variant == ReputationVariant.compact;
+    final countLabel = compact ? '$ratingCount' : '$ratingCount ratings';
 
+    // Per-variant type (whole.md §4.2): compact = star 10, value 11/w600
+    // onSurfaceVariant; standard/detailed = star 14, value 13/w600 onSurface.
     final row = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.star_rounded, size: 14, color: tokens.ratingStar),
+        Icon(
+          Icons.star_rounded,
+          size: compact ? 10 : 14,
+          color: tokens.ratingStar,
+        ),
         SizedBox(width: tokens.space1),
         Text(
           value,
-          style: context.text.labelLarge?.copyWith(
+          style: context.text.labelSmall?.copyWith(
+            fontSize: compact ? 11 : 13,
             fontWeight: FontWeight.w600,
-            color: colors.onSurface,
+            color: compact ? colors.onSurfaceVariant : colors.onSurface,
           ),
         ),
         Text(
           ' · $countLabel',
-          style: context.text.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
+          style: context.text.labelSmall?.copyWith(
+            fontSize: compact ? 11 : 13,
+            color: colors.onSurfaceVariant.withValues(
+              alpha: compact ? .8 : 1,
+            ),
           ),
         ),
       ],

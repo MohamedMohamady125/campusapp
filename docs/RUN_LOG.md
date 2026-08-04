@@ -1,6 +1,15 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: whole.md design-system spec implemented and green (495b798 + 2f31f05); optional stretch below unchanged.
+▶ NEXT: Atlas Dark (whole.md) fully executed and green; optional stretch below unchanged.
+
+## 2026-08-04 — Atlas Dark gap-closure pass (whole.md re-issued)
+
+- Colors/theme: new `design_system/theme/app_colors.dart` with the verbatim §3.1 dark/light ColorSchemes (no `fromSeed` anywhere); `app_theme.dart` rebuilt per §3.3 (elevation 0 + hairline `outlineVariant` sides, surfaceTint transparent, nav 64dp/indicator r10, inputs filled + isDense, `materialTapTargetSize: padded`, `visualDensity: standard`); `app_tokens.dart` trimmed to the §3.2 field set (radiusSm now 10).
+- Grid math: `kListingCardContentHeight` const + computed `mainAxisExtent = colWidth*0.75 + content` via LayoutBuilder in browse (columns `(w/200).floor().clamp(2,5)`); zero `childAspectRatio` guesses; skeleton grid shares the same delegate and `ListingCardSkeleton` mirrors the exact 4:3 + fixed-content geometry. Note: whole.md says "118dp exactly" but its own anatomy sums to 130 (12+20+4+34+8+20+4+16+12) — 118 overflows by exactly 12px, so the constant is 130.
+- New components: `FilterChipRow` (§4.6, single horizontal row, All first, value filters behind trailing Filters chip + RangeSlider sheet) and `ContentWidth` (§4.7, 1120/720 clamps); browse rewired to both.
+- Law 1/3/8 cleanup: login/register/verify/sell/edit rebuilt flat (gradients, BoxShadows, Colors.white, w800 all removed; section headers 13/w600 onSurfaceVariant); legacy `core/theme/app_theme.dart` deleted; every file now imports the `design_system/material.dart` barrel — zero direct `flutter/material` imports outside it.
+- Spec details: AvatarSize xs/sm corrected to 18/24 (§4.1); ReputationChip per-variant type (compact star 10 + 11sp onSurfaceVariant, standard star 14 + 13sp onSurface); nav bar wrapped in 1px `outlineVariant` top-border DecoratedBox with selectedIcons (§5.5); relative time drops "ago" (§7 voice); `MediaQuery.withClampedTextScaling(1.0–2.0)` explicit; Inter 400/500/600/700 bundled under `assets/google_fonts/` with OFL registered in `main()` — no runtime font fetch.
+- Verified: dart format clean, flutter analyze 0 issues, 26/26 widget tests green.
 
 ## 2026-08-04 — whole.md UI/UX reference spec executed (user request)
 

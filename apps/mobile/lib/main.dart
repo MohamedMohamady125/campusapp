@@ -1,9 +1,19 @@
 import 'package:campusconnect/core/router/app_router.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_theme.dart';
+import 'package:flutter/foundation.dart'
+    show LicenseEntryWithLineBreaks, LicenseRegistry;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
+  // Inter is bundled as an asset (whole.md §3.3) — register its OFL license.
+  LicenseRegistry.addLicense(() async* {
+    final license = await rootBundle.loadString(
+      'assets/google_fonts/OFL.txt',
+    );
+    yield LicenseEntryWithLineBreaks(const ['google_fonts'], license);
+  });
   runApp(const ProviderScope(child: CampusConnectApp()));
 }
 
@@ -20,6 +30,7 @@ class CampusConnectApp extends ConsumerWidget {
       // themeMode defaults to system — respects the OS setting (spec §9.3).
       // 2.0 keeps WCAG 1.4.4 (200% resize) satisfied (spec §15.3).
       builder: (context, child) => MediaQuery.withClampedTextScaling(
+        minScaleFactor: 1,
         maxScaleFactor: 2,
         child: child!,
       ),

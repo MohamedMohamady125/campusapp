@@ -1,10 +1,10 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
-import 'package:campusconnect/core/theme/app_theme.dart';
+import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/marketplace/data/listings_repository.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_controller.dart';
 import 'package:campusconnect/features/marketplace/presentation/listing_detail_screen.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -117,9 +117,10 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
         ),
         data: (listing) {
           _prefill(listing);
+          final tokens = context.tokens;
           return SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: EdgeInsets.all(tokens.space4),
               child: Form(
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -136,7 +137,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                           ? 'Give it a short title'
                           : null,
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(height: tokens.space4),
                     TextFormField(
                       controller: _price,
                       keyboardType: const TextInputType.numberWithOptions(
@@ -150,7 +151,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                           ? 'Enter a valid price'
                           : null,
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(height: tokens.space4),
                     DropdownButtonFormField<ListingCategory>(
                       initialValue: _category,
                       decoration: const InputDecoration(
@@ -167,7 +168,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                         () => _category = v ?? _category,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(height: tokens.space4),
                     DropdownButtonFormField<ListingCondition>(
                       initialValue: _condition,
                       decoration: const InputDecoration(
@@ -184,7 +185,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                         () => _condition = v ?? _condition,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(height: tokens.space4),
                     TextFormField(
                       controller: _description,
                       maxLines: 4,
@@ -196,7 +197,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                           ? 'Add a short description'
                           : null,
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    SizedBox(height: tokens.space6),
                     FilledButton(
                       onPressed: _submitting ? null : _submit,
                       child: _submitting

@@ -233,7 +233,7 @@ class _DetailBodyState extends State<_DetailBody> {
               Text(
                 formatPrice(listing.priceCents),
                 style: context.text.headlineSmall?.copyWith(
-                  color: tokens.price,
+                  color: context.colors.onSurface,
                   fontWeight: FontWeight.w700,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
@@ -417,7 +417,7 @@ class _StickyCtaBar extends StatelessWidget {
                 child: Text(
                   formatPrice(listing.priceCents),
                   style: context.text.titleLarge?.copyWith(
-                    color: tokens.price,
+                    color: context.colors.onSurface,
                     fontWeight: FontWeight.w700,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),

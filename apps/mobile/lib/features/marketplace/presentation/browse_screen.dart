@@ -1,5 +1,7 @@
 import 'package:campus_api/campus_api.dart';
+import 'package:campusconnect/design_system/components/content_width.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
+import 'package:campusconnect/design_system/components/filter_chip_row.dart';
 import 'package:campusconnect/design_system/components/listing_card.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/material.dart';
@@ -49,116 +51,147 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
         tooltip: 'Post a listing',
         child: const Icon(Icons.add_a_photo_outlined),
       ),
-      body: RefreshIndicator(
-        onRefresh: controller.refresh,
-        child: CustomScrollView(
-          controller: _scroll,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    tokens.space4,
-                    tokens.space4,
-                    tokens.space4,
-                    0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Market', style: context.text.titleLarge),
-                      SizedBox(height: tokens.space3),
-                      TextField(
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.search),
-                          hintText: 'Search listings',
+      body: ContentWidth(
+        child: RefreshIndicator(
+          onRefresh: controller.refresh,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Computed grid (whole.md §4.3) — never guess aspect ratios.
+              const gutter = 12.0;
+              const target = 200.0;
+              final gridWidth = constraints.maxWidth - tokens.space4 * 2;
+              final columns = (gridWidth / target).floor().clamp(2, 5);
+              final colWidth = (gridWidth - gutter * (columns - 1)) / columns;
+              final gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: gutter,
+                mainAxisSpacing: gutter,
+                mainAxisExtent: colWidth * 0.75 + kListingCardContentHeight,
+              );
+              return CustomScrollView(
+                controller: _scroll,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          tokens.space4,
+                          tokens.space4,
+                          tokens.space4,
+                          0,
                         ),
-                        textInputAction: TextInputAction.search,
-                        onSubmitted: (q) =>
-                            controller.setQuery(q.trim()).ignore(),
-                      ),
-                      SizedBox(height: tokens.space2),
-                      // Ambient trust line (spec §4.1) — stated once per
-                      // surface, not once per item.
-                      Text(
-                        'Everyone here is a verified student.',
-                        style: context.text.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Market', style: context.text.titleLarge),
+                            SizedBox(height: tokens.space3),
+                            TextField(
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.search),
+                                hintText: 'Search listings',
+                              ),
+                              textInputAction: TextInputAction.search,
+                              onSubmitted: (q) =>
+                                  controller.setQuery(q.trim()).ignore(),
+                            ),
+                            SizedBox(height: tokens.space2),
+                            // Ambient trust line (whole.md §5.1) — stated once
+                            // per surface, not once per card.
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.shield_outlined,
+                                  size: 12,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                                SizedBox(width: tokens.space1),
+                                Text(
+                                  'Everyone here is a verified student',
+                                  style: context.text.bodySmall?.copyWith(
+                                    fontSize: 11,
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(child: _CategoryChips(state: state)),
-            SliverToBoxAdapter(child: _PriceFilter(state: state)),
-            if (state.loading)
-              const _SkeletonGrid()
-            else if (state.error != null)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: EmptyState(
-                  icon: Icons.cloud_off,
-                  title: "Couldn't load listings",
-                  body: 'Check your connection and try again.',
-                  actionLabel: 'Retry',
-                  onAction: () => controller.refresh().ignore(),
-                ),
-              )
-            else if (state.items.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _hasActiveFilters(state)
-                    ? EmptyState(
-                        icon: Icons.filter_alt_off_outlined,
-                        title: 'No matches',
-                        body:
-                            'Try a wider price range or a different category.',
-                        actionLabel: 'Clear filters',
-                        onAction: () => controller.refresh().ignore(),
-                      )
-                    : EmptyState(
-                        icon: Icons.storefront_outlined,
-                        title: 'Nothing listed yet',
-                        body:
-                            'Be the first. Sell that textbook '
-                            "you're never opening again.",
-                        actionLabel: 'Post a listing',
-                        onAction: () => context.go('/market/sell'),
-                      ),
-              )
-            else
-              SliverPadding(
-                padding: EdgeInsets.all(tokens.space4),
-                sliver: SliverGrid.builder(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 220,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.62,
-                  ),
-                  itemCount: state.items.length,
-                  itemBuilder: (context, i) =>
-                      _BrowseListingCard(listing: state.items[i]),
-                ),
-              ),
-            if (state.loadingMore)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(tokens.space3),
-                  child: const Center(
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: CircularProgressIndicator(),
                     ),
                   ),
-                ),
-              ),
-          ],
+                  SliverToBoxAdapter(child: _CategoryChips(state: state)),
+                  if (state.loading)
+                    _SkeletonGrid(gridDelegate: gridDelegate)
+                  else if (state.error != null)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: EmptyState(
+                        icon: Icons.cloud_off,
+                        title: "Couldn't load listings",
+                        body: 'Check your connection and try again.',
+                        actionLabel: 'Retry',
+                        onAction: () => controller.refresh().ignore(),
+                      ),
+                    )
+                  else if (state.items.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _hasActiveFilters(state)
+                          ? EmptyState(
+                              icon: Icons.filter_alt_off_outlined,
+                              title: 'No matches',
+                              body:
+                                  'Try a wider price range or a '
+                                  'different category.',
+                              actionLabel: 'Clear filters',
+                              onAction: () => controller.refresh().ignore(),
+                            )
+                          : EmptyState(
+                              icon: Icons.storefront_outlined,
+                              title: 'Nothing listed yet',
+                              body:
+                                  'Be the first. Sell that textbook '
+                                  "you're never opening again.",
+                              actionLabel: 'Post a listing',
+                              onAction: () => context.go('/market/sell'),
+                            ),
+                    )
+                  else
+                    SliverPadding(
+                      // 96dp bottom padding so the FAB never covers a card
+                      // (whole.md §5.1).
+                      padding: EdgeInsets.fromLTRB(
+                        tokens.space4,
+                        0,
+                        tokens.space4,
+                        96,
+                      ),
+                      sliver: SliverGrid.builder(
+                        gridDelegate: gridDelegate,
+                        itemCount: state.items.length,
+                        itemBuilder: (context, i) =>
+                            _BrowseListingCard(listing: state.items[i]),
+                      ),
+                    ),
+                  if (state.loadingMore)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(tokens.space3),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -200,7 +233,7 @@ class _BrowseListingCard extends StatelessWidget {
   }
 }
 
-// -- Category chips (spec §3 Hick's law: 6 top-level categories max) -------
+// -- Category chips (whole.md §4.6 — one scroll row, All first) ------------
 class _CategoryChips extends ConsumerWidget {
   const _CategoryChips({required this.state});
 
@@ -217,103 +250,94 @@ class _CategoryChips extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tokens = context.tokens;
     final controller = ref.read(browseControllerProvider.notifier);
-    return SizedBox(
-      height: 64,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(
-          horizontal: tokens.space4,
-          vertical: tokens.space2,
-        ),
-        children: [
-          for (final entry in _labels.entries)
-            Padding(
-              padding: EdgeInsets.only(right: tokens.space2),
-              child: FilterChip(
-                label: Text(entry.value),
-                selected: state.category == entry.key,
-                onSelected: (on) =>
-                    controller.setCategory(on ? entry.key : null).ignore(),
-              ),
-            ),
-        ],
+    final priceActive = state.minPrice != null || state.maxPrice != null;
+    return FilterChipRow<ListingCategory>(
+      options: [
+        for (final entry in _labels.entries)
+          FilterChipOption(label: entry.value, value: entry.key),
+      ],
+      selected: state.category,
+      onSelected: (category) => controller.setCategory(category).ignore(),
+      // Value filters live behind a trailing chip + sheet, never in the
+      // row itself (whole.md §4.6).
+      trailing: FilterChip(
+        label: Text(priceActive ? 'Filters (1)' : 'Filters'),
+        selected: priceActive,
+        showCheckmark: false,
+        onSelected: (_) => _showPriceSheet(context, ref),
       ),
     );
   }
-}
 
-class _PriceFilter extends ConsumerStatefulWidget {
-  const _PriceFilter({required this.state});
-
-  final BrowseState state;
-
-  @override
-  ConsumerState<_PriceFilter> createState() => _PriceFilterState();
-}
-
-class _PriceFilterState extends ConsumerState<_PriceFilter> {
-  RangeValues _range = const RangeValues(0, 500);
-  bool _active = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final s = widget.state;
-    if (s.minPrice != null || s.maxPrice != null) {
-      _active = true;
-      _range = RangeValues(
-        (s.minPrice ?? 0) / 100,
-        (s.maxPrice ?? 50000) / 100,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
+  Future<void> _showPriceSheet(BuildContext context, WidgetRef ref) {
     final controller = ref.read(browseControllerProvider.notifier);
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: tokens.space4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              FilterChip(
-                label: Text(
-                  _active
-                      ? '\$${_range.start.round()} \u2013 '
-                            '\$${_range.end.round()}'
-                      : 'Price',
-                ),
-                selected: _active,
-                onSelected: (on) {
-                  setState(() => _active = on);
-                  if (!on) controller.setPriceRange(null, null).ignore();
-                },
-              ),
-            ],
-          ),
-          if (_active)
-            RangeSlider(
-              values: _range,
-              max: 500,
-              divisions: 50,
-              labels: RangeLabels(
-                '\$${_range.start.round()}',
-                '\$${_range.end.round()}',
-              ),
-              onChanged: (v) => setState(() => _range = v),
-              onChangeEnd: (v) {
-                controller
-                    .setPriceRange(v.start.round() * 100, v.end.round() * 100)
-                    .ignore();
-              },
+    var range = RangeValues(
+      (state.minPrice ?? 0) / 100,
+      (state.maxPrice ?? 50000) / 100,
+    );
+    return showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        final tokens = sheetContext.tokens;
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) => Padding(
+            padding: EdgeInsets.fromLTRB(
+              tokens.space4,
+              0,
+              tokens.space4,
+              tokens.space6,
             ),
-        ],
-      ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Price range', style: sheetContext.text.titleMedium),
+                SizedBox(height: tokens.space2),
+                RangeSlider(
+                  values: range,
+                  max: 500,
+                  divisions: 50,
+                  labels: RangeLabels(
+                    '\$${range.start.round()}',
+                    '\$${range.end.round()}',
+                  ),
+                  onChanged: (v) => setSheetState(() => range = v),
+                ),
+                SizedBox(height: tokens.space2),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          controller.setPriceRange(null, null).ignore();
+                          Navigator.of(sheetContext).pop();
+                        },
+                        child: const Text('Clear'),
+                      ),
+                    ),
+                    SizedBox(width: tokens.space3),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () {
+                          controller
+                              .setPriceRange(
+                                range.start.round() * 100,
+                                range.end.round() * 100,
+                              )
+                              .ignore();
+                          Navigator.of(sheetContext).pop();
+                        },
+                        child: const Text('Apply'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -323,14 +347,15 @@ String formatPrice(int cents) => cents % 100 == 0
     ? '\$${cents ~/ 100}'
     : '\$${(cents / 100).toStringAsFixed(2)}';
 
-/// Short relative timestamp, e.g. `2h ago`.
+/// Short relative timestamp, e.g. `2h` — never `2h ago`; `ago` is
+/// redundant when every card has one (whole.md §7 voice).
 String relativeTime(DateTime time) {
   final delta = DateTime.now().difference(time);
   if (delta.inMinutes < 1) return 'Just now';
-  if (delta.inMinutes < 60) return '${delta.inMinutes}m ago';
-  if (delta.inHours < 24) return '${delta.inHours}h ago';
-  if (delta.inDays < 7) return '${delta.inDays}d ago';
-  return '${delta.inDays ~/ 7}w ago';
+  if (delta.inMinutes < 60) return '${delta.inMinutes}m';
+  if (delta.inHours < 24) return '${delta.inHours}h';
+  if (delta.inDays < 7) return '${delta.inDays}d';
+  return '${delta.inDays ~/ 7}w';
 }
 
 /// Human label for a listing condition.
@@ -355,20 +380,17 @@ const listingCategoryIcons = <ListingCategory, IconData>{
 
 /// Skeleton grid matching the exact card geometry (spec §13.1).
 class _SkeletonGrid extends StatelessWidget {
-  const _SkeletonGrid();
+  const _SkeletonGrid({required this.gridDelegate});
+
+  final SliverGridDelegate gridDelegate;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return SliverPadding(
-      padding: EdgeInsets.all(tokens.space4),
+      padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
       sliver: SliverGrid.builder(
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 220,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.62,
-        ),
+        gridDelegate: gridDelegate,
         itemCount: 6,
         itemBuilder: (_, _) => const ListingCardSkeleton(),
       ),

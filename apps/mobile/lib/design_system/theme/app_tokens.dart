@@ -2,23 +2,19 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:campusconnect/design_system/material.dart';
 
-/// Design tokens (spec §5.4, §7): semantic colors ColorScheme has no slot
+/// Design tokens (whole.md §3.2): semantic colors ColorScheme has no slot
 /// for, plus the spacing and radius scales. Registered as a [ThemeExtension]
 /// on both themes; access via `context.tokens`.
 @immutable
 class AppTokens extends ThemeExtension<AppTokens> {
   const AppTokens({
-    // Semantic colors
     required this.verified,
     required this.onVerified,
-    required this.verifiedContainer,
     required this.success,
     required this.warning,
     required this.warningContainer,
-    required this.price,
     required this.ratingStar,
     required this.online,
-    // Spacing (4dp base grid, spec §7.3)
     this.space1 = 4,
     this.space2 = 8,
     this.space3 = 12,
@@ -27,21 +23,17 @@ class AppTokens extends ThemeExtension<AppTokens> {
     this.space6 = 24,
     this.space8 = 32,
     this.space12 = 48,
-    // Radii (spec §7.1 — cards are radiusMd, everywhere)
     this.radiusXs = 4,
-    this.radiusSm = 8,
+    this.radiusSm = 10,
     this.radiusMd = 12,
     this.radiusLg = 16,
-    this.radiusXl = 28,
   });
 
   final Color verified;
   final Color onVerified;
-  final Color verifiedContainer;
   final Color success;
   final Color warning;
   final Color warningContainer;
-  final Color price;
   final Color ratingStar;
   final Color online;
 
@@ -58,74 +50,49 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final double radiusSm;
   final double radiusMd;
   final double radiusLg;
-  final double radiusXl;
 
-  // Convenience shapes
   BorderRadius get brSm => BorderRadius.circular(radiusSm);
   BorderRadius get brMd => BorderRadius.circular(radiusMd);
   BorderRadius get brLg => BorderRadius.circular(radiusLg);
 
-  static const light = AppTokens(
-    verified: Color(0xFF0E6B4F),
-    onVerified: Color(0xFFFFFFFF),
-    verifiedContainer: Color(0xFFB7F2D8),
-    success: Color(0xFF1B6C3A),
-    warning: Color(0xFF8A5A00),
-    warningContainer: Color(0xFFFFEDCB),
-    price: Color(0xFF0F3D2E),
-    ratingStar: Color(0xFFB8860B),
-    online: Color(0xFF2E7D32),
-  );
-
-  static const dark = AppTokens(
-    verified: Color(0xFF6FD9AE),
+  static const darkTokens = AppTokens(
+    verified: Color(0xFF3DD9A0),
     onVerified: Color(0xFF00382A),
-    verifiedContainer: Color(0xFF00513C),
-    success: Color(0xFF7ADB9C),
+    success: Color(0xFF3DD9A0),
     warning: Color(0xFFF5BF54),
     warningContainer: Color(0xFF5C3D00),
-    price: Color(0xFFB8EFD4),
-    ratingStar: Color(0xFFF2C94C),
-    online: Color(0xFF81C995),
+    ratingStar: Color(0xFFF5C451),
+    online: Color(0xFF3DD9A0),
+  );
+
+  static const lightTokens = AppTokens(
+    verified: Color(0xFF12805C),
+    onVerified: Color(0xFFFFFFFF),
+    success: Color(0xFF12805C),
+    warning: Color(0xFF8A5A00),
+    warningContainer: Color(0xFFFFEDCB),
+    ratingStar: Color(0xFFC9930A),
+    online: Color(0xFF12805C),
   );
 
   @override
   AppTokens copyWith({
     Color? verified,
     Color? onVerified,
-    Color? verifiedContainer,
     Color? success,
     Color? warning,
     Color? warningContainer,
-    Color? price,
     Color? ratingStar,
     Color? online,
-  }) {
-    return AppTokens(
-      verified: verified ?? this.verified,
-      onVerified: onVerified ?? this.onVerified,
-      verifiedContainer: verifiedContainer ?? this.verifiedContainer,
-      success: success ?? this.success,
-      warning: warning ?? this.warning,
-      warningContainer: warningContainer ?? this.warningContainer,
-      price: price ?? this.price,
-      ratingStar: ratingStar ?? this.ratingStar,
-      online: online ?? this.online,
-      space1: space1,
-      space2: space2,
-      space3: space3,
-      space4: space4,
-      space5: space5,
-      space6: space6,
-      space8: space8,
-      space12: space12,
-      radiusXs: radiusXs,
-      radiusSm: radiusSm,
-      radiusMd: radiusMd,
-      radiusLg: radiusLg,
-      radiusXl: radiusXl,
-    );
-  }
+  }) => AppTokens(
+    verified: verified ?? this.verified,
+    onVerified: onVerified ?? this.onVerified,
+    success: success ?? this.success,
+    warning: warning ?? this.warning,
+    warningContainer: warningContainer ?? this.warningContainer,
+    ratingStar: ratingStar ?? this.ratingStar,
+    online: online ?? this.online,
+  );
 
   @override
   AppTokens lerp(covariant AppTokens? other, double t) {
@@ -133,11 +100,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
     return AppTokens(
       verified: Color.lerp(verified, other.verified, t)!,
       onVerified: Color.lerp(onVerified, other.onVerified, t)!,
-      verifiedContainer: Color.lerp(
-        verifiedContainer,
-        other.verifiedContainer,
-        t,
-      )!,
       success: Color.lerp(success, other.success, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       warningContainer: Color.lerp(
@@ -145,7 +107,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
         other.warningContainer,
         t,
       )!,
-      price: Color.lerp(price, other.price, t)!,
       ratingStar: Color.lerp(ratingStar, other.ratingStar, t)!,
       online: Color.lerp(online, other.online, t)!,
       space1: lerpDouble(space1, other.space1, t)!,
@@ -160,7 +121,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
       radiusSm: lerpDouble(radiusSm, other.radiusSm, t)!,
       radiusMd: lerpDouble(radiusMd, other.radiusMd, t)!,
       radiusLg: lerpDouble(radiusLg, other.radiusLg, t)!,
-      radiusXl: lerpDouble(radiusXl, other.radiusXl, t)!,
     );
   }
 }

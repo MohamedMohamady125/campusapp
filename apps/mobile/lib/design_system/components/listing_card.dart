@@ -7,10 +7,19 @@ import 'package:campusconnect/design_system/theme/app_tokens.dart';
 /// Optional status pill on the photo (spec §10.3).
 enum ListingCardStatus { none, isNew, reserved, expiring, sold }
 
-/// Marketplace grid card, 2-up (spec §10.3).
+/// Fixed content-block height below the 4:3 image (whole.md §4.3).
+///
+/// 12 pad + 20 price + 4 gap + 34 title (2 lines reserved) + 8 gap +
+/// 20 seller row + 4 gap + 16 meta + 12 pad = 130. Grids must size cells as
+/// `colWidth * 3/4 + kListingCardContentHeight` — never guess aspect ratios.
+const double kListingCardContentHeight = 130;
+
+/// Marketplace grid card (whole.md §4.3).
 ///
 /// The whole card is one tap target — no nested buttons; nested targets in a
-/// 2-up grid are a mis-tap factory. Long-press opens save/share/report.
+/// grid are a mis-tap factory. Long-press opens save/share/report. The
+/// 2-line title box is reserved whether the title fills it or not: that is
+/// what prevents clipping and keeps the grid regular.
 class ListingCard extends StatelessWidget {
   const ListingCard({
     required this.title,
@@ -25,6 +34,7 @@ class ListingCard extends StatelessWidget {
     this.status = ListingCardStatus.none,
     this.onLongPress,
     this.heroTag,
+    this.placeholderIcon,
   });
 
   final String title;
@@ -34,12 +44,16 @@ class ListingCard extends StatelessWidget {
   final double? rating;
   final int ratingCount;
 
-  /// e.g. `2h ago · Like new`
+  /// e.g. `2h · Like new`
   final String? metaLabel;
   final ListingCardStatus status;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final Object? heroTag;
+
+  /// Category-specific placeholder icon shown when there is no photo —
+  /// never one generic photo glyph (whole.md §4.3).
+  final IconData? placeholderIcon;
 
   String? get _statusLabel => switch (status) {
     ListingCardStatus.none => null,
@@ -55,13 +69,14 @@ class ListingCard extends StatelessWidget {
     final colors = context.colors;
 
     Widget image = AspectRatio(
-      aspectRatio: 1,
+      aspectRatio: 4 / 3,
       child: imageUrl == null || imageUrl!.isEmpty
           ? ColoredBox(
               color: colors.surfaceContainerHighest,
               child: Icon(
-                Icons.image_outlined,
-                color: colors.onSurfaceVariant,
+                placeholderIcon ?? Icons.image_outlined,
+                size: 26,
+                color: colors.onSurfaceVariant.withValues(alpha: .4),
               ),
             )
           : CachedNetworkImage(
@@ -113,51 +128,61 @@ class ListingCard extends StatelessWidget {
                     ),
                 ],
               ),
-              // Flexible so a 2-line title compresses inside a fixed grid
-              // cell instead of overflowing it.
-              Flexible(
-                child: Padding(
-                  padding: EdgeInsets.all(tokens.space3),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        priceLabel,
-                        style: context.text.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: tokens.price,
-                          fontFeatures: const [FontFeature.tabularFigures()],
+              // Fixed 118dp content block (whole.md §4.3) — the 2-line
+              // title box is reserved whether the title fills it or not.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      priceLabel,
+                      style: context.text.titleMedium?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: colors.onSurface,
+                        height: 1.2,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      height: 34,
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.text.bodySmall?.copyWith(
+                          fontSize: 13,
+                          height: 1.3,
+                          color: colors.onSurface.withValues(alpha: .85),
                         ),
                       ),
-                      SizedBox(height: tokens.space1),
-                      Flexible(
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.text.titleMedium,
-                        ),
-                      ),
-                      SizedBox(height: tokens.space2),
-                      Row(
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 20,
+                      child: Row(
                         children: [
                           VerifiedAvatar(
                             name: sellerName,
                             size: AvatarSize.xs,
                           ),
-                          SizedBox(width: tokens.space1),
+                          const SizedBox(width: 6),
                           Flexible(
                             child: Text(
                               sellerName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: context.text.bodySmall?.copyWith(
+                              style: context.text.labelSmall?.copyWith(
+                                fontSize: 11,
                                 fontWeight: FontWeight.w500,
+                                color: colors.onSurfaceVariant,
                               ),
                             ),
                           ),
-                          SizedBox(width: tokens.space2),
+                          const SizedBox(width: 6),
                           ReputationChip(
                             rating: rating,
                             ratingCount: ratingCount,
@@ -165,19 +190,25 @@ class ListingCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (metaLabel != null) ...[
-                        SizedBox(height: tokens.space1),
-                        Text(
-                          metaLabel!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.text.bodySmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      height: 16,
+                      child: metaLabel == null
+                          ? null
+                          : Text(
+                              metaLabel!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.text.labelSmall?.copyWith(
+                                fontSize: 11,
+                                color: colors.onSurfaceVariant.withValues(
+                                  alpha: .8,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
               ),
             ],

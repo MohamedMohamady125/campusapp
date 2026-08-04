@@ -1,7 +1,7 @@
 import 'package:campusconnect/core/error/api_error.dart';
-import 'package:campusconnect/core/theme/app_theme.dart';
+import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -61,12 +61,13 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Scaffold(
       appBar: AppBar(title: const Text('Verify your email')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: EdgeInsets.all(tokens.space4),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Form(
@@ -77,10 +78,10 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                   children: [
                     Text(
                       'We sent a 6-digit code to\n${widget.email}',
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      style: context.text.bodyLarge,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    SizedBox(height: tokens.space6),
                     TextFormField(
                       controller: _code,
                       keyboardType: TextInputType.number,
@@ -99,7 +100,7 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                       },
                       onFieldSubmitted: (_) => _submitting ? null : _submit(),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(height: tokens.space4),
                     FilledButton(
                       onPressed: _submitting ? null : _submit,
                       child: _submitting
@@ -109,7 +110,7 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                             )
                           : const Text('Verify'),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    SizedBox(height: tokens.space3),
                     TextButton(
                       onPressed: _submitting ? null : _resend,
                       child: const Text('Resend code'),

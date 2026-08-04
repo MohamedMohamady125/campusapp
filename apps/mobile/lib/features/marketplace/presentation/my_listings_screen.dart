@@ -211,7 +211,9 @@ class _MyListingRow extends StatelessWidget {
                     Text(
                       formatPrice(listing.priceCents),
                       style: context.text.titleMedium?.copyWith(
-                        color: isSold ? colors.onSurfaceVariant : tokens.price,
+                        color: isSold
+                            ? colors.onSurfaceVariant
+                            : colors.onSurface,
                         fontWeight: FontWeight.w700,
                         decoration: isSold ? TextDecoration.lineThrough : null,
                         fontFeatures: const [

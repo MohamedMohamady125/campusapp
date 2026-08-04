@@ -84,28 +84,29 @@ class ListingCardSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AspectRatio(aspectRatio: 1, child: SkeletonBox()),
+          const AspectRatio(aspectRatio: 4 / 3, child: SkeletonBox()),
+          // Mirrors ListingCard's fixed 118dp content block (whole.md §4.3).
           Padding(
-            padding: EdgeInsets.all(tokens.space3),
+            padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SkeletonBox(width: 56, height: 18, borderRadius: tokens.brSm),
-                SizedBox(height: tokens.space2),
+                SkeletonBox(width: 56, height: 20, borderRadius: tokens.brSm),
+                const SizedBox(height: 4),
                 SkeletonBox(
                   width: double.infinity,
-                  height: 16,
+                  height: 34,
                   borderRadius: tokens.brSm,
                 ),
-                SizedBox(height: tokens.space2),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     const SkeletonBox(
-                      width: 24,
-                      height: 24,
+                      width: 20,
+                      height: 20,
                       shape: BoxShape.circle,
                     ),
-                    SizedBox(width: tokens.space2),
+                    const SizedBox(width: 6),
                     SkeletonBox(
                       width: 96,
                       height: 12,
@@ -113,6 +114,8 @@ class ListingCardSkeleton extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 4),
+                SkeletonBox(width: 72, height: 16, borderRadius: tokens.brSm),
               ],
             ),
           ),
