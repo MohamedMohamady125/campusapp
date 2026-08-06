@@ -1,4 +1,5 @@
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
 /// One filter option in a [FilterChipRow].
@@ -44,17 +45,18 @@ class FilterChipRow<T> extends StatelessWidget {
           label: Text(option.label),
           selected: isSelected,
           showCheckmark: false,
-          backgroundColor: Colors.transparent,
-          selectedColor: colors.secondaryContainer,
+          shape: const StadiumBorder(),
+          // Fifty Free chips: selected = tinted blue fill + blue hairline;
+          // unselected = white fill + hairline border.
+          backgroundColor: colors.surface,
+          selectedColor: colors.primaryContainer,
           side: isSelected
-              ? BorderSide.none
-              : BorderSide(color: colors.outline),
+              ? const BorderSide(color: AppColors.primaryBorder)
+              : BorderSide(color: colors.outlineVariant),
           labelStyle: context.text.labelMedium?.copyWith(
             fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected
-                ? colors.onSecondaryContainer
-                : colors.onSurfaceVariant,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? colors.primary : colors.onSurfaceVariant,
           ),
           onSelected: (_) => onSelected(option.value),
         ),

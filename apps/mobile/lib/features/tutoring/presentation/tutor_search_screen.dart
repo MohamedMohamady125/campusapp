@@ -2,6 +2,8 @@ import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/course_code_chip.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
+import 'package:campusconnect/design_system/components/fade_slide_in.dart';
+import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/components/tutor_card.dart';
 import 'package:campusconnect/design_system/material.dart';
@@ -198,9 +200,9 @@ class _CourseSuggestionsList extends StatelessWidget {
       separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
       itemBuilder: (context, i) {
         final course = courses[i];
-        return Card(
-          child: InkWell(
-            onTap: () => onSelect(course),
+        return Pressable(
+          onTap: () => onSelect(course),
+          child: Card(
             child: Padding(
               padding: EdgeInsets.all(tokens.space3),
               child: Row(
@@ -346,20 +348,23 @@ class _RankedTutors extends ConsumerWidget {
                 final ranked = items[i - 1];
                 final tutor = ranked.tutor;
                 final offering = ranked.offering;
-                return Padding(
-                  padding: EdgeInsets.only(bottom: tokens.space3),
-                  child: TutorCard(
-                    name: tutor.displayName,
-                    courseSignal:
-                        '${course.code} · '
-                        '${offering.gradeReceived} · ${offering.termTaken}',
-                    rankReason: _rankReason(ranked, course.code),
-                    rating: tutor.ratingCount > 0
-                        ? tutor.reputationScore.toDouble()
-                        : null,
-                    ratingCount: tutor.ratingCount,
-                    onTap: () => onMessage(ranked).ignore(),
-                    onMessage: () => onMessage(ranked).ignore(),
+                return FadeSlideIn(
+                  index: i - 1,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: tokens.space3),
+                    child: TutorCard(
+                      name: tutor.displayName,
+                      courseSignal:
+                          '${course.code} · '
+                          '${offering.gradeReceived} · ${offering.termTaken}',
+                      rankReason: _rankReason(ranked, course.code),
+                      rating: tutor.ratingCount > 0
+                          ? tutor.reputationScore.toDouble()
+                          : null,
+                      ratingCount: tutor.ratingCount,
+                      onTap: () => onMessage(ranked).ignore(),
+                      onMessage: () => onMessage(ranked).ignore(),
+                    ),
                   ),
                 );
               },

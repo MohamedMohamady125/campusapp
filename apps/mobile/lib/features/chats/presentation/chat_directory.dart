@@ -1,6 +1,8 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
+import 'package:campusconnect/design_system/components/fade_slide_in.dart';
+import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
@@ -77,11 +79,14 @@ class ChatDirectoryList extends ConsumerWidget {
                     SizedBox(height: context.tokens.space2),
                 itemBuilder: (context, i) {
                   final chat = chats[i];
-                  return _GroupCard(
-                    chat: chat,
-                    visibilityLabel:
-                        _visibilityLabels[chat.visibility] ?? 'Open',
-                    onTap: () => _openChat(context, ref, chat),
+                  return FadeSlideIn(
+                    index: i,
+                    child: _GroupCard(
+                      chat: chat,
+                      visibilityLabel:
+                          _visibilityLabels[chat.visibility] ?? 'Open',
+                      onTap: () => _openChat(context, ref, chat),
+                    ),
                   );
                 },
               ),
@@ -106,9 +111,9 @@ class _GroupCard extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
     return MergeSemantics(
-      child: Card(
-        child: InkWell(
-          onTap: onTap,
+      child: Pressable(
+        onTap: onTap,
+        child: Card(
           child: Padding(
             padding: EdgeInsets.all(tokens.space3),
             child: Row(

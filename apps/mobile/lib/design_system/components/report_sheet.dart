@@ -133,6 +133,11 @@ class _ReportSheetState extends State<_ReportSheet> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _submitting ? null : _submit,
+                  // Destructive action — Fifty Free error orange (§8).
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.error,
+                    foregroundColor: colors.onError,
+                  ),
                   child: Text(_submitting ? 'Sending…' : 'Submit report'),
                 ),
               ),

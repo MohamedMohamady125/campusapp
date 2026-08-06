@@ -62,9 +62,10 @@ class _SkeletonBoxState extends State<SkeletonBox>
           borderRadius: widget.shape == BoxShape.circle
               ? null
               : widget.borderRadius,
+          // Shimmer: base surfaceAlt, highlight surfaceLight (Fifty Free §6).
           color: Color.lerp(
-            colors.surfaceContainerHighest,
-            colors.surfaceContainerHigh,
+            colors.surfaceContainer,
+            colors.surfaceContainerLow,
             _controller.value,
           ),
         ),
@@ -91,12 +92,12 @@ class ListingCardSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SkeletonBox(width: 56, height: 20, borderRadius: tokens.brSm),
+                SkeletonBox(width: 56, height: 20, borderRadius: tokens.brXs),
                 const SizedBox(height: 4),
                 SkeletonBox(
                   width: double.infinity,
                   height: 34,
-                  borderRadius: tokens.brSm,
+                  borderRadius: tokens.brXs,
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -110,12 +111,12 @@ class ListingCardSkeleton extends StatelessWidget {
                     SkeletonBox(
                       width: 96,
                       height: 12,
-                      borderRadius: tokens.brSm,
+                      borderRadius: tokens.brXs,
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                SkeletonBox(width: 72, height: 16, borderRadius: tokens.brSm),
+                SkeletonBox(width: 72, height: 16, borderRadius: tokens.brXs),
               ],
             ),
           ),
@@ -153,13 +154,13 @@ class ListRowSkeleton extends StatelessWidget {
                   SkeletonBox(
                     width: 140,
                     height: 14,
-                    borderRadius: tokens.brSm,
+                    borderRadius: tokens.brXs,
                   ),
                   SizedBox(height: tokens.space2),
                   SkeletonBox(
                     width: double.infinity,
                     height: 12,
-                    borderRadius: tokens.brSm,
+                    borderRadius: tokens.brXs,
                   ),
                 ],
               ),

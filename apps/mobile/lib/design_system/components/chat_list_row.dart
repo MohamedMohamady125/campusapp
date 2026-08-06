@@ -1,3 +1,4 @@
+import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
@@ -36,7 +37,7 @@ class ChatListRow extends StatelessWidget {
     final unread = unreadCount > 0;
 
     return MergeSemantics(
-      child: InkWell(
+      child: Pressable(
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: 72),

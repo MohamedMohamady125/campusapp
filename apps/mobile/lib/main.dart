@@ -25,9 +25,11 @@ class CampusConnectApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'CampusConnect',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      // themeMode defaults to system — respects the OS setting (spec §9.3).
+      // Light theme forced per user preference (2026-08-05).
+      themeMode: ThemeMode.light,
       // 2.0 keeps WCAG 1.4.4 (200% resize) satisfied (spec §15.3).
       builder: (context, child) => MediaQuery.withClampedTextScaling(
         minScaleFactor: 1,

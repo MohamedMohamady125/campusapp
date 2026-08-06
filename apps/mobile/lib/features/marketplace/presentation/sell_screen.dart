@@ -1,6 +1,8 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/marketplace/data/listings_repository.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_controller.dart';
@@ -234,21 +236,18 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                       ),
                       SizedBox(height: tokens.space8),
 
-                      // -- Submit button --
-                      SizedBox(
-                        height: 52,
-                        child: FilledButton(
-                          onPressed: _submitting ? null : _submit,
-                          child: _submitting
-                              ? SizedBox.square(
-                                  dimension: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: context.colors.onPrimary,
-                                  ),
-                                )
-                              : const Text('Post listing'),
-                        ),
+                      // -- Submit button (theme = blue pill, 52dp) --
+                      FilledButton(
+                        onPressed: _submitting ? null : _submit,
+                        child: _submitting
+                            ? SizedBox.square(
+                                dimension: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: context.colors.onPrimary,
+                                ),
+                              )
+                            : const Text('Post listing'),
                       ),
                       SizedBox(height: tokens.space2),
                       Text(
@@ -374,7 +373,7 @@ class _StepDot extends StatelessWidget {
   }
 }
 
-// -- Section header (whole.md §6: 13/w600 onSurfaceVariant, ls 0.4) --
+// -- Eyebrow micro-label (Fifty Free: Inter 11/w700, ls 1, UPPERCASE) --
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel({required this.label});
 
@@ -382,15 +381,7 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: context.text.labelMedium?.copyWith(
-        fontSize: 13,
-        color: context.colors.onSurfaceVariant,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.4,
-      ),
-    );
+    return Text(label.toUpperCase(), style: AppTextStyles.label);
   }
 }
 
@@ -414,7 +405,7 @@ class _PhotoUploadArea extends StatelessWidget {
 
     if (photos.isEmpty) {
       // Large inviting upload area
-      return GestureDetector(
+      return Pressable(
         onTap: onAdd,
         child: CustomPaint(
           painter: _DashedBorderPainter(
@@ -533,7 +524,7 @@ class _PhotoUploadArea extends StatelessWidget {
                   ),
                 ),
               if (photos.length < 5)
-                GestureDetector(
+                Pressable(
                   onTap: onAdd,
                   child: CustomPaint(
                     painter: _DashedBorderPainter(

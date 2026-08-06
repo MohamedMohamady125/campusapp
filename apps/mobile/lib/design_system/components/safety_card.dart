@@ -25,20 +25,19 @@ class SafetyCard extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
 
+    // Flat white card with hairline border (Fifty Free §1) — guidance,
+    // never an alarm surface.
     return Container(
       padding: EdgeInsets.all(tokens.space4),
       decoration: BoxDecoration(
-        color: colors.secondaryContainer,
+        color: colors.surface,
         borderRadius: tokens.brMd,
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.shield_outlined,
-            size: 20,
-            color: colors.onSecondaryContainer,
-          ),
+          Icon(Icons.shield_outlined, size: 20, color: colors.primary),
           SizedBox(width: tokens.space3),
           Expanded(
             child: Column(
@@ -47,14 +46,14 @@ class SafetyCard extends StatelessWidget {
                 Text(
                   title,
                   style: context.text.titleSmall?.copyWith(
-                    color: colors.onSecondaryContainer,
+                    color: colors.onSurface,
                   ),
                 ),
                 SizedBox(height: tokens.space1),
                 Text(
                   body,
                   style: context.text.bodyMedium?.copyWith(
-                    color: colors.onSecondaryContainer,
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -64,7 +63,7 @@ class SafetyCard extends StatelessWidget {
             onPressed: onDismiss,
             tooltip: 'Dismiss',
             iconSize: 18,
-            color: colors.onSecondaryContainer,
+            color: colors.onSurfaceVariant,
             icon: const Icon(Icons.close),
           ),
         ],

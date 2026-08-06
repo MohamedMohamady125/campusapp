@@ -7,6 +7,7 @@ import 'package:campusconnect/design_system/components/safety_card.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/marketplace/data/listings_repository.dart';
@@ -230,12 +231,11 @@ class _DetailBodyState extends State<_DetailBody> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price first — it's what buyers scan for (spec §12.3).
+              // Inter w700 tabular, onSurface — never blue (Fifty Free).
               Text(
                 formatPrice(listing.priceCents),
-                style: context.text.headlineSmall?.copyWith(
-                  color: context.colors.onSurface,
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const [FontFeature.tabularFigures()],
+                style: AppTextStyles.stat.copyWith(
+                  color: colors.onSurface,
                 ),
               ),
               SizedBox(height: tokens.space1),
@@ -403,8 +403,12 @@ class _StickyCtaBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
-    return ColoredBox(
-      color: colors.surfaceContainer,
+    // Flat white bar with a hairline top border — no elevation.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.outlineVariant)),
+      ),
       child: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -416,10 +420,9 @@ class _StickyCtaBar extends StatelessWidget {
               Expanded(
                 child: Text(
                   formatPrice(listing.priceCents),
-                  style: context.text.titleLarge?.copyWith(
-                    color: context.colors.onSurface,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                  style: AppTextStyles.statSmall.copyWith(
+                    fontSize: 18,
+                    color: colors.onSurface,
                   ),
                 ),
               ),

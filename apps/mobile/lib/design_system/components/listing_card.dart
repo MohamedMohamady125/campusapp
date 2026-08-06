@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
 /// Optional status pill on the photo (spec §10.3).
@@ -91,127 +93,128 @@ class ListingCard extends StatelessWidget {
     if (heroTag != null) image = Hero(tag: heroTag!, child: image);
 
     return MergeSemantics(
-      child: Card(
-        child: InkWell(
-          onTap: onTap,
+      child: Pressable(
+        onTap: onTap,
+        child: GestureDetector(
           onLongPress: onLongPress,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  image,
-                  if (_statusLabel != null)
-                    Positioned(
-                      left: tokens.space2,
-                      top: tokens.space2,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: tokens.space2,
-                          vertical: tokens.space1 / 2,
-                        ),
-                        decoration: ShapeDecoration(
-                          color: status == ListingCardStatus.expiring
-                              ? tokens.warningContainer
-                              : colors.surfaceContainerHigh,
-                          shape: const StadiumBorder(),
-                        ),
-                        child: Text(
-                          _statusLabel!,
-                          style: context.text.labelSmall?.copyWith(
-                            color: status == ListingCardStatus.expiring
-                                ? tokens.warning
-                                : colors.onSurface,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              // Fixed 118dp content block (whole.md §4.3) — the 2-line
-              // title box is reserved whether the title fills it or not.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
                   children: [
-                    Text(
-                      priceLabel,
-                      style: context.text.titleMedium?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: colors.onSurface,
-                        height: 1.2,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      height: 34,
-                      child: Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.text.bodySmall?.copyWith(
-                          fontSize: 13,
-                          height: 1.3,
-                          color: colors.onSurface.withValues(alpha: .85),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 20,
-                      child: Row(
-                        children: [
-                          VerifiedAvatar(
-                            name: sellerName,
-                            size: AvatarSize.xs,
+                    image,
+                    if (_statusLabel != null)
+                      Positioned(
+                        left: tokens.space2,
+                        top: tokens.space2,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: tokens.space2,
+                            vertical: tokens.space1 / 2,
                           ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              sellerName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.text.labelSmall?.copyWith(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: colors.onSurfaceVariant,
-                              ),
+                          decoration: ShapeDecoration(
+                            color: status == ListingCardStatus.expiring
+                                ? tokens.warningContainer
+                                : colors.surfaceContainerHigh,
+                            shape: const StadiumBorder(),
+                          ),
+                          child: Text(
+                            _statusLabel!,
+                            style: context.text.labelSmall?.copyWith(
+                              color: status == ListingCardStatus.expiring
+                                  ? tokens.warning
+                                  : colors.onSurface,
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          ReputationChip(
-                            rating: rating,
-                            ratingCount: ratingCount,
-                            variant: ReputationVariant.compact,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      height: 16,
-                      child: metaLabel == null
-                          ? null
-                          : Text(
-                              metaLabel!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.text.labelSmall?.copyWith(
-                                fontSize: 11,
-                                color: colors.onSurfaceVariant.withValues(
-                                  alpha: .8,
+                  ],
+                ),
+                // Fixed 118dp content block (whole.md §4.3) — the 2-line
+                // title box is reserved whether the title fills it or not.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        priceLabel,
+                        // Inter w700 tabular figures — same 20dp line as before
+                        // (16 * 1.2); geometry is load-bearing (see const doc).
+                        style: AppTextStyles.statSmall.copyWith(
+                          color: colors.onSurface,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        height: 34,
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.text.bodySmall?.copyWith(
+                            fontSize: 13,
+                            height: 1.3,
+                            color: colors.onSurface.withValues(alpha: .85),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 20,
+                        child: Row(
+                          children: [
+                            VerifiedAvatar(
+                              name: sellerName,
+                              size: AvatarSize.xs,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                sellerName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.text.labelSmall?.copyWith(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: colors.onSurfaceVariant,
                                 ),
                               ),
                             ),
-                    ),
-                  ],
+                            const SizedBox(width: 6),
+                            ReputationChip(
+                              rating: rating,
+                              ratingCount: ratingCount,
+                              variant: ReputationVariant.compact,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        height: 16,
+                        child: metaLabel == null
+                            ? null
+                            : Text(
+                                metaLabel!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.text.labelSmall?.copyWith(
+                                  fontSize: 11,
+                                  color: colors.onSurfaceVariant.withValues(
+                                    alpha: .8,
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

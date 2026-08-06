@@ -141,8 +141,8 @@ class _AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: shell,
-      // 1px outlineVariant top border (whole.md §5.5) — Law 1 hairline in
-      // place of elevation.
+      // 1px outlineVariant top border — Fifty Free hairline (#EEF1F2 via
+      // the scheme) in place of elevation.
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(

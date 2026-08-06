@@ -1,8 +1,10 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
+import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/marketplace/data/listings_repository.dart';
@@ -177,9 +179,9 @@ class _MyListingRow extends StatelessWidget {
     final colors = context.colors;
     final isSold = listing.status == ListingStatus.sold;
 
-    return Card(
-      child: InkWell(
-        onTap: onTap,
+    return Pressable(
+      onTap: onTap,
+      child: Card(
         child: Padding(
           padding: EdgeInsets.all(tokens.space3),
           child: Row(
@@ -210,15 +212,12 @@ class _MyListingRow extends StatelessWidget {
                     SizedBox(height: tokens.space1),
                     Text(
                       formatPrice(listing.priceCents),
-                      style: context.text.titleMedium?.copyWith(
+                      // Inter w700 tabular, onSurface — never blue.
+                      style: AppTextStyles.statSmall.copyWith(
                         color: isSold
                             ? colors.onSurfaceVariant
                             : colors.onSurface,
-                        fontWeight: FontWeight.w700,
                         decoration: isSold ? TextDecoration.lineThrough : null,
-                        fontFeatures: const [
-                          FontFeature.tabularFigures(),
-                        ],
                       ),
                     ),
                     SizedBox(height: tokens.space1),

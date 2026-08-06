@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
 /// Avatar sizes (spec §10.1).
@@ -60,16 +61,17 @@ class VerifiedAvatar extends StatelessWidget {
         width: dp,
         height: dp,
         child: imageUrl == null || imageUrl!.isEmpty
+            // Fifty Free avatar: primaryBg circle, Manrope w800 letter in
+            // primaryDark (mapped to primaryContainer/onPrimaryContainer).
             ? ColoredBox(
-                color: colors.secondaryContainer,
+                color: colors.primaryContainer,
                 child: Center(
                   child: Text(
                     _initials,
-                    style:
-                        (dp >= AvatarSize.lg.dp
-                                ? context.text.titleMedium
-                                : context.text.labelMedium)
-                            ?.copyWith(color: colors.onSecondaryContainer),
+                    style: AppTextStyles.avatarLetter.copyWith(
+                      fontSize: dp * 0.36,
+                      color: colors.onPrimaryContainer,
+                    ),
                   ),
                 ),
               )
@@ -79,12 +81,13 @@ class VerifiedAvatar extends StatelessWidget {
                 placeholder: (_, _) =>
                     ColoredBox(color: colors.surfaceContainerHighest),
                 errorWidget: (_, _, _) => ColoredBox(
-                  color: colors.secondaryContainer,
+                  color: colors.primaryContainer,
                   child: Center(
                     child: Text(
                       _initials,
-                      style: context.text.labelMedium?.copyWith(
-                        color: colors.onSecondaryContainer,
+                      style: AppTextStyles.avatarLetter.copyWith(
+                        fontSize: dp * 0.36,
+                        color: colors.onPrimaryContainer,
                       ),
                     ),
                   ),

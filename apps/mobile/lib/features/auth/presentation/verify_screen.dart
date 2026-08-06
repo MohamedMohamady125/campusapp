@@ -78,7 +78,9 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                   children: [
                     Text(
                       'We sent a 6-digit code to\n${widget.email}',
-                      style: context.text.bodyLarge,
+                      style: context.text.bodyMedium?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: tokens.space6),

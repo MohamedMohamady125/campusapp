@@ -1,4 +1,5 @@
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
 /// Bottom-anchored message composer (spec §10.5).
@@ -65,7 +66,7 @@ class _ComposerState extends State<Composer> {
     final colors = context.colors;
 
     return ColoredBox(
-      color: colors.surfaceContainer,
+      color: colors.surface,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -100,6 +101,14 @@ class _ComposerState extends State<Composer> {
                 child: IconButton.filled(
                   onPressed: widget.enabled && _hasContent ? _send : null,
                   tooltip: 'Send',
+                  // Circular solid-blue send control (Fifty Free §7).
+                  style: IconButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                    disabledBackgroundColor: AppColors.primaryDisabled,
+                    disabledForegroundColor: colors.onPrimary,
+                    shape: const CircleBorder(),
+                  ),
                   icon: const Icon(Icons.arrow_upward, size: 20),
                 ),
               ),

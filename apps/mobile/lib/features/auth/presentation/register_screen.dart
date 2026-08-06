@@ -1,13 +1,15 @@
 import 'dart:async' show unawaited;
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// Sign-up (spec M2): .edu email -> verification code screen.
-/// Atlas Dark (whole.md): flat surfaces, hairline borders, no gradients.
+/// Fifty Free: flat white surfaces, hairline borders, no gradients.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -92,21 +94,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(height: tokens.space4),
-                      // --- Wordmark (flat, hairline — Law 1) ---
+                      // --- Wordmark (flat, hairline — Fifty Free) ---
                       Center(
                         child: Container(
                           width: 64,
                           height: 64,
                           decoration: ShapeDecoration(
-                            color: colors.surfaceContainerHigh,
+                            color: AppColors.primaryBg,
                             shape: RoundedRectangleBorder(
-                              borderRadius: tokens.brLg,
-                              side: BorderSide(color: colors.outlineVariant),
+                              borderRadius: tokens.brMd,
+                              side: const BorderSide(
+                                color: AppColors.primaryBorder,
+                              ),
                             ),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.school_outlined,
-                            color: colors.onSurface,
+                            color: AppColors.primaryDark,
                             size: 30,
                           ),
                         ),
@@ -115,9 +119,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       // --- Title ---
                       Text(
                         'Create your account',
-                        style: text.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.heading,
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: tokens.space2),
@@ -232,21 +234,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         ),
                       ),
                       SizedBox(height: tokens.space4),
-                      // --- Submit button ---
-                      SizedBox(
-                        height: 52,
-                        child: FilledButton(
-                          onPressed: _submitting ? null : _submit,
-                          child: _submitting
-                              ? SizedBox.square(
-                                  dimension: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: colors.onPrimary,
-                                  ),
-                                )
-                              : const Text('Create account'),
-                        ),
+                      // --- Submit button (theme = blue pill, 52dp) ---
+                      FilledButton(
+                        onPressed: _submitting ? null : _submit,
+                        child: _submitting
+                            ? SizedBox.square(
+                                dimension: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: colors.onPrimary,
+                                ),
+                              )
+                            : const Text('Create account'),
                       ),
                       SizedBox(height: tokens.space8),
                       // --- Sign in link ---

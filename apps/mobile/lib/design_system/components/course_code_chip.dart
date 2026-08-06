@@ -1,10 +1,12 @@
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
-/// Course code chip, e.g. `CS250` (spec §10.9).
+/// Course code chip, e.g. `CS250` (spec §10.9, Fifty Free §3).
 ///
-/// Rectangular (radiusSm), not stadium — course codes are identifiers and
-/// rectangular reads as "data", not "tag". Tapping opens tutor search.
+/// Stadium pill with the tinted-blue selected treatment: identifiers get
+/// the brand accent so they read as tappable data. Tapping opens tutor
+/// search.
 class CourseCodeChip extends StatelessWidget {
   const CourseCodeChip({required this.code, super.key, this.onTap});
 
@@ -17,11 +19,13 @@ class CourseCodeChip extends StatelessWidget {
     final colors = context.colors;
 
     return Material(
-      color: colors.secondaryContainer,
-      borderRadius: tokens.brSm,
+      color: colors.primaryContainer,
+      shape: const StadiumBorder(
+        side: BorderSide(color: AppColors.primaryBorder),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: tokens.brSm,
+        customBorder: const StadiumBorder(),
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: tokens.space3,
@@ -30,9 +34,9 @@ class CourseCodeChip extends StatelessWidget {
           child: Text(
             code,
             style: context.text.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
-              color: colors.onSecondaryContainer,
+              color: colors.primary,
             ),
           ),
         ),

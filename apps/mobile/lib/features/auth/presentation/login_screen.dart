@@ -1,14 +1,16 @@
 import 'dart:async' show unawaited;
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Login — Atlas Dark (whole.md): flat surfaces, hairline borders, no
-/// gradients or shadows. Forgiving form: inline validation, preserved
-/// input, submit disabled only while in-flight.
+/// Login — Fifty Free: flat white, hairline borders, no gradients or
+/// shadows. Forgiving form: inline validation, preserved input, submit
+/// disabled only while in-flight.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -85,21 +87,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(height: tokens.space6),
-                      // --- Wordmark (flat, hairline — Law 1) ---
+                      // --- Wordmark (flat, hairline — Fifty Free) ---
                       Center(
                         child: Container(
                           width: 64,
                           height: 64,
                           decoration: ShapeDecoration(
-                            color: colors.surfaceContainerHigh,
+                            color: AppColors.primaryBg,
                             shape: RoundedRectangleBorder(
-                              borderRadius: tokens.brLg,
-                              side: BorderSide(color: colors.outlineVariant),
+                              borderRadius: tokens.brMd,
+                              side: const BorderSide(
+                                color: AppColors.primaryBorder,
+                              ),
                             ),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.school_outlined,
-                            color: colors.onSurface,
+                            color: AppColors.primaryDark,
                             size: 30,
                           ),
                         ),
@@ -108,9 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // --- Title ---
                       Text(
                         'CampusConnect',
-                        style: text.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.displayMedium,
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: tokens.space2),
@@ -197,21 +199,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                       ),
                       SizedBox(height: tokens.space6),
-                      // --- Submit button ---
-                      SizedBox(
-                        height: 52,
-                        child: FilledButton(
-                          onPressed: _submitting ? null : _submit,
-                          child: _submitting
-                              ? SizedBox.square(
-                                  dimension: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: colors.onPrimary,
-                                  ),
-                                )
-                              : const Text('Sign in'),
-                        ),
+                      // --- Submit button (theme = blue pill, 52dp) ---
+                      FilledButton(
+                        onPressed: _submitting ? null : _submit,
+                        child: _submitting
+                            ? SizedBox.square(
+                                dimension: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: colors.onPrimary,
+                                ),
+                              )
+                            : const Text('Sign in'),
                       ),
                       SizedBox(height: tokens.space8),
                       // --- Register link ---

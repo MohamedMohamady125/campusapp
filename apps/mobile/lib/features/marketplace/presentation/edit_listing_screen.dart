@@ -1,6 +1,7 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/marketplace/data/listings_repository.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_controller.dart';
@@ -127,6 +128,9 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Eyebrow micro-label (Fifty Free recipe 2).
+                    Text('DETAILS', style: AppTextStyles.label),
+                    SizedBox(height: tokens.space3),
                     TextFormField(
                       controller: _title,
                       textCapitalization: TextCapitalization.sentences,
@@ -185,7 +189,9 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                         () => _condition = v ?? _condition,
                       ),
                     ),
-                    SizedBox(height: tokens.space4),
+                    SizedBox(height: tokens.space6),
+                    Text('DESCRIPTION', style: AppTextStyles.label),
+                    SizedBox(height: tokens.space3),
                     TextFormField(
                       controller: _description,
                       maxLines: 4,

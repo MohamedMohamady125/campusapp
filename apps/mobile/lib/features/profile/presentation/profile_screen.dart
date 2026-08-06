@@ -1,6 +1,7 @@
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,7 +35,7 @@ class ProfileScreen extends ConsumerWidget {
                     SizedBox(height: tokens.space3),
                     Text(
                       user.displayName,
-                      style: context.text.titleLarge,
+                      style: AppTextStyles.profileName,
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: tokens.space1),

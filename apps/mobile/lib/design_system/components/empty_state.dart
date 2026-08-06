@@ -1,4 +1,6 @@
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
 /// Empty state (spec §10.7, §13.2).
@@ -36,12 +38,24 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: colors.onSurfaceVariant),
-            SizedBox(height: tokens.space4),
+            // 72dp soft circle, 32dp muted icon (Fifty Free §5).
+            Container(
+              width: 72,
+              height: 72,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: colors.surfaceContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 32, color: AppColors.textTertiary),
+            ),
+            SizedBox(height: tokens.space5),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: context.text.titleMedium,
+              style: AppTextStyles.titleLarge.copyWith(
+                color: colors.onSurface,
+              ),
             ),
             SizedBox(height: tokens.space2),
             Text(
@@ -49,7 +63,7 @@ class EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: context.text.bodyMedium?.copyWith(
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: colors.onSurfaceVariant,
               ),
             ),

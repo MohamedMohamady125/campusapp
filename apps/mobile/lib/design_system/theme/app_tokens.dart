@@ -23,10 +23,12 @@ class AppTokens extends ThemeExtension<AppTokens> {
     this.space6 = 24,
     this.space8 = 32,
     this.space12 = 48,
-    this.radiusXs = 4,
-    this.radiusSm = 10,
-    this.radiusMd = 12,
-    this.radiusLg = 16,
+    this.radiusXs = 8,
+    this.radiusSm = 12,
+    this.radiusMd = 16,
+    this.radiusLg = 24,
+    this.radiusXl = 28,
+    this.radiusFull = 100,
   });
 
   final Color verified;
@@ -50,29 +52,34 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final double radiusSm;
   final double radiusMd;
   final double radiusLg;
+  final double radiusXl;
+  final double radiusFull;
 
+  BorderRadius get brXs => BorderRadius.circular(radiusXs);
   BorderRadius get brSm => BorderRadius.circular(radiusSm);
   BorderRadius get brMd => BorderRadius.circular(radiusMd);
   BorderRadius get brLg => BorderRadius.circular(radiusLg);
+  BorderRadius get brFull => BorderRadius.circular(radiusFull);
 
   static const darkTokens = AppTokens(
-    verified: Color(0xFF3DD9A0),
-    onVerified: Color(0xFF00382A),
-    success: Color(0xFF3DD9A0),
-    warning: Color(0xFFF5BF54),
+    verified: Color(0xFF4A84B8),
+    onVerified: Color(0xFFFFFFFF),
+    success: Color(0xFF10B981),
+    warning: Color(0xFFFFB700),
     warningContainer: Color(0xFF5C3D00),
-    ratingStar: Color(0xFFF5C451),
-    online: Color(0xFF3DD9A0),
+    ratingStar: Color(0xFFF5A623),
+    online: Color(0xFF10B981),
   );
 
+  // Fifty Free status/accent tokens.
   static const lightTokens = AppTokens(
-    verified: Color(0xFF12805C),
+    verified: Color(0xFF144F86),
     onVerified: Color(0xFFFFFFFF),
-    success: Color(0xFF12805C),
-    warning: Color(0xFF8A5A00),
-    warningContainer: Color(0xFFFFEDCB),
-    ratingStar: Color(0xFFC9930A),
-    online: Color(0xFF12805C),
+    success: Color(0xFF059669),
+    warning: Color(0xFFF59E0B),
+    warningContainer: Color(0xFFFFF6E0),
+    ratingStar: Color(0xFFF5A623),
+    online: Color(0xFF10B981),
   );
 
   @override

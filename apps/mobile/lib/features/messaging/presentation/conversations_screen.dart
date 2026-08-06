@@ -1,6 +1,7 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/design_system/components/chat_list_row.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
+import 'package:campusconnect/design_system/components/fade_slide_in.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
@@ -69,14 +70,17 @@ class ConversationsList extends ConsumerWidget {
                 (p) => p.id != myId,
                 orElse: () => convo.participants.first,
               );
-              return ChatListRow(
-                name: other.displayName,
-                // API doesn't expose a last-message preview yet; the
-                // context origin is the most useful line we have.
-                preview: _contextLabels[convo.contextType] ?? 'Conversation',
-                onTap: () => context.go(
-                  '/chats/conversation/${convo.id}',
-                  extra: other.displayName,
+              return FadeSlideIn(
+                index: i,
+                child: ChatListRow(
+                  name: other.displayName,
+                  // API doesn't expose a last-message preview yet; the
+                  // context origin is the most useful line we have.
+                  preview: _contextLabels[convo.contextType] ?? 'Conversation',
+                  onTap: () => context.go(
+                    '/chats/conversation/${convo.id}',
+                    extra: other.displayName,
+                  ),
                 ),
               );
             },

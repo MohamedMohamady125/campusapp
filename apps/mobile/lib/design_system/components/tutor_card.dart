@@ -1,6 +1,8 @@
+import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
 /// Tutor list row, min 88dp (spec §10.4).
@@ -42,95 +44,91 @@ class TutorCard extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
 
-    return Card(
-      color: promoted ? colors.surfaceContainer : null,
-      child: InkWell(
+    return MergeSemantics(
+      child: Pressable(
         onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 88),
-          child: Padding(
-            padding: EdgeInsets.all(tokens.space3),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (promoted) ...[
-                  Text(
-                    'Promoted',
-                    style: context.text.labelSmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  SizedBox(height: tokens.space1),
-                ],
-                // No MergeSemantics: letting the texts merge up into the
-                // InkWell's semantics node gives the tap target its label.
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    VerifiedAvatar(
-                      name: name,
-                      imageUrl: avatarUrl,
-                      size: AvatarSize.lg,
-                    ),
-                    SizedBox(width: tokens.space3),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(name, style: context.text.titleMedium),
-                          SizedBox(height: tokens.space1),
-                          Text(
-                            courseSignal,
-                            style: context.text.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          if (rankReason != null) ...[
+        child: Card(
+          color: promoted ? colors.surfaceContainerLow : null,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 88),
+            child: Padding(
+              padding: EdgeInsets.all(tokens.space3),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (promoted) ...[
+                    // Eyebrow micro-label (Fifty Free §9).
+                    Text('Promoted'.toUpperCase(), style: AppTextStyles.label),
+                    SizedBox(height: tokens.space1),
+                  ],
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      VerifiedAvatar(
+                        name: name,
+                        imageUrl: avatarUrl,
+                        size: AvatarSize.lg,
+                      ),
+                      SizedBox(width: tokens.space3),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, style: context.text.titleMedium),
                             SizedBox(height: tokens.space1),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.bolt,
-                                  size: 14,
-                                  color: colors.onSurfaceVariant,
-                                ),
-                                SizedBox(width: tokens.space1),
-                                Flexible(
-                                  child: Text(
-                                    rankReason!,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: context.text.bodySmall?.copyWith(
-                                      color: colors.onSurfaceVariant,
+                            Text(
+                              courseSignal,
+                              style: context.text.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (rankReason != null) ...[
+                              SizedBox(height: tokens.space1),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.bolt,
+                                    size: 14,
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                  SizedBox(width: tokens.space1),
+                                  Flexible(
+                                    child: Text(
+                                      rankReason!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: context.text.bodySmall?.copyWith(
+                                        color: colors.onSurfaceVariant,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    SizedBox(width: tokens.space2),
-                    ReputationChip(
-                      rating: rating,
-                      ratingCount: ratingCount,
-                      variant: ReputationVariant.compact,
-                    ),
-                  ],
-                ),
-                SizedBox(height: tokens.space2),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.tonal(
-                    onPressed: onMessage,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(64, 40),
-                    ),
-                    child: const Text('Message'),
+                      SizedBox(width: tokens.space2),
+                      ReputationChip(
+                        rating: rating,
+                        ratingCount: ratingCount,
+                        variant: ReputationVariant.compact,
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  SizedBox(height: tokens.space2),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.tonal(
+                      onPressed: onMessage,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(64, 40),
+                      ),
+                      child: const Text('Message'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

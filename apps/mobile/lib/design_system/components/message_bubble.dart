@@ -4,10 +4,11 @@ import 'package:campusconnect/design_system/theme/app_tokens.dart';
 /// Delivery state of a message (spec §10.5).
 enum MessageStatus { sending, sent, failed }
 
-/// Chat bubble (spec §10.5).
+/// Chat bubble (spec §10.5, Fifty Free §4).
 ///
-/// Mine: `primaryContainer`, right-aligned, 4dp bottom-right corner.
-/// Theirs: `surfaceContainerHigh`, left-aligned, 4dp bottom-left corner.
+/// Mine: solid `primary` blue with white text, right-aligned, 4dp
+/// bottom-right corner. Theirs: `surfaceContainerLow`, left-aligned,
+/// 4dp bottom-left corner.
 /// Max width 78% of the screen. Failed messages get a 2dp error left edge
 /// and a tappable "Tap to retry" — an icon + text, never colour alone.
 class MessageBubble extends StatelessWidget {
@@ -36,11 +37,12 @@ class MessageBubble extends StatelessWidget {
     final colors = context.colors;
     final failed = status == MessageStatus.failed;
 
+    final round = Radius.circular(tokens.radiusLg);
     final radius = BorderRadius.only(
-      topLeft: const Radius.circular(16),
-      topRight: const Radius.circular(16),
-      bottomLeft: Radius.circular(isMine ? 16 : 4),
-      bottomRight: Radius.circular(isMine ? 4 : 16),
+      topLeft: round,
+      topRight: round,
+      bottomLeft: isMine ? round : const Radius.circular(4),
+      bottomRight: isMine ? const Radius.circular(4) : round,
     );
 
     final bubble = Container(
@@ -52,7 +54,7 @@ class MessageBubble extends StatelessWidget {
         vertical: tokens.space2,
       ),
       decoration: BoxDecoration(
-        color: isMine ? colors.primaryContainer : colors.surfaceContainerHigh,
+        color: isMine ? colors.primary : colors.surfaceContainerLow,
         borderRadius: radius,
         border: failed
             ? Border(left: BorderSide(color: colors.error, width: 2))
@@ -61,7 +63,7 @@ class MessageBubble extends StatelessWidget {
       child: Text(
         body,
         style: context.text.bodyLarge?.copyWith(
-          color: isMine ? colors.onPrimaryContainer : colors.onSurface,
+          color: isMine ? colors.onPrimary : colors.onSurface,
         ),
       ),
     );

@@ -1,10 +1,12 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/design_system/components/content_width.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
+import 'package:campusconnect/design_system/components/fade_slide_in.dart';
 import 'package:campusconnect/design_system/components/filter_chip_row.dart';
 import 'package:campusconnect/design_system/components/listing_card.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,7 +87,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Market', style: context.text.titleLarge),
+                            Text('Market', style: AppTextStyles.heading),
                             SizedBox(height: tokens.space3),
                             TextField(
                               decoration: const InputDecoration(
@@ -171,8 +173,10 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                       sliver: SliverGrid.builder(
                         gridDelegate: gridDelegate,
                         itemCount: state.items.length,
-                        itemBuilder: (context, i) =>
-                            _BrowseListingCard(listing: state.items[i]),
+                        itemBuilder: (context, i) => FadeSlideIn(
+                          index: i,
+                          child: _BrowseListingCard(listing: state.items[i]),
+                        ),
                       ),
                     ),
                   if (state.loadingMore)
