@@ -16,6 +16,12 @@ class ChatsRepository {
     return res.data!.items.toList();
   }
 
+  /// Chats the current user belongs to — used for owner detection (Sprint 6).
+  Future<List<ChatResponse>> myChats() async {
+    final res = await _chats.myChatsApiV1ChatsGet(limit: 50);
+    return res.data!.items.toList();
+  }
+
   /// Joins a chat; already-a-member conflicts are treated as success so
   /// the J3 tap-through is idempotent.
   Future<void> join(String chatId) async {
@@ -44,6 +50,56 @@ class ChatsRepository {
       chatMessageCreateRequest: ChatMessageCreateRequest((b) => b.body = body),
     );
     return res.data!;
+  }
+
+  // -- Moderation (Sprint 6): mods/owners only; the API enforces roles. -----
+
+  /// Deletes a message with a required reason (3..300 chars, API-validated).
+  Future<void> deleteMessage(
+    String chatId,
+    String messageId,
+    String reason,
+  ) async {
+    await _chats.deleteChatMessageApiV1ChatsChatIdMessagesMessageIdDeletePost(
+      chatId: chatId,
+      messageId: messageId,
+      chatMessageDeleteRequest: ChatMessageDeleteRequest(
+        (b) => b.reason = reason,
+      ),
+    );
+  }
+
+  Future<void> muteMember(
+    String chatId,
+    String userId, {
+    required int minutes,
+    required String reason,
+  }) async {
+    await _chats.muteMemberApiV1ChatsChatIdMembersUserIdMutePost(
+      chatId: chatId,
+      userId: userId,
+      muteRequest: MuteRequest(
+        (b) => b
+          ..minutes = minutes
+          ..reason = reason,
+      ),
+    );
+  }
+
+  Future<void> banMember(String chatId, String userId, {String? reason}) async {
+    await _chats.banMemberApiV1ChatsChatIdMembersUserIdBanPost(
+      chatId: chatId,
+      userId: userId,
+      banRequest: reason == null ? null : BanRequest((b) => b.reason = reason),
+    );
+  }
+
+  /// Promotes a member to moderator (owner only; 409 `ALREADY_MOD`).
+  Future<void> promoteMember(String chatId, String userId) async {
+    await _chats.promoteMemberApiV1ChatsChatIdMembersUserIdPromotePost(
+      chatId: chatId,
+      userId: userId,
+    );
   }
 }
 

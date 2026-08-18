@@ -75,6 +75,12 @@ class ChatMessage(TimestampedBase):
     body: Mapped[str] = mapped_column(Text)
     attachment_key: Mapped[str | None] = mapped_column(String(255))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Tombstoned moderation deletes: who removed it and why (shown in the feed).
+    deleted_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    deleted_reason: Mapped[str | None] = mapped_column(String(300))
 
     chat: Mapped[Chat] = relationship()
-    sender: Mapped[User] = relationship()
+    sender: Mapped[User] = relationship(foreign_keys=[sender_id])
+    deleted_by: Mapped[User | None] = relationship(foreign_keys=[deleted_by_id])

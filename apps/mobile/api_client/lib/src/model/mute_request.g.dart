@@ -9,11 +9,13 @@ part of 'mute_request.dart';
 class _$MuteRequest extends MuteRequest {
   @override
   final int? minutes;
+  @override
+  final String reason;
 
   factory _$MuteRequest([void Function(MuteRequestBuilder)? updates]) =>
       (MuteRequestBuilder()..update(updates))._build();
 
-  _$MuteRequest._({this.minutes}) : super._();
+  _$MuteRequest._({this.minutes, required this.reason}) : super._();
   @override
   MuteRequest rebuild(void Function(MuteRequestBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -24,13 +26,16 @@ class _$MuteRequest extends MuteRequest {
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    return other is MuteRequest && minutes == other.minutes;
+    return other is MuteRequest &&
+        minutes == other.minutes &&
+        reason == other.reason;
   }
 
   @override
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, minutes.hashCode);
+    _$hash = $jc(_$hash, reason.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -38,7 +43,8 @@ class _$MuteRequest extends MuteRequest {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'MuteRequest')
-          ..add('minutes', minutes))
+          ..add('minutes', minutes)
+          ..add('reason', reason))
         .toString();
   }
 }
@@ -50,6 +56,10 @@ class MuteRequestBuilder implements Builder<MuteRequest, MuteRequestBuilder> {
   int? get minutes => _$this._minutes;
   set minutes(int? minutes) => _$this._minutes = minutes;
 
+  String? _reason;
+  String? get reason => _$this._reason;
+  set reason(String? reason) => _$this._reason = reason;
+
   MuteRequestBuilder() {
     MuteRequest._defaults(this);
   }
@@ -58,6 +68,7 @@ class MuteRequestBuilder implements Builder<MuteRequest, MuteRequestBuilder> {
     final $v = _$v;
     if ($v != null) {
       _minutes = $v.minutes;
+      _reason = $v.reason;
       _$v = null;
     }
     return this;
@@ -80,6 +91,8 @@ class MuteRequestBuilder implements Builder<MuteRequest, MuteRequestBuilder> {
     final _$result = _$v ??
         _$MuteRequest._(
           minutes: minutes,
+          reason: BuiltValueNullFieldError.checkNotNull(
+              reason, r'MuteRequest', 'reason'),
         );
     replace(_$result);
     return _$result;

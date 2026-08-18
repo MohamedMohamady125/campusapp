@@ -16,9 +16,11 @@ import 'package:campus_api/src/model/date.dart';
 
 import 'package:campus_api/src/model/app_schemas_auth_message_response.dart';
 import 'package:campus_api/src/model/app_schemas_conversation_message_response.dart';
+import 'package:campus_api/src/model/ban_request.dart';
 import 'package:campus_api/src/model/chat_create_request.dart';
 import 'package:campus_api/src/model/chat_membership_response.dart';
 import 'package:campus_api/src/model/chat_message_create_request.dart';
+import 'package:campus_api/src/model/chat_message_delete_request.dart';
 import 'package:campus_api/src/model/chat_message_page_response.dart';
 import 'package:campus_api/src/model/chat_message_response.dart';
 import 'package:campus_api/src/model/chat_page_response.dart';
@@ -92,9 +94,11 @@ part 'serializers.g.dart';
 @SerializersFor([
   AppSchemasAuthMessageResponse,
   AppSchemasConversationMessageResponse,
+  BanRequest,
   ChatCreateRequest,
   ChatMembershipResponse,
   ChatMessageCreateRequest,
+  ChatMessageDeleteRequest,
   ChatMessagePageResponse,
   ChatMessageResponse,
   ChatPageResponse,

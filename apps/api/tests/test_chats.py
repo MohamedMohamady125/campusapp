@@ -101,22 +101,28 @@ async def test_moderation_with_audit_log(client: httpx.AsyncClient) -> None:
 
     # Plain members cannot moderate.
     resp = await client.post(
-        f"/api/v1/chats/{chat['id']}/messages/{message_id}/delete", headers=member
+        f"/api/v1/chats/{chat['id']}/messages/{message_id}/delete",
+        json={"reason": "not a mod"},
+        headers=member,
     )
     assert resp.status_code == 403
 
-    # Owner deletes the message → gone from the feed.
+    # Owner deletes the message → it stays in the feed as a tombstone (Sprint 6).
     resp = await client.post(
-        f"/api/v1/chats/{chat['id']}/messages/{message_id}/delete", headers=owner
+        f"/api/v1/chats/{chat['id']}/messages/{message_id}/delete",
+        json={"reason": "spam content"},
+        headers=owner,
     )
     assert resp.status_code == 204
     resp = await client.get(f"/api/v1/chats/{chat['id']}/messages", headers=owner)
-    assert resp.json()["items"] == []
+    tombstone = resp.json()["items"][0]
+    assert tombstone["deleted_at"] is not None
+    assert tombstone["body"] == ""
 
     # Mute → posting blocked with MUTED.
     resp = await client.post(
         f"/api/v1/chats/{chat['id']}/members/{member_id}/mute",
-        json={"minutes": 30},
+        json={"minutes": 30, "reason": "spamming"},
         headers=owner,
     )
     assert resp.status_code == 200 and resp.json()["muted_until"] is not None

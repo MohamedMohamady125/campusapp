@@ -6,63 +6,53 @@
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
-part 'mute_request.g.dart';
+part 'ban_request.g.dart';
 
-/// MuteRequest
+/// BanRequest
 ///
 /// Properties:
-/// * [minutes] 
 /// * [reason] 
 @BuiltValue()
-abstract class MuteRequest implements Built<MuteRequest, MuteRequestBuilder> {
-  @BuiltValueField(wireName: r'minutes')
-  int? get minutes;
-
+abstract class BanRequest implements Built<BanRequest, BanRequestBuilder> {
   @BuiltValueField(wireName: r'reason')
-  String get reason;
+  String? get reason;
 
-  MuteRequest._();
+  BanRequest._();
 
-  factory MuteRequest([void updates(MuteRequestBuilder b)]) = _$MuteRequest;
+  factory BanRequest([void updates(BanRequestBuilder b)]) = _$BanRequest;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(MuteRequestBuilder b) => b
-      ..minutes = 60;
+  static void _defaults(BanRequestBuilder b) => b;
 
   @BuiltValueSerializer(custom: true)
-  static Serializer<MuteRequest> get serializer => _$MuteRequestSerializer();
+  static Serializer<BanRequest> get serializer => _$BanRequestSerializer();
 }
 
-class _$MuteRequestSerializer implements PrimitiveSerializer<MuteRequest> {
+class _$BanRequestSerializer implements PrimitiveSerializer<BanRequest> {
   @override
-  final Iterable<Type> types = const [MuteRequest, _$MuteRequest];
+  final Iterable<Type> types = const [BanRequest, _$BanRequest];
 
   @override
-  final String wireName = r'MuteRequest';
+  final String wireName = r'BanRequest';
 
   Iterable<Object?> _serializeProperties(
     Serializers serializers,
-    MuteRequest object, {
+    BanRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
-    if (object.minutes != null) {
-      yield r'minutes';
+    if (object.reason != null) {
+      yield r'reason';
       yield serializers.serialize(
-        object.minutes,
-        specifiedType: const FullType(int),
+        object.reason,
+        specifiedType: const FullType.nullable(String),
       );
     }
-    yield r'reason';
-    yield serializers.serialize(
-      object.reason,
-      specifiedType: const FullType(String),
-    );
   }
 
   @override
   Object serialize(
     Serializers serializers,
-    MuteRequest object, {
+    BanRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) {
     return _serializeProperties(serializers, object, specifiedType: specifiedType).toList();
@@ -73,25 +63,19 @@ class _$MuteRequestSerializer implements PrimitiveSerializer<MuteRequest> {
     Object serialized, {
     FullType specifiedType = FullType.unspecified,
     required List<Object?> serializedList,
-    required MuteRequestBuilder result,
+    required BanRequestBuilder result,
     required List<Object?> unhandled,
   }) {
     for (var i = 0; i < serializedList.length; i += 2) {
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
-        case r'minutes':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(int),
-          ) as int;
-          result.minutes = valueDes;
-          break;
         case r'reason':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.reason = valueDes;
           break;
         default:
@@ -103,12 +87,12 @@ class _$MuteRequestSerializer implements PrimitiveSerializer<MuteRequest> {
   }
 
   @override
-  MuteRequest deserialize(
+  BanRequest deserialize(
     Serializers serializers,
     Object serialized, {
     FullType specifiedType = FullType.unspecified,
   }) {
-    final result = MuteRequestBuilder();
+    final result = BanRequestBuilder();
     final serializedList = (serialized as Iterable<Object?>).toList();
     final unhandled = <Object?>[];
     _deserializeProperties(

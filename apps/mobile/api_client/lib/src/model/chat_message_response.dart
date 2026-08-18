@@ -14,6 +14,9 @@ part 'chat_message_response.g.dart';
 /// * [body] 
 /// * [chatId] 
 /// * [createdAt] 
+/// * [deletedAt] 
+/// * [deletedByName] 
+/// * [deletedReason] 
 /// * [id] 
 /// * [senderId] 
 @BuiltValue()
@@ -26,6 +29,15 @@ abstract class ChatMessageResponse implements Built<ChatMessageResponse, ChatMes
 
   @BuiltValueField(wireName: r'created_at')
   DateTime get createdAt;
+
+  @BuiltValueField(wireName: r'deleted_at')
+  DateTime? get deletedAt;
+
+  @BuiltValueField(wireName: r'deleted_by_name')
+  String? get deletedByName;
+
+  @BuiltValueField(wireName: r'deleted_reason')
+  String? get deletedReason;
 
   @BuiltValueField(wireName: r'id')
   String get id;
@@ -71,6 +83,27 @@ class _$ChatMessageResponseSerializer implements PrimitiveSerializer<ChatMessage
       object.createdAt,
       specifiedType: const FullType(DateTime),
     );
+    if (object.deletedAt != null) {
+      yield r'deleted_at';
+      yield serializers.serialize(
+        object.deletedAt,
+        specifiedType: const FullType.nullable(DateTime),
+      );
+    }
+    if (object.deletedByName != null) {
+      yield r'deleted_by_name';
+      yield serializers.serialize(
+        object.deletedByName,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
+    if (object.deletedReason != null) {
+      yield r'deleted_reason';
+      yield serializers.serialize(
+        object.deletedReason,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
     yield r'id';
     yield serializers.serialize(
       object.id,
@@ -124,6 +157,30 @@ class _$ChatMessageResponseSerializer implements PrimitiveSerializer<ChatMessage
             specifiedType: const FullType(DateTime),
           ) as DateTime;
           result.createdAt = valueDes;
+          break;
+        case r'deleted_at':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
+          result.deletedAt = valueDes;
+          break;
+        case r'deleted_by_name':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.deletedByName = valueDes;
+          break;
+        case r'deleted_reason':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.deletedReason = valueDes;
           break;
         case r'id':
           final valueDes = serializers.deserialize(

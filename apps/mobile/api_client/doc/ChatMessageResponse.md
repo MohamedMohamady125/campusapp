@@ -11,6 +11,9 @@ Name | Type | Description | Notes
 **body** | **String** |  | 
 **chatId** | **String** |  | 
 **createdAt** | [**DateTime**](DateTime.md) |  | 
+**deletedAt** | [**DateTime**](DateTime.md) |  | [optional] 
+**deletedByName** | **String** |  | [optional] 
+**deletedReason** | **String** |  | [optional] 
 **id** | **String** |  | 
 **senderId** | **String** |  | 
 

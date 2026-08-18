@@ -1,14 +1,18 @@
 import 'dart:async';
 
 import 'package:campus_api/campus_api.dart';
+import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/composer.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/message_bubble.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
+import 'package:campusconnect/design_system/components/tombstone_bubble.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/chats/data/chats_repository.dart';
+import 'package:campusconnect/features/chats/presentation/chat_role_provider.dart';
+import 'package:campusconnect/features/chats/presentation/moderation_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// State for one chat room; messages ascending by `createdAt`.
@@ -76,6 +80,27 @@ class ChatRoomController
       return false;
     }
   }
+
+  /// Optimistically swaps a message for its tombstone after a moderator
+  /// delete (Sprint 6); the next poll confirms the server state.
+  void markDeleted(String messageId, {required String reason, String? byName}) {
+    state = ChatRoomState(
+      messages: [
+        for (final m in state.messages)
+          if (m.id == messageId)
+            m.rebuild(
+              (b) => b
+                ..body = ''
+                ..deletedAt = DateTime.now().toUtc()
+                ..deletedReason = reason
+                ..deletedByName = byName,
+            )
+          else
+            m,
+      ],
+      loading: false,
+    );
+  }
 }
 
 final AutoDisposeNotifierProviderFamily<
@@ -134,10 +159,66 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     }
   }
 
+  void _snack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// Long-press moderation flow (Sprint 6): sheet → dialog → API call.
+  Future<void> _moderate(
+    ChatMessageResponse msg, {
+    required bool isOwner,
+  }) async {
+    final action = await showModerationSheet(context, canPromote: isOwner);
+    if (action == null || !mounted) return;
+    final repo = ref.read(chatsRepositoryProvider);
+    try {
+      switch (action) {
+        case ModerationAction.delete:
+          final reason = await showDeleteMessageDialog(context);
+          if (reason == null || !mounted) return;
+          final myName = ref.read(authControllerProvider).user?.displayName;
+          await repo.deleteMessage(widget.chatId, msg.id, reason);
+          ref
+              .read(chatRoomControllerProvider(widget.chatId).notifier)
+              .markDeleted(msg.id, reason: reason, byName: myName);
+        case ModerationAction.mute:
+          final choice = await showMuteMemberDialog(context);
+          if (choice == null || !mounted) return;
+          await repo.muteMember(
+            widget.chatId,
+            msg.senderId,
+            minutes: choice.$1,
+            reason: choice.$2,
+          );
+          if (mounted) _snack('Member muted.');
+        case ModerationAction.ban:
+          final confirmed = await showBanMemberDialog(context);
+          if (confirmed == null || !mounted) return;
+          await repo.banMember(
+            widget.chatId,
+            msg.senderId,
+            reason: confirmed.$1,
+          );
+          if (mounted) _snack('Member banned from this group.');
+        case ModerationAction.promote:
+          await repo.promoteMember(widget.chatId, msg.senderId);
+          if (mounted) _snack('Member is now a moderator.');
+      }
+    } on Object catch (e) {
+      // ALREADY_MOD (409) and friends surface their server message here.
+      if (mounted) _snack(apiErrorMessage(e));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(chatRoomControllerProvider(widget.chatId));
     final myId = ref.watch(authControllerProvider).user?.id;
+    final role = ref.watch(chatRoleProvider(widget.chatId)).valueOrNull;
+    final isOwner = role == ChatRole.owner;
+    final canModerate = isOwner || role == ChatRole.mod;
     final tokens = context.tokens;
 
     return Scaffold(
@@ -171,14 +252,29 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                         final msg =
                             state.messages[state.messages.length - 1 - i];
                         final pending = msg.id.startsWith('local-');
+                        final mine = msg.senderId == myId;
+                        if (msg.deletedAt != null) {
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: tokens.space2),
+                            child: TombstoneBubble(
+                              isMine: mine,
+                              deletedByName: msg.deletedByName,
+                              reason: msg.deletedReason,
+                            ),
+                          );
+                        }
                         return Padding(
                           padding: EdgeInsets.only(bottom: tokens.space2),
                           child: MessageBubble(
                             body: msg.body,
-                            isMine: msg.senderId == myId,
+                            isMine: mine,
                             status: pending
                                 ? MessageStatus.sending
                                 : MessageStatus.sent,
+                            onLongPress: canModerate && !mine && !pending
+                                ? () =>
+                                      _moderate(msg, isOwner: isOwner).ignore()
+                                : null,
                           ),
                         );
                       },

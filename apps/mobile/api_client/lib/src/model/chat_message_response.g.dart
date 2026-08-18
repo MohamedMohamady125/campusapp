@@ -14,6 +14,12 @@ class _$ChatMessageResponse extends ChatMessageResponse {
   @override
   final DateTime createdAt;
   @override
+  final DateTime? deletedAt;
+  @override
+  final String? deletedByName;
+  @override
+  final String? deletedReason;
+  @override
   final String id;
   @override
   final String senderId;
@@ -26,6 +32,9 @@ class _$ChatMessageResponse extends ChatMessageResponse {
       {required this.body,
       required this.chatId,
       required this.createdAt,
+      this.deletedAt,
+      this.deletedByName,
+      this.deletedReason,
       required this.id,
       required this.senderId})
       : super._();
@@ -45,6 +54,9 @@ class _$ChatMessageResponse extends ChatMessageResponse {
         body == other.body &&
         chatId == other.chatId &&
         createdAt == other.createdAt &&
+        deletedAt == other.deletedAt &&
+        deletedByName == other.deletedByName &&
+        deletedReason == other.deletedReason &&
         id == other.id &&
         senderId == other.senderId;
   }
@@ -55,6 +67,9 @@ class _$ChatMessageResponse extends ChatMessageResponse {
     _$hash = $jc(_$hash, body.hashCode);
     _$hash = $jc(_$hash, chatId.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
+    _$hash = $jc(_$hash, deletedAt.hashCode);
+    _$hash = $jc(_$hash, deletedByName.hashCode);
+    _$hash = $jc(_$hash, deletedReason.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, senderId.hashCode);
     _$hash = $jf(_$hash);
@@ -67,6 +82,9 @@ class _$ChatMessageResponse extends ChatMessageResponse {
           ..add('body', body)
           ..add('chatId', chatId)
           ..add('createdAt', createdAt)
+          ..add('deletedAt', deletedAt)
+          ..add('deletedByName', deletedByName)
+          ..add('deletedReason', deletedReason)
           ..add('id', id)
           ..add('senderId', senderId))
         .toString();
@@ -89,6 +107,20 @@ class ChatMessageResponseBuilder
   DateTime? get createdAt => _$this._createdAt;
   set createdAt(DateTime? createdAt) => _$this._createdAt = createdAt;
 
+  DateTime? _deletedAt;
+  DateTime? get deletedAt => _$this._deletedAt;
+  set deletedAt(DateTime? deletedAt) => _$this._deletedAt = deletedAt;
+
+  String? _deletedByName;
+  String? get deletedByName => _$this._deletedByName;
+  set deletedByName(String? deletedByName) =>
+      _$this._deletedByName = deletedByName;
+
+  String? _deletedReason;
+  String? get deletedReason => _$this._deletedReason;
+  set deletedReason(String? deletedReason) =>
+      _$this._deletedReason = deletedReason;
+
   String? _id;
   String? get id => _$this._id;
   set id(String? id) => _$this._id = id;
@@ -107,6 +139,9 @@ class ChatMessageResponseBuilder
       _body = $v.body;
       _chatId = $v.chatId;
       _createdAt = $v.createdAt;
+      _deletedAt = $v.deletedAt;
+      _deletedByName = $v.deletedByName;
+      _deletedReason = $v.deletedReason;
       _id = $v.id;
       _senderId = $v.senderId;
       _$v = null;
@@ -136,6 +171,9 @@ class ChatMessageResponseBuilder
               chatId, r'ChatMessageResponse', 'chatId'),
           createdAt: BuiltValueNullFieldError.checkNotNull(
               createdAt, r'ChatMessageResponse', 'createdAt'),
+          deletedAt: deletedAt,
+          deletedByName: deletedByName,
+          deletedReason: deletedReason,
           id: BuiltValueNullFieldError.checkNotNull(
               id, r'ChatMessageResponse', 'id'),
           senderId: BuiltValueNullFieldError.checkNotNull(

@@ -42,6 +42,9 @@ class _FakeChatsRepository implements ChatsRepository {
   Future<List<ChatResponse>> directory() async => [_chat()];
 
   @override
+  Future<List<ChatResponse>> myChats() async => [_chat()];
+
+  @override
   Future<void> join(String chatId) async {
     joinCalls++;
   }
@@ -60,6 +63,31 @@ class _FakeChatsRepository implements ChatsRepository {
     messages = [...messages, sent];
     return sent;
   }
+
+  @override
+  Future<void> deleteMessage(
+    String chatId,
+    String messageId,
+    String reason,
+  ) async {}
+
+  @override
+  Future<void> muteMember(
+    String chatId,
+    String userId, {
+    required int minutes,
+    required String reason,
+  }) async {}
+
+  @override
+  Future<void> banMember(
+    String chatId,
+    String userId, {
+    String? reason,
+  }) async {}
+
+  @override
+  Future<void> promoteMember(String chatId, String userId) async {}
 }
 
 void main() {

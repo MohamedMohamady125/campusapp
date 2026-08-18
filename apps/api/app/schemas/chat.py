@@ -55,8 +55,12 @@ class ChatMessageResponse(BaseModel):
     id: uuid.UUID
     chat_id: uuid.UUID
     sender_id: uuid.UUID
-    body: str
+    body: str  # blanked to "" server-side when the message is deleted
     created_at: datetime
+    # Tombstone fields (Sprint 6): deleted messages stay in the feed.
+    deleted_at: datetime | None = None
+    deleted_reason: str | None = None
+    deleted_by_name: str | None = None
 
 
 class ChatMessagePageResponse(BaseModel):
@@ -64,8 +68,17 @@ class ChatMessagePageResponse(BaseModel):
     next_cursor: str | None
 
 
+class ChatMessageDeleteRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=300)
+
+
 class MuteRequest(BaseModel):
     minutes: int = Field(default=60, ge=1, le=10080)  # up to 7 days
+    reason: str = Field(min_length=3, max_length=300)
+
+
+class BanRequest(BaseModel):
+    reason: str | None = Field(default=None, min_length=3, max_length=300)
 
 
 class NotificationResponse(BaseModel):

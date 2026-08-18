@@ -11,6 +11,7 @@ import 'package:campusconnect/features/marketplace/presentation/listing_detail_s
 import 'package:campusconnect/features/marketplace/presentation/my_listings_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/sell_screen.dart';
 import 'package:campusconnect/features/messaging/presentation/thread_screen.dart';
+import 'package:campusconnect/features/notifications/presentation/notifications_screen.dart';
 import 'package:campusconnect/features/profile/presentation/profile_screen.dart';
 import 'package:campusconnect/features/tutoring/presentation/tutor_search_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +49,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verify',
         builder: (_, state) => VerifyScreen(email: state.extra! as String),
+      ),
+      // Pushed over the shell from any tab's bell (Sprint 6).
+      GoRoute(
+        path: '/notifications',
+        builder: (_, _) => const NotificationsScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _AppShell(shell: shell),

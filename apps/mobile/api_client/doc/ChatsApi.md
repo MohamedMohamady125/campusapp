@@ -19,10 +19,11 @@ Method | HTTP request | Description
 [**muteMemberApiV1ChatsChatIdMembersUserIdMutePost**](ChatsApi.md#mutememberapiv1chatschatidmembersuseridmutepost) | **POST** /api/v1/chats/{chat_id}/members/{user_id}/mute | Mute Member
 [**myChatsApiV1ChatsGet**](ChatsApi.md#mychatsapiv1chatsget) | **GET** /api/v1/chats | My Chats
 [**postChatMessageApiV1ChatsChatIdMessagesPost**](ChatsApi.md#postchatmessageapiv1chatschatidmessagespost) | **POST** /api/v1/chats/{chat_id}/messages | Post Chat Message
+[**promoteMemberApiV1ChatsChatIdMembersUserIdPromotePost**](ChatsApi.md#promotememberapiv1chatschatidmembersuseridpromotepost) | **POST** /api/v1/chats/{chat_id}/members/{user_id}/promote | Promote Member
 
 
 # **banMemberApiV1ChatsChatIdMembersUserIdBanPost**
-> ChatMembershipResponse banMemberApiV1ChatsChatIdMembersUserIdBanPost(chatId, userId)
+> ChatMembershipResponse banMemberApiV1ChatsChatIdMembersUserIdBanPost(chatId, userId, banRequest)
 
 Ban Member
 
@@ -33,9 +34,10 @@ import 'package:campus_api/api.dart';
 final api = CampusApi().getChatsApi();
 final String chatId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
 final String userId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final BanRequest banRequest = ; // BanRequest | 
 
 try {
-    final response = api.banMemberApiV1ChatsChatIdMembersUserIdBanPost(chatId, userId);
+    final response = api.banMemberApiV1ChatsChatIdMembersUserIdBanPost(chatId, userId, banRequest);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling ChatsApi->banMemberApiV1ChatsChatIdMembersUserIdBanPost: $e\n');
@@ -48,6 +50,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **chatId** | **String**|  | 
  **userId** | **String**|  | 
+ **banRequest** | [**BanRequest**](BanRequest.md)|  | [optional] 
 
 ### Return type
 
@@ -59,7 +62,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -149,7 +152,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **deleteChatMessageApiV1ChatsChatIdMessagesMessageIdDeletePost**
-> deleteChatMessageApiV1ChatsChatIdMessagesMessageIdDeletePost(chatId, messageId)
+> deleteChatMessageApiV1ChatsChatIdMessagesMessageIdDeletePost(chatId, messageId, chatMessageDeleteRequest)
 
 Delete Chat Message
 
@@ -160,9 +163,10 @@ import 'package:campus_api/api.dart';
 final api = CampusApi().getChatsApi();
 final String chatId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
 final String messageId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final ChatMessageDeleteRequest chatMessageDeleteRequest = ; // ChatMessageDeleteRequest | 
 
 try {
-    api.deleteChatMessageApiV1ChatsChatIdMessagesMessageIdDeletePost(chatId, messageId);
+    api.deleteChatMessageApiV1ChatsChatIdMessagesMessageIdDeletePost(chatId, messageId, chatMessageDeleteRequest);
 } on DioException catch (e) {
     print('Exception when calling ChatsApi->deleteChatMessageApiV1ChatsChatIdMessagesMessageIdDeletePost: $e\n');
 }
@@ -174,6 +178,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **chatId** | **String**|  | 
  **messageId** | **String**|  | 
+ **chatMessageDeleteRequest** | [**ChatMessageDeleteRequest**](ChatMessageDeleteRequest.md)|  | 
 
 ### Return type
 
@@ -185,7 +190,7 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -443,6 +448,51 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **promoteMemberApiV1ChatsChatIdMembersUserIdPromotePost**
+> ChatMembershipResponse promoteMemberApiV1ChatsChatIdMembersUserIdPromotePost(chatId, userId)
+
+Promote Member
+
+Owner-only: promote a member to moderator (Sprint 6).
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getChatsApi();
+final String chatId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String userId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+
+try {
+    final response = api.promoteMemberApiV1ChatsChatIdMembersUserIdPromotePost(chatId, userId);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling ChatsApi->promoteMemberApiV1ChatsChatIdMembersUserIdPromotePost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **chatId** | **String**|  | 
+ **userId** | **String**|  | 
+
+### Return type
+
+[**ChatMembershipResponse**](ChatMembershipResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

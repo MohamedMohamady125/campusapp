@@ -9,6 +9,7 @@ import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_controller.dart';
+import 'package:campusconnect/features/notifications/presentation/notification_bell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -87,7 +88,17 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Market', style: AppTextStyles.heading),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Market',
+                                    style: AppTextStyles.heading,
+                                  ),
+                                ),
+                                const NotificationBell(),
+                              ],
+                            ),
                             SizedBox(height: tokens.space3),
                             TextField(
                               decoration: const InputDecoration(

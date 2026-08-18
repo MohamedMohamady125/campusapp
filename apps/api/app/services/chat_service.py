@@ -24,13 +24,18 @@ from app.models import AuditLog, Chat, ChatMembership, ChatMessage, Notification
 from app.models.enums import ChatRole, ChatVisibility
 from app.repositories.chat_repo import ChatRepository, NotificationRepository
 from app.schemas.chat import ChatCreateRequest
+from app.services.notification_dispatch import upsert_deduped_notification
 from app.services.realtime import hub
 
 CHAT_MESSAGE_LIMIT = 30  # anti-spam (spec §8)
 CHAT_MESSAGE_WINDOW_SECONDS = 60
 NOTIFICATION_TYPE_CHAT_MESSAGE = "chat_message"
+NOTIFICATION_TYPE_CHAT_MENTION = "chat_mention"
 
 _MOD_ROLES = (ChatRole.mod, ChatRole.owner)
+
+# @mention tokens: "@" followed by word characters (letters/digits/underscore).
+_MENTION_RE = re.compile(r"@(\w+)")
 
 
 def slugify(name: str) -> str:
@@ -121,7 +126,7 @@ class ChatService:
         return membership
 
     async def post_message(self, *, chat_id: uuid.UUID, user: User, body: str) -> ChatMessage:
-        await self._get_or_404(chat_id)
+        chat = await self._get_or_404(chat_id)
         membership = await self._assert_active_member(chat_id, user)
         now = datetime.now(UTC)
         if membership.muted_until is not None and membership.muted_until > now:
@@ -134,7 +139,10 @@ class ChatService:
         message = ChatMessage(chat_id=chat_id, sender_id=user.id, body=body)
         self._repo.add(message)
         await self._session.flush()
-        await self._fan_out_notifications(chat_id=chat_id, message=message)
+        mentioned = await self._dispatch_mentions(chat=chat, sender=user, message=message)
+        await self._fan_out_notifications(
+            chat=chat, sender=user, message=message, exclude=mentioned
+        )
         await self._session.commit()
         await self._session.refresh(message)
         hub.publish(
@@ -150,26 +158,89 @@ class ChatService:
         )
         return message
 
-    async def _fan_out_notifications(self, *, chat_id: uuid.UUID, message: ChatMessage) -> None:
-        """Per-event notifications honoring preferences (spec §14 M7)."""
-        member_ids = await self._repo.member_ids(chat_id)
-        recipients = [uid for uid in member_ids if uid != message.sender_id]
+    async def _dispatch_mentions(
+        self, *, chat: Chat, sender: User, message: ChatMessage
+    ) -> set[uuid.UUID]:
+        """@mention notifications (Sprint 6). Returns the mentioned member ids.
+
+        Matching rule (simple & deterministic): each `@token` in the body is
+        lowercased and matches a chat member if it equals either (a) the first
+        whitespace-separated token of their display_name, or (b) their full
+        display_name with spaces stripped — both compared case-insensitively.
+        E.g. "@UserA" matches display_name "UserA" and "usera something".
+        Mentions are ALWAYS dispatched individually (never deduplicated), and a
+        mentioned member is excluded from the generic chat_message fan-out.
+        """
+        tokens = {t.lower() for t in _MENTION_RE.findall(message.body)}
+        if not tokens:
+            return set()
+        mentioned: dict[uuid.UUID, str] = {}
+        for uid, name in await self._repo.members_with_names(chat.id):
+            if uid == sender.id:
+                continue
+            parts = name.split()
+            first = parts[0].lower() if parts else ""
+            squashed = name.replace(" ", "").lower()
+            if first in tokens or squashed in tokens:
+                mentioned[uid] = name
+        if not mentioned:
+            return set()
         opted_out = await self._notifications.disabled_types_for(
-            recipients, NOTIFICATION_TYPE_CHAT_MESSAGE
+            list(mentioned), NOTIFICATION_TYPE_CHAT_MENTION
         )
-        for uid in recipients:
+        for uid in mentioned:
             if uid in opted_out:
                 continue
             self._notifications.add(
                 Notification(
                     user_id=uid,
-                    type=NOTIFICATION_TYPE_CHAT_MESSAGE,
+                    type=NOTIFICATION_TYPE_CHAT_MENTION,
                     payload={
-                        "chat_id": str(chat_id),
+                        "chat_id": str(chat.id),
                         "message_id": str(message.id),
-                        "sender_id": str(message.sender_id),
+                        "sender_id": str(sender.id),
+                        "sender_name": sender.display_name,
+                        "chat_name": chat.name,
                     },
                 )
+            )
+        # Mentioned members never also get the generic chat_message notification.
+        return set(mentioned)
+
+    async def _fan_out_notifications(
+        self,
+        *,
+        chat: Chat,
+        sender: User,
+        message: ChatMessage,
+        exclude: set[uuid.UUID],
+    ) -> None:
+        """Per-event notifications honoring preferences (spec §14 M7), deduped
+        per recipient within a 60-minute window (Sprint 6, see
+        notification_dispatch.upsert_deduped_notification)."""
+        member_ids = await self._repo.member_ids(chat.id)
+        recipients = [uid for uid in member_ids if uid != sender.id and uid not in exclude]
+        opted_out = await self._notifications.disabled_types_for(
+            recipients, NOTIFICATION_TYPE_CHAT_MESSAGE
+        )
+        now = datetime.now(UTC)
+        for uid in recipients:
+            if uid in opted_out:
+                continue
+            await upsert_deduped_notification(
+                self._notifications,
+                user_id=uid,
+                type_=NOTIFICATION_TYPE_CHAT_MESSAGE,
+                dedup_key="chat_id",
+                dedup_value=str(chat.id),
+                payload={
+                    "chat_id": str(chat.id),
+                    "message_id": str(message.id),
+                    "sender_id": str(sender.id),
+                    "sender_name": sender.display_name,
+                    "chat_name": chat.name,
+                },
+                now=now,
             )
 
     async def list_messages(
@@ -210,15 +281,26 @@ class ChatService:
         )
 
     async def delete_message(
-        self, *, chat_id: uuid.UUID, message_id: uuid.UUID, actor: User
+        self, *, chat_id: uuid.UUID, message_id: uuid.UUID, actor: User, reason: str
     ) -> None:
+        """Tombstone delete (Sprint 6): the message stays in the feed with a
+        blanked body plus who removed it and why. Reason is mandatory."""
         await self._get_or_404(chat_id)
         await self._assert_moderator(chat_id, actor)
         message = await self._repo.get_message(message_id)
         if message is None or message.chat_id != chat_id or message.deleted_at is not None:
             raise NotFoundError("Message not found.", code="MESSAGE_NOT_FOUND")
         message.deleted_at = datetime.now(UTC)
-        self._audit(actor, "chat_message.delete", "chat_message", message.id, chat_id=str(chat_id))
+        message.deleted_by_id = actor.id
+        message.deleted_reason = reason
+        self._audit(
+            actor,
+            "chat_message.delete",
+            "chat_message",
+            message.id,
+            chat_id=str(chat_id),
+            reason=reason,
+        )
         await self._session.commit()
 
     async def _moderatable_member(
@@ -232,7 +314,13 @@ class ChatService:
         return target
 
     async def mute_member(
-        self, *, chat_id: uuid.UUID, target_user_id: uuid.UUID, actor: User, minutes: int
+        self,
+        *,
+        chat_id: uuid.UUID,
+        target_user_id: uuid.UUID,
+        actor: User,
+        minutes: int,
+        reason: str,
     ) -> ChatMembership:
         await self._get_or_404(chat_id)
         await self._assert_moderator(chat_id, actor)
@@ -245,17 +333,44 @@ class ChatService:
             target_user_id,
             chat_id=str(chat_id),
             minutes=str(minutes),
+            reason=reason,
         )
         await self._session.commit()
         return target
 
     async def ban_member(
-        self, *, chat_id: uuid.UUID, target_user_id: uuid.UUID, actor: User
+        self,
+        *,
+        chat_id: uuid.UUID,
+        target_user_id: uuid.UUID,
+        actor: User,
+        reason: str | None = None,
     ) -> ChatMembership:
         await self._get_or_404(chat_id)
         await self._assert_moderator(chat_id, actor)
         target = await self._moderatable_member(chat_id, target_user_id)
         target.banned_at = datetime.now(UTC)
-        self._audit(actor, "chat_member.ban", "user", target_user_id, chat_id=str(chat_id))
+        meta = {"chat_id": str(chat_id)}
+        if reason is not None:
+            meta["reason"] = reason
+        self._audit(actor, "chat_member.ban", "user", target_user_id, **meta)
+        await self._session.commit()
+        return target
+
+    async def promote_member(
+        self, *, chat_id: uuid.UUID, target_user_id: uuid.UUID, actor: User
+    ) -> ChatMembership:
+        """Owner-only: promote a plain member to moderator (Sprint 6)."""
+        await self._get_or_404(chat_id)
+        actor_membership = await self._repo.get_membership(chat_id, actor.id)
+        if actor_membership is None or actor_membership.role != ChatRole.owner:
+            raise ForbiddenError("Only the chat owner can promote members.", code="NOT_CHAT_OWNER")
+        target = await self._repo.get_membership(chat_id, target_user_id)
+        if target is None or target.banned_at is not None:
+            raise NotFoundError("Member not found.", code="MEMBER_NOT_FOUND")
+        if target.role in _MOD_ROLES:
+            raise ConflictError("Member is already a moderator.", code="ALREADY_MOD")
+        target.role = ChatRole.mod
+        self._audit(actor, "chat_member.promote", "user", target_user_id, chat_id=str(chat_id))
         await self._session.commit()
         return target

@@ -24,9 +24,11 @@ export 'package:campus_api/src/api/users_api.dart';
 
 export 'package:campus_api/src/model/app_schemas_auth_message_response.dart';
 export 'package:campus_api/src/model/app_schemas_conversation_message_response.dart';
+export 'package:campus_api/src/model/ban_request.dart';
 export 'package:campus_api/src/model/chat_create_request.dart';
 export 'package:campus_api/src/model/chat_membership_response.dart';
 export 'package:campus_api/src/model/chat_message_create_request.dart';
+export 'package:campus_api/src/model/chat_message_delete_request.dart';
 export 'package:campus_api/src/model/chat_message_page_response.dart';
 export 'package:campus_api/src/model/chat_message_response.dart';
 export 'package:campus_api/src/model/chat_page_response.dart';

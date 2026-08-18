@@ -6,8 +6,16 @@ from typing import Any, cast
 
 from sqlalchemy import CursorResult, Select, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.models import Chat, ChatMembership, ChatMessage, Notification, NotificationPreference
+from app.models import (
+    Chat,
+    ChatMembership,
+    ChatMessage,
+    Notification,
+    NotificationPreference,
+    User,
+)
 from app.models.enums import ChatVisibility
 
 
@@ -99,6 +107,15 @@ class ChatRepository:
         )
         return [r[0] for r in rows]
 
+    async def members_with_names(self, chat_id: uuid.UUID) -> list[tuple[uuid.UUID, str]]:
+        """Active (non-banned) members with display names, for @mention matching."""
+        rows = await self._session.execute(
+            select(ChatMembership.user_id, User.display_name)
+            .join(User, User.id == ChatMembership.user_id)
+            .where(ChatMembership.chat_id == chat_id, ChatMembership.banned_at.is_(None))
+        )
+        return [(r[0], r[1]) for r in rows]
+
     async def get_message(self, message_id: uuid.UUID) -> ChatMessage | None:
         return await self._session.get(ChatMessage, message_id)
 
@@ -109,9 +126,12 @@ class ChatRepository:
         cursor: tuple[datetime, uuid.UUID] | None,
         limit: int,
     ) -> list[ChatMessage]:
+        # Deleted messages are NOT filtered out: they are returned as tombstones
+        # (body blanked at the API layer) so the room shows "message removed".
         stmt = (
             select(ChatMessage)
-            .where(ChatMessage.chat_id == chat_id, ChatMessage.deleted_at.is_(None))
+            .options(selectinload(ChatMessage.deleted_by))
+            .where(ChatMessage.chat_id == chat_id)
             .order_by(ChatMessage.created_at.desc(), ChatMessage.id.desc())
         )
         stmt = _keyset(stmt, ChatMessage, cursor)
@@ -142,6 +162,31 @@ class NotificationRepository:
         )
         stmt = _keyset(stmt, Notification, cursor)
         return list((await self._session.execute(stmt.limit(limit))).scalars())
+
+    async def find_recent_unread_by_payload(
+        self,
+        *,
+        user_id: uuid.UUID,
+        type_: str,
+        key: str,
+        value: str,
+        since: datetime,
+    ) -> Notification | None:
+        """Most recent unread notification of a type whose payload[key] == value,
+        created after `since` — the dedup target for chat/DM fan-out."""
+        stmt = (
+            select(Notification)
+            .where(
+                Notification.user_id == user_id,
+                Notification.type == type_,
+                Notification.read_at.is_(None),
+                Notification.created_at >= since,
+                Notification.payload[key].astext == value,
+            )
+            .order_by(Notification.created_at.desc(), Notification.id.desc())
+            .limit(1)
+        )
+        return (await self._session.execute(stmt)).scalars().first()
 
     async def unread_count(self, user_id: uuid.UUID) -> int:
         result = await self._session.execute(

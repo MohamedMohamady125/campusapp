@@ -16,11 +16,14 @@ from app.integrations.analytics.base import EVENT_MESSAGE_SENT
 from app.integrations.analytics.provider import get_analytics_provider
 from app.models import Conversation, ConversationParticipant, Message, User
 from app.models.enums import ConversationContext
+from app.repositories.chat_repo import NotificationRepository
 from app.repositories.conversation_repo import ConversationRepository
 from app.repositories.user_repo import UserRepository
+from app.services.notification_dispatch import upsert_deduped_notification
 
 MESSAGE_LIMIT = 30  # anti-spam (spec §8): max messages per window
 MESSAGE_WINDOW_SECONDS = 60
+NOTIFICATION_TYPE_DM_MESSAGE = "dm_message"
 
 
 class MessagingService:
@@ -28,6 +31,7 @@ class MessagingService:
         self._session = session
         self._repo = ConversationRepository(session)
         self._users = UserRepository(session)
+        self._notifications = NotificationRepository(session)
 
     async def get_or_create_conversation(
         self,
@@ -99,14 +103,16 @@ class MessagingService:
         )
 
     async def send_message(self, *, conversation_id: uuid.UUID, user: User, body: str) -> Message:
-        await self._get_or_404(conversation_id)
+        conversation = await self._get_or_404(conversation_id)
         participant = await self._assert_participant(conversation_id, user)
         await enforce_rate_limit(
             f"msg:{user.id}", limit=MESSAGE_LIMIT, window_seconds=MESSAGE_WINDOW_SECONDS
         )
         message = Message(conversation_id=conversation_id, sender_id=user.id, body=body)
         self._repo.add(message)
+        await self._session.flush()  # assign message.id for the notification payload
         participant.last_read_at = datetime.now(UTC)
+        await self._notify_recipients(conversation=conversation, sender=user, message=message)
         await get_analytics_provider().track(
             self._session,
             name=EVENT_MESSAGE_SENT,
@@ -116,6 +122,35 @@ class MessagingService:
         await self._session.commit()
         await self._session.refresh(message)
         return message
+
+    async def _notify_recipients(
+        self, *, conversation: Conversation, sender: User, message: Message
+    ) -> None:
+        """dm_message notifications for the other participant(s) (Sprint 6),
+        honoring per-type NotificationPreference like the chat fan-out and
+        deduped per recipient on payload.conversation_id within 60 minutes."""
+        recipients = [p.user_id for p in conversation.participants if p.user_id != sender.id]
+        opted_out = await self._notifications.disabled_types_for(
+            recipients, NOTIFICATION_TYPE_DM_MESSAGE
+        )
+        now = datetime.now(UTC)
+        for uid in recipients:
+            if uid in opted_out:
+                continue
+            await upsert_deduped_notification(
+                self._notifications,
+                user_id=uid,
+                type_=NOTIFICATION_TYPE_DM_MESSAGE,
+                dedup_key="conversation_id",
+                dedup_value=str(conversation.id),
+                payload={
+                    "conversation_id": str(conversation.id),
+                    "message_id": str(message.id),
+                    "sender_id": str(sender.id),
+                    "sender_name": sender.display_name,
+                },
+                now=now,
+            )
 
     async def mark_read(self, *, conversation_id: uuid.UUID, user: User) -> None:
         await self._get_or_404(conversation_id)

@@ -84,6 +84,7 @@ Class | Method | HTTP request | Description
 [*ChatsApi*](doc/ChatsApi.md) | [**muteMemberApiV1ChatsChatIdMembersUserIdMutePost**](doc/ChatsApi.md#mutememberapiv1chatschatidmembersuseridmutepost) | **POST** /api/v1/chats/{chat_id}/members/{user_id}/mute | Mute Member
 [*ChatsApi*](doc/ChatsApi.md) | [**myChatsApiV1ChatsGet**](doc/ChatsApi.md#mychatsapiv1chatsget) | **GET** /api/v1/chats | My Chats
 [*ChatsApi*](doc/ChatsApi.md) | [**postChatMessageApiV1ChatsChatIdMessagesPost**](doc/ChatsApi.md#postchatmessageapiv1chatschatidmessagespost) | **POST** /api/v1/chats/{chat_id}/messages | Post Chat Message
+[*ChatsApi*](doc/ChatsApi.md) | [**promoteMemberApiV1ChatsChatIdMembersUserIdPromotePost**](doc/ChatsApi.md#promotememberapiv1chatschatidmembersuseridpromotepost) | **POST** /api/v1/chats/{chat_id}/members/{user_id}/promote | Promote Member
 [*ConversationsApi*](doc/ConversationsApi.md) | [**createConversationApiV1ConversationsPost**](doc/ConversationsApi.md#createconversationapiv1conversationspost) | **POST** /api/v1/conversations | Create Conversation
 [*ConversationsApi*](doc/ConversationsApi.md) | [**listConversationsApiV1ConversationsGet**](doc/ConversationsApi.md#listconversationsapiv1conversationsget) | **GET** /api/v1/conversations | List Conversations
 [*ConversationsApi*](doc/ConversationsApi.md) | [**listMessagesApiV1ConversationsConversationIdMessagesGet**](doc/ConversationsApi.md#listmessagesapiv1conversationsconversationidmessagesget) | **GET** /api/v1/conversations/{conversation_id}/messages | List Messages
@@ -123,9 +124,11 @@ Class | Method | HTTP request | Description
 
  - [AppSchemasAuthMessageResponse](doc/AppSchemasAuthMessageResponse.md)
  - [AppSchemasConversationMessageResponse](doc/AppSchemasConversationMessageResponse.md)
+ - [BanRequest](doc/BanRequest.md)
  - [ChatCreateRequest](doc/ChatCreateRequest.md)
  - [ChatMembershipResponse](doc/ChatMembershipResponse.md)
  - [ChatMessageCreateRequest](doc/ChatMessageCreateRequest.md)
+ - [ChatMessageDeleteRequest](doc/ChatMessageDeleteRequest.md)
  - [ChatMessagePageResponse](doc/ChatMessagePageResponse.md)
  - [ChatMessageResponse](doc/ChatMessageResponse.md)
  - [ChatPageResponse](doc/ChatPageResponse.md)

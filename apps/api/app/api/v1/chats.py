@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user
 from app.core.pagination import DEFAULT_PAGE_SIZE, clamp_limit, decode_cursor, encode_cursor
 from app.db.session import get_session
-from app.models import Chat, User
+from app.models import Chat, ChatMessage, User
 from app.repositories.chat_repo import ChatRepository
 from app.schemas.chat import (
+    BanRequest,
     ChatCreateRequest,
     ChatMembershipResponse,
     ChatMessageCreateRequest,
+    ChatMessageDeleteRequest,
     ChatMessagePageResponse,
     ChatMessageResponse,
     ChatPageResponse,
@@ -27,6 +29,24 @@ router = APIRouter(prefix="/chats", tags=["chats"])
 
 def _service(session: AsyncSession = Depends(get_session)) -> ChatService:
     return ChatService(session)
+
+
+def _message_response(m: ChatMessage) -> ChatMessageResponse:
+    """Map a message to its API shape; deleted messages become tombstones with
+    a blanked body (Sprint 6) — the raw text is never exposed after deletion."""
+    deleted = m.deleted_at is not None
+    return ChatMessageResponse(
+        id=m.id,
+        chat_id=m.chat_id,
+        sender_id=m.sender_id,
+        body="" if deleted else m.body,
+        created_at=m.created_at,
+        deleted_at=m.deleted_at,
+        deleted_reason=m.deleted_reason if deleted else None,
+        deleted_by_name=(
+            m.deleted_by.display_name if deleted and m.deleted_by is not None else None
+        ),
+    )
 
 
 async def _page(chats: list[Chat], repo: ChatRepository, *, limit: int) -> ChatPageResponse:
@@ -137,7 +157,7 @@ async def list_chat_messages(
     messages = messages[:limit]
     next_cursor = encode_cursor(messages[-1].created_at, messages[-1].id) if has_more else None
     return ChatMessagePageResponse(
-        items=[ChatMessageResponse.model_validate(m) for m in messages],
+        items=[_message_response(m) for m in messages],
         next_cursor=next_cursor,
     )
 
@@ -150,17 +170,18 @@ async def post_chat_message(
     svc: ChatService = Depends(_service),
 ) -> ChatMessageResponse:
     message = await svc.post_message(chat_id=chat_id, user=user, body=body.body)
-    return ChatMessageResponse.model_validate(message)
+    return _message_response(message)
 
 
 @router.post("/{chat_id}/messages/{message_id}/delete", status_code=204)
 async def delete_chat_message(
     chat_id: uuid.UUID,
     message_id: uuid.UUID,
+    body: ChatMessageDeleteRequest,
     user: User = Depends(get_current_user),
     svc: ChatService = Depends(_service),
 ) -> None:
-    await svc.delete_message(chat_id=chat_id, message_id=message_id, actor=user)
+    await svc.delete_message(chat_id=chat_id, message_id=message_id, actor=user, reason=body.reason)
 
 
 @router.post("/{chat_id}/members/{user_id}/mute", response_model=ChatMembershipResponse)
@@ -172,7 +193,11 @@ async def mute_member(
     svc: ChatService = Depends(_service),
 ) -> ChatMembershipResponse:
     membership = await svc.mute_member(
-        chat_id=chat_id, target_user_id=user_id, actor=user, minutes=body.minutes
+        chat_id=chat_id,
+        target_user_id=user_id,
+        actor=user,
+        minutes=body.minutes,
+        reason=body.reason,
     )
     return ChatMembershipResponse.model_validate(membership)
 
@@ -181,8 +206,26 @@ async def mute_member(
 async def ban_member(
     chat_id: uuid.UUID,
     user_id: uuid.UUID,
+    body: BanRequest | None = None,
     user: User = Depends(get_current_user),
     svc: ChatService = Depends(_service),
 ) -> ChatMembershipResponse:
-    membership = await svc.ban_member(chat_id=chat_id, target_user_id=user_id, actor=user)
+    membership = await svc.ban_member(
+        chat_id=chat_id,
+        target_user_id=user_id,
+        actor=user,
+        reason=body.reason if body is not None else None,
+    )
+    return ChatMembershipResponse.model_validate(membership)
+
+
+@router.post("/{chat_id}/members/{user_id}/promote", response_model=ChatMembershipResponse)
+async def promote_member(
+    chat_id: uuid.UUID,
+    user_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    svc: ChatService = Depends(_service),
+) -> ChatMembershipResponse:
+    """Owner-only: promote a member to moderator (Sprint 6)."""
+    membership = await svc.promote_member(chat_id=chat_id, target_user_id=user_id, actor=user)
     return ChatMembershipResponse.model_validate(membership)

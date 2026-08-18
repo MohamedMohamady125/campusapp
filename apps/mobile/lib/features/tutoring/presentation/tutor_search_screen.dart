@@ -9,6 +9,7 @@ import 'package:campusconnect/design_system/components/tutor_card.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
+import 'package:campusconnect/features/notifications/presentation/notification_bell.dart';
 import 'package:campusconnect/features/tutoring/data/tutoring_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -74,7 +75,10 @@ class _TutorSearchScreenState extends ConsumerState<TutorSearchScreen> {
     final tokens = context.tokens;
     final colors = context.colors;
     return Scaffold(
-      appBar: AppBar(title: const Text('Find a tutor')),
+      appBar: AppBar(
+        title: const Text('Find a tutor'),
+        actions: const [NotificationBell()],
+      ),
       body: Column(
         children: [
           Padding(
