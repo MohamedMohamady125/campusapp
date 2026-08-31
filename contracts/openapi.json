@@ -349,7 +349,8 @@
         "enum": [
           "listing",
           "tutoring",
-          "direct"
+          "direct",
+          "run"
         ],
         "title": "ConversationContext",
         "type": "string"
@@ -531,6 +532,49 @@
           "rollout_percent"
         ],
         "title": "FlagItem",
+        "type": "object"
+      },
+      "FoodSpotCategory": {
+        "enum": [
+          "campus",
+          "off_campus"
+        ],
+        "title": "FoodSpotCategory",
+        "type": "string"
+      },
+      "FoodSpotResponse": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/FoodSpotCategory"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "description"
+        ],
+        "title": "FoodSpotResponse",
         "type": "object"
       },
       "ForgotPasswordRequest": {
@@ -1285,7 +1329,8 @@
       "RatingContext": {
         "enum": [
           "listing",
-          "tutoring"
+          "tutoring",
+          "run"
         ],
         "title": "RatingContext",
         "type": "string"
@@ -1691,6 +1736,338 @@
         "title": "ResetPasswordRequest",
         "type": "object"
       },
+      "RunCreateRequest": {
+        "properties": {
+          "delivery_spot": {
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Delivery Spot",
+            "type": "string"
+          },
+          "fee_cents": {
+            "default": 0,
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Fee Cents",
+            "type": "integer"
+          },
+          "food_spot_id": {
+            "format": "uuid",
+            "title": "Food Spot Id",
+            "type": "string"
+          },
+          "leaving_at": {
+            "format": "date-time",
+            "title": "Leaving At",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "prepay_required": {
+            "default": false,
+            "title": "Prepay Required",
+            "type": "boolean"
+          },
+          "spots_max": {
+            "default": 3,
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Spots Max",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "food_spot_id",
+          "delivery_spot",
+          "leaving_at"
+        ],
+        "title": "RunCreateRequest",
+        "type": "object"
+      },
+      "RunOrderCreateRequest": {
+        "properties": {
+          "order_text": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Order Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_text"
+        ],
+        "title": "RunOrderCreateRequest",
+        "type": "object"
+      },
+      "RunOrderResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "order_text": {
+            "title": "Order Text",
+            "type": "string"
+          },
+          "requester": {
+            "$ref": "#/components/schemas/RunUserSummary"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunOrderStatus"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "requester",
+          "order_text",
+          "status",
+          "created_at"
+        ],
+        "title": "RunOrderResponse",
+        "type": "object"
+      },
+      "RunOrderStatus": {
+        "description": "Per-order lifecycle within a run.\n\nrequested \u2192 accepted | declined | cancelled\naccepted \u2192 delivered \u2192 received | no_show",
+        "enum": [
+          "requested",
+          "accepted",
+          "declined",
+          "cancelled",
+          "delivered",
+          "received",
+          "no_show"
+        ],
+        "title": "RunOrderStatus",
+        "type": "string"
+      },
+      "RunPageResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RunResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "RunPageResponse",
+        "type": "object"
+      },
+      "RunResponse": {
+        "properties": {
+          "accepted_count": {
+            "title": "Accepted Count",
+            "type": "integer"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "delivery_spot": {
+            "title": "Delivery Spot",
+            "type": "string"
+          },
+          "fee_cents": {
+            "title": "Fee Cents",
+            "type": "integer"
+          },
+          "food_spot": {
+            "$ref": "#/components/schemas/FoodSpotResponse"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "leaving_at": {
+            "format": "date-time",
+            "title": "Leaving At",
+            "type": "string"
+          },
+          "my_order": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunOrderResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "orders": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RunOrderResponse"
+            },
+            "title": "Orders",
+            "type": "array"
+          },
+          "pending_count": {
+            "title": "Pending Count",
+            "type": "integer"
+          },
+          "prepay_required": {
+            "title": "Prepay Required",
+            "type": "boolean"
+          },
+          "runner": {
+            "$ref": "#/components/schemas/RunUserSummary"
+          },
+          "spots_max": {
+            "title": "Spots Max",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          }
+        },
+        "required": [
+          "id",
+          "runner",
+          "food_spot",
+          "delivery_spot",
+          "note",
+          "leaving_at",
+          "fee_cents",
+          "spots_max",
+          "prepay_required",
+          "status",
+          "conversation_id",
+          "accepted_count",
+          "pending_count",
+          "created_at"
+        ],
+        "title": "RunResponse",
+        "type": "object"
+      },
+      "RunStatus": {
+        "description": "Food run lifecycle (food-runs spec).\n\nopen \u2192 locked \u2192 at_store \u2192 delivering \u2192 done\nTerminal alternates: expired (nobody joined / runner ghosted), cancelled.",
+        "enum": [
+          "open",
+          "locked",
+          "at_store",
+          "delivering",
+          "done",
+          "expired",
+          "cancelled"
+        ],
+        "title": "RunStatus",
+        "type": "string"
+      },
+      "RunStatusUpdateRequest": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "RunStatusUpdateRequest",
+        "type": "object"
+      },
+      "RunUserSummary": {
+        "description": "Trust card shown on every run/order: identity + portable reputation.",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "rating_count": {
+            "title": "Rating Count",
+            "type": "integer"
+          },
+          "reputation_score": {
+            "title": "Reputation Score",
+            "type": "number"
+          },
+          "venmo_handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Venmo Handle"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "reputation_score",
+          "rating_count"
+        ],
+        "title": "RunUserSummary",
+        "type": "object"
+      },
       "SubscriptionResponse": {
         "properties": {
           "current_period_end": {
@@ -1828,6 +2205,17 @@
           "role": {
             "$ref": "#/components/schemas/UserRole"
           },
+          "venmo_handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Venmo Handle"
+          },
           "year": {
             "anyOf": [
               {
@@ -1848,6 +2236,7 @@
           "major",
           "bio",
           "avatar_key",
+          "venmo_handle",
           "reputation_score",
           "rating_count",
           "role",
@@ -1987,6 +2376,19 @@
               }
             ],
             "title": "Major"
+          },
+          "venmo_handle": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "pattern": "^@?[A-Za-z0-9_-]{3,30}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Venmo Handle"
           },
           "year": {
             "anyOf": [
@@ -4441,6 +4843,725 @@
         "summary": "Create Report",
         "tags": [
           "reports"
+        ]
+      }
+    },
+    "/api/v1/runs": {
+      "get": {
+        "operationId": "run_feed_api_v1_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Run Feed",
+        "tags": [
+          "runs"
+        ]
+      },
+      "post": {
+        "operationId": "create_run_api_v1_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/mine": {
+      "get": {
+        "operationId": "my_runs_api_v1_runs_mine_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Runs",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/spots": {
+      "get": {
+        "operationId": "list_spots_api_v1_runs_spots_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FoodSpotResponse"
+                  },
+                  "title": "Response List Spots Api V1 Runs Spots Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Spots",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}": {
+      "get": {
+        "operationId": "get_run_api_v1_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancel_run_api_v1_runs__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Cancel Run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders": {
+      "post": {
+        "operationId": "request_spot_api_v1_runs__run_id__orders_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunOrderCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Request Spot",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}": {
+      "delete": {
+        "operationId": "withdraw_order_api_v1_runs__run_id__orders__order_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Withdraw Order",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}/accept": {
+      "post": {
+        "operationId": "accept_order_api_v1_runs__run_id__orders__order_id__accept_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Accept Order",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}/decline": {
+      "post": {
+        "operationId": "decline_order_api_v1_runs__run_id__orders__order_id__decline_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Decline Order",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}/delivered": {
+      "post": {
+        "operationId": "mark_delivered_api_v1_runs__run_id__orders__order_id__delivered_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mark Delivered",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}/no-show": {
+      "post": {
+        "operationId": "mark_no_show_api_v1_runs__run_id__orders__order_id__no_show_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mark No Show",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}/received": {
+      "post": {
+        "operationId": "confirm_received_api_v1_runs__run_id__orders__order_id__received_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm Received",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/status": {
+      "post": {
+        "operationId": "update_status_api_v1_runs__run_id__status_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunStatusUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Status",
+        "tags": [
+          "runs"
         ]
       }
     },

@@ -30,7 +30,7 @@ abstract class RatingResponse implements Built<RatingResponse, RatingResponseBui
 
   @BuiltValueField(wireName: r'context_type')
   RatingContext get contextType;
-  // enum contextTypeEnum {  listing,  tutoring,  };
+  // enum contextTypeEnum {  listing,  tutoring,  run,  };
 
   @BuiltValueField(wireName: r'created_at')
   DateTime get createdAt;

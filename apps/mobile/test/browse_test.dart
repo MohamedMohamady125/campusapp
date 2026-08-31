@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/fake_auth.dart';
+import 'helpers/fake_flags.dart';
 
 ListingResponse _listing(String id, String title, int cents) => ListingResponse(
   (b) => b
@@ -94,9 +95,17 @@ Widget _app(_FakeListingsRepository repo) => ProviderScope(
       () => FakeAuthController(authedState()),
     ),
     listingsRepositoryProvider.overrideWithValue(repo),
+    ...shellOverrides(),
   ],
   child: const CampusConnectApp(),
 );
+
+/// The shell now launches runs-first — hop to the Market tab.
+Future<void> _openMarket(WidgetTester tester) async {
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Market'));
+  await tester.pumpAndSettle();
+}
 
 void main() {
   testWidgets('browse renders listings with prices', (tester) async {
@@ -109,7 +118,7 @@ void main() {
       ),
     ]);
     await tester.pumpWidget(_app(repo));
-    await tester.pumpAndSettle();
+    await _openMarket(tester);
 
     expect(find.text('Calc Textbook'), findsOneWidget);
     expect(find.text(r'$25'), findsOneWidget); // whole dollars, no .00
@@ -120,7 +129,7 @@ void main() {
   testWidgets('empty feed shows actionable empty state', (tester) async {
     final repo = _FakeListingsRepository([const ListingsPage(items: [])]);
     await tester.pumpWidget(_app(repo));
-    await tester.pumpAndSettle();
+    await _openMarket(tester);
 
     // Spec §13.2 copy — never a dead end.
     expect(find.text('Nothing listed yet'), findsOneWidget);
@@ -130,7 +139,7 @@ void main() {
   testWidgets('category chip filters trigger a refetch', (tester) async {
     final repo = _FakeListingsRepository([const ListingsPage(items: [])]);
     await tester.pumpWidget(_app(repo));
-    await tester.pumpAndSettle();
+    await _openMarket(tester);
 
     await tester.tap(find.text('Furniture'));
     await tester.pumpAndSettle();
@@ -146,7 +155,7 @@ void main() {
       ListingsPage(items: [_listing('l1', 'Calc Textbook', 2500)]),
     ]);
     await tester.pumpWidget(_app(repo));
-    await tester.pumpAndSettle();
+    await _openMarket(tester);
 
     await tester.tap(find.text('Calc Textbook'));
     await tester.pumpAndSettle();
@@ -165,7 +174,7 @@ void main() {
   ) async {
     final repo = _CreateCapturingRepo();
     await tester.pumpWidget(_app(repo));
-    await tester.pumpAndSettle();
+    await _openMarket(tester);
 
     await tester.tap(find.text('Post a listing').first);
     await tester.pumpAndSettle();
@@ -191,7 +200,7 @@ void main() {
       ListingsPage(items: [_listing('l1', 'Calc Textbook', 2500)]),
     ]);
     await tester.pumpWidget(_app(repo));
-    await tester.pumpAndSettle();
+    await _openMarket(tester);
 
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));

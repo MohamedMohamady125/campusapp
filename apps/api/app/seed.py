@@ -21,18 +21,24 @@ from app.models import (
     ChatMessage,
     Course,
     Flag,
+    FoodSpot,
     Listing,
     ListingImage,
     Rating,
+    Run,
+    RunOrder,
     TutorOffering,
     User,
 )
 from app.models.enums import (
     ChatRole,
+    FoodSpotCategory,
     ListingCategory,
     ListingCondition,
     ModerationStatus,
     RatingContext,
+    RunOrderStatus,
+    RunStatus,
 )
 
 log = structlog.get_logger()
@@ -130,6 +136,27 @@ _FLAGS = [
     ("tutor_premium", False),
     ("escrow", False),
     ("partner_slots", False),
+    # Runs-first launch (food-runs spec): only the hero tab is visible; the
+    # rest re-appear by flipping these rows — zero code changes.
+    ("tab_food_runs", True),
+    ("tab_marketplace", False),
+    ("tab_tutoring", False),
+    ("tab_chats", False),
+]
+
+# GCU launch catalog: Lopes Way venues + walkable off-campus staples.
+_FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str]] = [
+    ("Chick-fil-A (Lopes Way)", FoodSpotCategory.campus, "Closed Sundays. Lines get long at noon."),
+    ("Panda Express (Lopes Way)", FoodSpotCategory.campus, "Orange chicken never misses."),
+    ("Qdoba (Lopes Way)", FoodSpotCategory.campus, "Burritos, bowls, queso."),
+    ("Subway (Lopes Way)", FoodSpotCategory.campus, "Footlongs on Lopes Way."),
+    ("Pita Jungle (GCU)", FoodSpotCategory.campus, "Fresh Mediterranean on campus."),
+    ("Canyon Pizza Co.", FoodSpotCategory.campus, "Late-night slices."),
+    ("The Grid (POD Market)", FoodSpotCategory.campus, "Snacks, drinks, essentials."),
+    ("Chipotle (27th Ave)", FoodSpotCategory.off_campus, "Just off campus — bowl run classic."),
+    ("Raising Cane's (Camelback)", FoodSpotCategory.off_campus, "Box combos + Cane's sauce."),
+    ("Dutch Bros (Camelback)", FoodSpotCategory.off_campus, "Coffee runs before 8am class."),
+    ("In-N-Out (Northern Ave)", FoodSpotCategory.off_campus, "Worth the drive. Animal style."),
 ]
 
 
@@ -235,6 +262,105 @@ async def _seed(session: AsyncSession) -> None:
                 )
             )
 
+    # Food spots + demo runs (food-runs spec).
+    spots: list[FoodSpot] = []
+    for spot_name, spot_category, spot_desc in _FOOD_SPOTS:
+        spot = FoodSpot(name=spot_name, category=spot_category, description=spot_desc, active=True)
+        spots.append(spot)
+        session.add(spot)
+    # Runners need a Venmo handle to charge a fee.
+    for user in users[:6]:
+        user.venmo_handle = f"@{user.display_name.split()[0]}-GCU"
+    await session.flush()
+
+    # 1) An open run leaving soon — the feed's hero card.
+    open_run = Run(
+        runner_id=users[0].id,
+        food_spot_id=spots[0].id,
+        delivery_spot="Juniper Hall lobby",
+        note="Leaving right after class, drop your order!",
+        leaving_at=now + timedelta(minutes=25),
+        fee_cents=200,
+        spots_max=4,
+        prepay_required=False,
+        status=RunStatus.open,
+    )
+    session.add(open_run)
+    await session.flush()
+    session.add(
+        RunOrder(
+            run_id=open_run.id,
+            requester_id=users[3].id,
+            order_text="Spicy deluxe meal, lemonade, Polynesian sauce",
+            status=RunOrderStatus.requested,
+        )
+    )
+
+    # 2) A run mid-delivery.
+    delivering_run = Run(
+        runner_id=users[1].id,
+        food_spot_id=spots[7].id,
+        delivery_spot="Encanto Apartments courtyard",
+        leaving_at=now - timedelta(minutes=20),
+        fee_cents=300,
+        spots_max=3,
+        prepay_required=True,
+        status=RunStatus.delivering,
+    )
+    session.add(delivering_run)
+    await session.flush()
+    session.add(
+        RunOrder(
+            run_id=delivering_run.id,
+            requester_id=users[4].id,
+            order_text="Chicken bowl, white rice, double chicken, mild salsa",
+            status=RunOrderStatus.accepted,
+        )
+    )
+
+    # 3) A completed run with a received order — powers demo run ratings.
+    done_run = Run(
+        runner_id=users[2].id,
+        food_spot_id=spots[9].id,
+        delivery_spot="Library front steps",
+        leaving_at=now - timedelta(hours=3),
+        fee_cents=150,
+        spots_max=2,
+        prepay_required=False,
+        status=RunStatus.done,
+        completed_at=now - timedelta(hours=2),
+    )
+    session.add(done_run)
+    await session.flush()
+    done_order = RunOrder(
+        run_id=done_run.id,
+        requester_id=users[5].id,
+        order_text="Golden eagle, medium, soft top",
+        status=RunOrderStatus.received,
+    )
+    session.add(done_order)
+    await session.flush()
+    session.add(
+        Rating(
+            rater_id=users[5].id,
+            rated_user_id=users[2].id,
+            context_type=RatingContext.run,
+            context_id=done_order.id,
+            stars=5,
+            comment="Super fast, drink still cold. Legend.",
+        )
+    )
+    session.add(
+        Rating(
+            rater_id=users[2].id,
+            rated_user_id=users[5].id,
+            context_type=RatingContext.run,
+            context_id=done_order.id,
+            stars=5,
+            comment="Paid instantly, easy handoff.",
+        )
+    )
+
     # Sample ratings (context ids reference seeded listings).
     for _ in range(30):
         rater, rated = rng.sample(users, k=2)
@@ -271,6 +397,8 @@ async def _seed(session: AsyncSession) -> None:
         users=len(users),
         listings=len(listings),
         chats=len(_CHATS),
+        food_spots=len(spots),
+        runs=3,
     )
 
 

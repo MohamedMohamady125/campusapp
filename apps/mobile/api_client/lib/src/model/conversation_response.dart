@@ -26,7 +26,7 @@ abstract class ConversationResponse implements Built<ConversationResponse, Conve
 
   @BuiltValueField(wireName: r'context_type')
   ConversationContext get contextType;
-  // enum contextTypeEnum {  listing,  tutoring,  direct,  };
+  // enum contextTypeEnum {  listing,  tutoring,  direct,  run,  };
 
   @BuiltValueField(wireName: r'created_at')
   DateTime get createdAt;

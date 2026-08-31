@@ -53,6 +53,7 @@ class ConversationContext(enum.StrEnum):
     listing = "listing"
     tutoring = "tutoring"
     direct = "direct"
+    run = "run"
 
 
 class ChatVisibility(enum.StrEnum):
@@ -70,6 +71,44 @@ class ChatRole(enum.StrEnum):
 class RatingContext(enum.StrEnum):
     listing = "listing"
     tutoring = "tutoring"
+    run = "run"
+
+
+class FoodSpotCategory(enum.StrEnum):
+    campus = "campus"
+    off_campus = "off_campus"
+
+
+class RunStatus(enum.StrEnum):
+    """Food run lifecycle (food-runs spec).
+
+    open → locked → at_store → delivering → done
+    Terminal alternates: expired (nobody joined / runner ghosted), cancelled.
+    """
+
+    open = "open"
+    locked = "locked"
+    at_store = "at_store"
+    delivering = "delivering"
+    done = "done"
+    expired = "expired"
+    cancelled = "cancelled"
+
+
+class RunOrderStatus(enum.StrEnum):
+    """Per-order lifecycle within a run.
+
+    requested → accepted | declined | cancelled
+    accepted → delivered → received | no_show
+    """
+
+    requested = "requested"
+    accepted = "accepted"
+    declined = "declined"
+    cancelled = "cancelled"
+    delivered = "delivered"
+    received = "received"
+    no_show = "no_show"
 
 
 class ReportTargetType(enum.StrEnum):

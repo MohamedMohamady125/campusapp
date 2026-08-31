@@ -14,13 +14,16 @@ class _$UserUpdateRequest extends UserUpdateRequest {
   @override
   final String? major;
   @override
+  final String? venmoHandle;
+  @override
   final String? year;
 
   factory _$UserUpdateRequest(
           [void Function(UserUpdateRequestBuilder)? updates]) =>
       (UserUpdateRequestBuilder()..update(updates))._build();
 
-  _$UserUpdateRequest._({this.bio, this.displayName, this.major, this.year})
+  _$UserUpdateRequest._(
+      {this.bio, this.displayName, this.major, this.venmoHandle, this.year})
       : super._();
   @override
   UserUpdateRequest rebuild(void Function(UserUpdateRequestBuilder) updates) =>
@@ -37,6 +40,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
         bio == other.bio &&
         displayName == other.displayName &&
         major == other.major &&
+        venmoHandle == other.venmoHandle &&
         year == other.year;
   }
 
@@ -46,6 +50,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
     _$hash = $jc(_$hash, bio.hashCode);
     _$hash = $jc(_$hash, displayName.hashCode);
     _$hash = $jc(_$hash, major.hashCode);
+    _$hash = $jc(_$hash, venmoHandle.hashCode);
     _$hash = $jc(_$hash, year.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -57,6 +62,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
           ..add('bio', bio)
           ..add('displayName', displayName)
           ..add('major', major)
+          ..add('venmoHandle', venmoHandle)
           ..add('year', year))
         .toString();
   }
@@ -78,6 +84,10 @@ class UserUpdateRequestBuilder
   String? get major => _$this._major;
   set major(String? major) => _$this._major = major;
 
+  String? _venmoHandle;
+  String? get venmoHandle => _$this._venmoHandle;
+  set venmoHandle(String? venmoHandle) => _$this._venmoHandle = venmoHandle;
+
   String? _year;
   String? get year => _$this._year;
   set year(String? year) => _$this._year = year;
@@ -92,6 +102,7 @@ class UserUpdateRequestBuilder
       _bio = $v.bio;
       _displayName = $v.displayName;
       _major = $v.major;
+      _venmoHandle = $v.venmoHandle;
       _year = $v.year;
       _$v = null;
     }
@@ -117,6 +128,7 @@ class UserUpdateRequestBuilder
           bio: bio,
           displayName: displayName,
           major: major,
+          venmoHandle: venmoHandle,
           year: year,
         );
     replace(_$result);

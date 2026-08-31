@@ -28,6 +28,8 @@ class _$UserMeResponse extends UserMeResponse {
   @override
   final UserRole role;
   @override
+  final String? venmoHandle;
+  @override
   final String? year;
 
   factory _$UserMeResponse([void Function(UserMeResponseBuilder)? updates]) =>
@@ -44,6 +46,7 @@ class _$UserMeResponse extends UserMeResponse {
       required this.ratingCount,
       required this.reputationScore,
       required this.role,
+      this.venmoHandle,
       this.year})
       : super._();
   @override
@@ -67,6 +70,7 @@ class _$UserMeResponse extends UserMeResponse {
         ratingCount == other.ratingCount &&
         reputationScore == other.reputationScore &&
         role == other.role &&
+        venmoHandle == other.venmoHandle &&
         year == other.year;
   }
 
@@ -83,6 +87,7 @@ class _$UserMeResponse extends UserMeResponse {
     _$hash = $jc(_$hash, ratingCount.hashCode);
     _$hash = $jc(_$hash, reputationScore.hashCode);
     _$hash = $jc(_$hash, role.hashCode);
+    _$hash = $jc(_$hash, venmoHandle.hashCode);
     _$hash = $jc(_$hash, year.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -101,6 +106,7 @@ class _$UserMeResponse extends UserMeResponse {
           ..add('ratingCount', ratingCount)
           ..add('reputationScore', reputationScore)
           ..add('role', role)
+          ..add('venmoHandle', venmoHandle)
           ..add('year', year))
         .toString();
   }
@@ -151,6 +157,10 @@ class UserMeResponseBuilder
   UserRole? get role => _$this._role;
   set role(UserRole? role) => _$this._role = role;
 
+  String? _venmoHandle;
+  String? get venmoHandle => _$this._venmoHandle;
+  set venmoHandle(String? venmoHandle) => _$this._venmoHandle = venmoHandle;
+
   String? _year;
   String? get year => _$this._year;
   set year(String? year) => _$this._year = year;
@@ -172,6 +182,7 @@ class UserMeResponseBuilder
       _ratingCount = $v.ratingCount;
       _reputationScore = $v.reputationScore;
       _role = $v.role;
+      _venmoHandle = $v.venmoHandle;
       _year = $v.year;
       _$v = null;
     }
@@ -211,6 +222,7 @@ class UserMeResponseBuilder
               reputationScore, r'UserMeResponse', 'reputationScore'),
           role: BuiltValueNullFieldError.checkNotNull(
               role, r'UserMeResponse', 'role'),
+          venmoHandle: venmoHandle,
           year: year,
         );
     replace(_$result);

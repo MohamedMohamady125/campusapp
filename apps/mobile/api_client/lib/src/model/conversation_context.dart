@@ -17,6 +17,8 @@ class ConversationContext extends EnumClass {
   static const ConversationContext tutoring = _$tutoring;
   @BuiltValueEnumConst(wireName: r'direct')
   static const ConversationContext direct = _$direct;
+  @BuiltValueEnumConst(wireName: r'run')
+  static const ConversationContext run = _$run;
 
   static Serializer<ConversationContext> get serializer => _$conversationContextSerializer;
 

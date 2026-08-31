@@ -14,6 +14,7 @@ from app.api.v1.listings import router as listings_router
 from app.api.v1.notifications import router as notifications_router
 from app.api.v1.ratings import router as ratings_router
 from app.api.v1.reports import router as reports_router
+from app.api.v1.runs import router as runs_router
 from app.api.v1.tutoring import router as tutoring_router
 from app.api.v1.users import router as users_router
 from app.api.v1.ws import router as ws_router
@@ -67,6 +68,7 @@ def create_app() -> FastAPI:
     app.include_router(conversations_router, prefix="/api/v1")
     app.include_router(ratings_router, prefix="/api/v1")
     app.include_router(reports_router, prefix="/api/v1")
+    app.include_router(runs_router, prefix="/api/v1")
     app.include_router(tutoring_router, prefix="/api/v1")
     app.include_router(chats_router, prefix="/api/v1")
     app.include_router(notifications_router, prefix="/api/v1")

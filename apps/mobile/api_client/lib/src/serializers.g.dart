@@ -27,6 +27,8 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(CourseResponse.serializer)
       ..add(DailyMetricItem.serializer)
       ..add(FlagItem.serializer)
+      ..add(FoodSpotCategory.serializer)
+      ..add(FoodSpotResponse.serializer)
       ..add(ForgotPasswordRequest.serializer)
       ..add(HTTPValidationError.serializer)
       ..add(HealthResponse.serializer)
@@ -75,6 +77,15 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(ReportUpdateRequest.serializer)
       ..add(ResendCodeRequest.serializer)
       ..add(ResetPasswordRequest.serializer)
+      ..add(RunCreateRequest.serializer)
+      ..add(RunOrderCreateRequest.serializer)
+      ..add(RunOrderResponse.serializer)
+      ..add(RunOrderStatus.serializer)
+      ..add(RunPageResponse.serializer)
+      ..add(RunResponse.serializer)
+      ..add(RunStatus.serializer)
+      ..add(RunStatusUpdateRequest.serializer)
+      ..add(RunUserSummary.serializer)
       ..add(SubscriptionResponse.serializer)
       ..add(TokenResponse.serializer)
       ..add(TutorSearchResponse.serializer)
@@ -134,6 +145,12 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(ReportResponse)]),
           () => ListBuilder<ReportResponse>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(RunOrderResponse)]),
+          () => ListBuilder<RunOrderResponse>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(RunResponse)]),
+          () => ListBuilder<RunResponse>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
           () => ListBuilder<String>())

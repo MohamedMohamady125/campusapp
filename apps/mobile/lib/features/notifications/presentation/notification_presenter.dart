@@ -33,8 +33,45 @@ String notificationTitle(NotificationResponse n) {
     case 'dm_message':
       if (sender == null) break;
       return count > 1 ? '$sender and $more' : '$sender sent you a message';
+    case 'run_request':
+      final requester = _str(n, 'requester_name');
+      final spot = _str(n, 'spot_name');
+      if (requester == null || spot == null) return 'New order request';
+      return '$requester wants in on your $spot run';
+    case 'run_request_accepted':
+      final spot = _str(n, 'spot_name');
+      return spot == null
+          ? "You're in! Your order was accepted"
+          : "You're in! Your $spot order was accepted";
+    case 'run_request_declined':
+      final spot = _str(n, 'spot_name');
+      return spot == null
+          ? "The runner couldn't take your order"
+          : "The runner couldn't take your $spot order";
+    case 'run_status':
+      return _runStatusTitle(n);
+    case 'run_completed':
+      return 'Run complete — rate your runner';
   }
   return 'You have a new notification';
+}
+
+/// Friendly copy per run-status update payload.
+String _runStatusTitle(NotificationResponse n) {
+  final spot = _str(n, 'spot_name');
+  switch (_str(n, 'run_status')) {
+    case 'at_store':
+      return spot == null
+          ? 'Your runner is at the store'
+          : 'Your runner is at $spot';
+    case 'delivering':
+      return 'Your order is on its way';
+    case 'cancelled':
+      return spot == null
+          ? 'That run was cancelled'
+          : 'The $spot run was cancelled';
+  }
+  return 'Your run has an update';
 }
 
 /// Where tapping the notification should navigate, or null for legacy types.
@@ -48,6 +85,14 @@ NotificationRoute? notificationRoute(NotificationResponse n) {
       final conversationId = _str(n, 'conversation_id');
       if (conversationId == null) return null;
       return ('/chats/conversation/$conversationId', _str(n, 'sender_name'));
+    case 'run_request' ||
+        'run_request_accepted' ||
+        'run_request_declined' ||
+        'run_status' ||
+        'run_completed':
+      final runId = _str(n, 'run_id');
+      if (runId == null) return null;
+      return ('/runs/run/$runId', _str(n, 'spot_name'));
   }
   return null;
 }
@@ -57,6 +102,10 @@ IconData notificationIcon(NotificationResponse n) => switch (n.type) {
   'chat_message' => Icons.chat_bubble_outline,
   'chat_mention' => Icons.alternate_email,
   'dm_message' => Icons.mail_outline,
+  'run_request' => Icons.fastfood_outlined,
+  'run_request_accepted' || 'run_completed' => Icons.check_circle_outline,
+  'run_request_declined' => Icons.remove_circle_outline,
+  'run_status' => Icons.directions_run,
   _ => Icons.notifications_none,
 };
 

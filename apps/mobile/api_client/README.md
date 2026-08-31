@@ -109,6 +109,20 @@ Class | Method | HTTP request | Description
 [*ReportsApi*](doc/ReportsApi.md) | [**createReportApiV1ReportsPost**](doc/ReportsApi.md#createreportapiv1reportspost) | **POST** /api/v1/reports | Create Report
 [*ReportsApi*](doc/ReportsApi.md) | [**listReportsApiV1AdminReportsGet**](doc/ReportsApi.md#listreportsapiv1adminreportsget) | **GET** /api/v1/admin/reports | List Reports
 [*ReportsApi*](doc/ReportsApi.md) | [**updateReportApiV1AdminReportsReportIdPatch**](doc/ReportsApi.md#updatereportapiv1adminreportsreportidpatch) | **PATCH** /api/v1/admin/reports/{report_id} | Update Report
+[*RunsApi*](doc/RunsApi.md) | [**acceptOrderApiV1RunsRunIdOrdersOrderIdAcceptPost**](doc/RunsApi.md#acceptorderapiv1runsrunidordersorderidacceptpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/accept | Accept Order
+[*RunsApi*](doc/RunsApi.md) | [**cancelRunApiV1RunsRunIdCancelPost**](doc/RunsApi.md#cancelrunapiv1runsrunidcancelpost) | **POST** /api/v1/runs/{run_id}/cancel | Cancel Run
+[*RunsApi*](doc/RunsApi.md) | [**confirmReceivedApiV1RunsRunIdOrdersOrderIdReceivedPost**](doc/RunsApi.md#confirmreceivedapiv1runsrunidordersorderidreceivedpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/received | Confirm Received
+[*RunsApi*](doc/RunsApi.md) | [**createRunApiV1RunsPost**](doc/RunsApi.md#createrunapiv1runspost) | **POST** /api/v1/runs | Create Run
+[*RunsApi*](doc/RunsApi.md) | [**declineOrderApiV1RunsRunIdOrdersOrderIdDeclinePost**](doc/RunsApi.md#declineorderapiv1runsrunidordersorderiddeclinepost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/decline | Decline Order
+[*RunsApi*](doc/RunsApi.md) | [**getRunApiV1RunsRunIdGet**](doc/RunsApi.md#getrunapiv1runsrunidget) | **GET** /api/v1/runs/{run_id} | Get Run
+[*RunsApi*](doc/RunsApi.md) | [**listSpotsApiV1RunsSpotsGet**](doc/RunsApi.md#listspotsapiv1runsspotsget) | **GET** /api/v1/runs/spots | List Spots
+[*RunsApi*](doc/RunsApi.md) | [**markDeliveredApiV1RunsRunIdOrdersOrderIdDeliveredPost**](doc/RunsApi.md#markdeliveredapiv1runsrunidordersorderiddeliveredpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/delivered | Mark Delivered
+[*RunsApi*](doc/RunsApi.md) | [**markNoShowApiV1RunsRunIdOrdersOrderIdNoShowPost**](doc/RunsApi.md#marknoshowapiv1runsrunidordersorderidnoshowpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/no-show | Mark No Show
+[*RunsApi*](doc/RunsApi.md) | [**myRunsApiV1RunsMineGet**](doc/RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs
+[*RunsApi*](doc/RunsApi.md) | [**requestSpotApiV1RunsRunIdOrdersPost**](doc/RunsApi.md#requestspotapiv1runsrunidorderspost) | **POST** /api/v1/runs/{run_id}/orders | Request Spot
+[*RunsApi*](doc/RunsApi.md) | [**runFeedApiV1RunsGet**](doc/RunsApi.md#runfeedapiv1runsget) | **GET** /api/v1/runs | Run Feed
+[*RunsApi*](doc/RunsApi.md) | [**updateStatusApiV1RunsRunIdStatusPost**](doc/RunsApi.md#updatestatusapiv1runsrunidstatuspost) | **POST** /api/v1/runs/{run_id}/status | Update Status
+[*RunsApi*](doc/RunsApi.md) | [**withdrawOrderApiV1RunsRunIdOrdersOrderIdDelete**](doc/RunsApi.md#withdraworderapiv1runsrunidordersorderiddelete) | **DELETE** /api/v1/runs/{run_id}/orders/{order_id} | Withdraw Order
 [*TutoringApi*](doc/TutoringApi.md) | [**autocompleteCoursesApiV1CoursesGet**](doc/TutoringApi.md#autocompletecoursesapiv1coursesget) | **GET** /api/v1/courses | Autocomplete Courses
 [*TutoringApi*](doc/TutoringApi.md) | [**cancelTutorPremiumApiV1TutoringPremiumSubscriptionDelete**](doc/TutoringApi.md#canceltutorpremiumapiv1tutoringpremiumsubscriptiondelete) | **DELETE** /api/v1/tutoring/premium/subscription | Cancel Tutor Premium
 [*TutoringApi*](doc/TutoringApi.md) | [**createOfferingApiV1TutoringOfferingsPost**](doc/TutoringApi.md#createofferingapiv1tutoringofferingspost) | **POST** /api/v1/tutoring/offerings | Create Offering
@@ -142,6 +156,8 @@ Class | Method | HTTP request | Description
  - [CourseResponse](doc/CourseResponse.md)
  - [DailyMetricItem](doc/DailyMetricItem.md)
  - [FlagItem](doc/FlagItem.md)
+ - [FoodSpotCategory](doc/FoodSpotCategory.md)
+ - [FoodSpotResponse](doc/FoodSpotResponse.md)
  - [ForgotPasswordRequest](doc/ForgotPasswordRequest.md)
  - [HTTPValidationError](doc/HTTPValidationError.md)
  - [HealthResponse](doc/HealthResponse.md)
@@ -187,6 +203,15 @@ Class | Method | HTTP request | Description
  - [ReportUpdateRequest](doc/ReportUpdateRequest.md)
  - [ResendCodeRequest](doc/ResendCodeRequest.md)
  - [ResetPasswordRequest](doc/ResetPasswordRequest.md)
+ - [RunCreateRequest](doc/RunCreateRequest.md)
+ - [RunOrderCreateRequest](doc/RunOrderCreateRequest.md)
+ - [RunOrderResponse](doc/RunOrderResponse.md)
+ - [RunOrderStatus](doc/RunOrderStatus.md)
+ - [RunPageResponse](doc/RunPageResponse.md)
+ - [RunResponse](doc/RunResponse.md)
+ - [RunStatus](doc/RunStatus.md)
+ - [RunStatusUpdateRequest](doc/RunStatusUpdateRequest.md)
+ - [RunUserSummary](doc/RunUserSummary.md)
  - [SubscriptionResponse](doc/SubscriptionResponse.md)
  - [TokenResponse](doc/TokenResponse.md)
  - [TutorSearchResponse](doc/TutorSearchResponse.md)

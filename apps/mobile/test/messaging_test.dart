@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/fake_auth.dart';
 import 'helpers/fake_conversations.dart';
+import 'helpers/fake_flags.dart';
 
 Widget _app(FakeConversationsRepository repo) => ProviderScope(
   overrides: [
@@ -14,6 +15,7 @@ Widget _app(FakeConversationsRepository repo) => ProviderScope(
       () => FakeAuthController(authedState()),
     ),
     conversationsRepositoryProvider.overrideWithValue(repo),
+    ...shellOverrides(),
   ],
   child: const CampusConnectApp(),
 );

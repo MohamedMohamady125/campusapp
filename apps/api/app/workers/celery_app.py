@@ -18,6 +18,11 @@ celery_app.conf.update(
     result_serializer="json",
     accept_content=["json"],
     beat_schedule={
+        # Food runs are minutes-scale, not days-scale — sweep every 5 minutes.
+        "expire-runs-every-5-min": {
+            "task": "app.workers.tasks.expire_runs",
+            "schedule": crontab(minute="*/5"),
+        },
         "expire-listings-nightly": {
             "task": "app.workers.tasks.expire_listings",
             "schedule": crontab(hour=3, minute=0),

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.scoring import GLOBAL_MEAN_SEED
 from app.models import AnalyticsEvent, DailyMetric, Listing, Rating, VerificationCode
-from app.models.enums import ListingStatus
+from app.models.enums import ListingStatus, RunOrderStatus, RunStatus
 
 log = structlog.get_logger()
 
@@ -37,6 +37,42 @@ async def expire_listings_job(session: AsyncSession) -> int:
     count = int(result.rowcount or 0)
     log.info("jobs.expire_listings", expired=count)
     return count
+
+
+async def expire_runs_job(session: AsyncSession) -> dict[str, int]:
+    """Food-runs expiry sweep (every 5 min). Idempotent.
+
+    - open run past leaving_at with no accepted orders → quiet `expired`;
+    - open run past leaving_at with >=1 accepted order → auto-`locked`;
+    - any still-active run 90 min past leaving_at → `expired` (runner ghosted).
+    Accepted orders are left untouched — no automatic no_show judgments.
+    """
+    from app.repositories.run_repo import RunRepository
+    from app.services.run_service import RUN_HARD_EXPIRY
+
+    now = datetime.now(UTC)
+    expired = locked = 0
+    for run in await RunRepository(session).expirable(now=now):
+        overdue = now - run.leaving_at
+        has_accepted = any(
+            o.status in (RunOrderStatus.accepted, RunOrderStatus.delivered) for o in run.orders
+        )
+        if overdue >= RUN_HARD_EXPIRY:
+            run.status = RunStatus.expired
+            expired += 1
+        elif run.status == RunStatus.open:
+            if has_accepted:
+                run.status = RunStatus.locked
+                locked += 1
+            else:
+                run.status = RunStatus.expired
+                for order in run.orders:
+                    if order.status == RunOrderStatus.requested:
+                        order.status = RunOrderStatus.declined
+                expired += 1
+    await session.commit()
+    log.info("jobs.expire_runs", expired=expired, locked=locked)
+    return {"expired": expired, "locked": locked}
 
 
 async def recompute_global_mean_job(session: AsyncSession) -> float:

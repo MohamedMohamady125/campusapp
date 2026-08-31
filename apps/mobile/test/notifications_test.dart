@@ -13,6 +13,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'helpers/fake_auth.dart';
 import 'helpers/fake_conversations.dart';
+import 'helpers/fake_flags.dart';
 
 class _MockNotificationsRepository extends Mock
     implements NotificationsRepository {}
@@ -133,6 +134,7 @@ void main() {
         conversationsRepositoryProvider.overrideWithValue(
           FakeConversationsRepository(),
         ),
+        ...shellOverrides(),
       ],
       child: const CampusConnectApp(),
     );

@@ -9,6 +9,7 @@ part of 'conversation_context.dart';
 const ConversationContext _$listing = const ConversationContext._('listing');
 const ConversationContext _$tutoring = const ConversationContext._('tutoring');
 const ConversationContext _$direct = const ConversationContext._('direct');
+const ConversationContext _$run = const ConversationContext._('run');
 
 ConversationContext _$valueOf(String name) {
   switch (name) {
@@ -18,6 +19,8 @@ ConversationContext _$valueOf(String name) {
       return _$tutoring;
     case 'direct':
       return _$direct;
+    case 'run':
+      return _$run;
     default:
       throw ArgumentError(name);
   }
@@ -28,6 +31,7 @@ final BuiltSet<ConversationContext> _$values =
   _$listing,
   _$tutoring,
   _$direct,
+  _$run,
 ]);
 
 class _$ConversationContextMeta {
@@ -35,6 +39,7 @@ class _$ConversationContextMeta {
   ConversationContext get listing => _$listing;
   ConversationContext get tutoring => _$tutoring;
   ConversationContext get direct => _$direct;
+  ConversationContext get run => _$run;
   ConversationContext valueOf(String name) => _$valueOf(name);
   BuiltSet<ConversationContext> get values => _$values;
 }
@@ -54,11 +59,13 @@ class _$ConversationContextSerializer
     'listing': 'listing',
     'tutoring': 'tutoring',
     'direct': 'direct',
+    'run': 'run',
   };
   static const Map<Object, String> _fromWire = const <Object, String>{
     'listing': 'listing',
     'tutoring': 'tutoring',
     'direct': 'direct',
+    'run': 'run',
   };
 
   @override

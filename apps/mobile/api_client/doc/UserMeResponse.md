@@ -18,6 +18,7 @@ Name | Type | Description | Notes
 **ratingCount** | **int** |  | 
 **reputationScore** | **num** |  | 
 **role** | [**UserRole**](UserRole.md) |  | 
+**venmoHandle** | **String** |  | 
 **year** | **String** |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

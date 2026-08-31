@@ -27,7 +27,7 @@ abstract class RatingCreateRequest implements Built<RatingCreateRequest, RatingC
 
   @BuiltValueField(wireName: r'context_type')
   RatingContext get contextType;
-  // enum contextTypeEnum {  listing,  tutoring,  };
+  // enum contextTypeEnum {  listing,  tutoring,  run,  };
 
   @BuiltValueField(wireName: r'rated_user_id')
   String get ratedUserId;

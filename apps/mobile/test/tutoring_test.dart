@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/fake_auth.dart';
 import 'helpers/fake_conversations.dart';
+import 'helpers/fake_flags.dart';
 
 CourseResponse _course() => CourseResponse(
   (b) => b
@@ -80,6 +81,7 @@ void main() {
         ),
         tutoringRepositoryProvider.overrideWithValue(tutoring),
         conversationsRepositoryProvider.overrideWithValue(conversations),
+        ...shellOverrides(),
       ],
       child: const CampusConnectApp(),
     );

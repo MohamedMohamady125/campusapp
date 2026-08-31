@@ -18,6 +18,7 @@ import 'package:campus_api/src/api/meta_api.dart';
 import 'package:campus_api/src/api/notifications_api.dart';
 import 'package:campus_api/src/api/ratings_api.dart';
 import 'package:campus_api/src/api/reports_api.dart';
+import 'package:campus_api/src/api/runs_api.dart';
 import 'package:campus_api/src/api/tutoring_api.dart';
 import 'package:campus_api/src/api/users_api.dart';
 
@@ -167,6 +168,12 @@ class CampusApi {
   /// by doing that all interceptors will not be executed
   ReportsApi getReportsApi() {
     return ReportsApi(dio, serializers);
+  }
+
+  /// Get RunsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  RunsApi getRunsApi() {
+    return RunsApi(dio, serializers);
   }
 
   /// Get TutoringApi instance, base route and serializer can be overridden by a given but be careful,

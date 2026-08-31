@@ -8,6 +8,7 @@ from app.workers.celery_app import celery_app
 from app.workers.jobs import (
     aggregate_daily_metrics_job,
     expire_listings_job,
+    expire_runs_job,
     purge_verification_codes_job,
     recompute_global_mean_job,
 )
@@ -24,6 +25,11 @@ def _run(coro_factory: Any) -> Any:
 @celery_app.task  # type: ignore[untyped-decorator]
 def expire_listings() -> int:
     return int(_run(expire_listings_job))
+
+
+@celery_app.task  # type: ignore[untyped-decorator]
+def expire_runs() -> dict[str, int]:
+    return dict(_run(expire_runs_job))
 
 
 @celery_app.task  # type: ignore[untyped-decorator]

@@ -14,6 +14,7 @@ part 'user_update_request.g.dart';
 /// * [bio] 
 /// * [displayName] 
 /// * [major] 
+/// * [venmoHandle] 
 /// * [year] 
 @BuiltValue()
 abstract class UserUpdateRequest implements Built<UserUpdateRequest, UserUpdateRequestBuilder> {
@@ -25,6 +26,9 @@ abstract class UserUpdateRequest implements Built<UserUpdateRequest, UserUpdateR
 
   @BuiltValueField(wireName: r'major')
   String? get major;
+
+  @BuiltValueField(wireName: r'venmo_handle')
+  String? get venmoHandle;
 
   @BuiltValueField(wireName: r'year')
   String? get year;
@@ -70,6 +74,13 @@ class _$UserUpdateRequestSerializer implements PrimitiveSerializer<UserUpdateReq
       yield r'major';
       yield serializers.serialize(
         object.major,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
+    if (object.venmoHandle != null) {
+      yield r'venmo_handle';
+      yield serializers.serialize(
+        object.venmoHandle,
         specifiedType: const FullType.nullable(String),
       );
     }
@@ -126,6 +137,14 @@ class _$UserUpdateRequestSerializer implements PrimitiveSerializer<UserUpdateReq
           ) as String?;
           if (valueDes == null) continue;
           result.major = valueDes;
+          break;
+        case r'venmo_handle':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.venmoHandle = valueDes;
           break;
         case r'year':
           final valueDes = serializers.deserialize(

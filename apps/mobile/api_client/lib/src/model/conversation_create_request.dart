@@ -22,7 +22,7 @@ abstract class ConversationCreateRequest implements Built<ConversationCreateRequ
 
   @BuiltValueField(wireName: r'context_type')
   ConversationContext? get contextType;
-  // enum contextTypeEnum {  listing,  tutoring,  direct,  };
+  // enum contextTypeEnum {  listing,  tutoring,  direct,  run,  };
 
   @BuiltValueField(wireName: r'recipient_id')
   String get recipientId;

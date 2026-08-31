@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/fake_auth.dart';
 import 'helpers/fake_conversations.dart';
+import 'helpers/fake_flags.dart';
 
 ChatResponse _chat() => ChatResponse(
   (b) => b
@@ -147,6 +148,7 @@ void main() {
           conversationsRepositoryProvider.overrideWithValue(
             FakeConversationsRepository(),
           ),
+          ...shellOverrides(),
         ],
         child: const CampusConnectApp(),
       ),

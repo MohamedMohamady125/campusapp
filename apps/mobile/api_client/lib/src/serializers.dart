@@ -34,6 +34,8 @@ import 'package:campus_api/src/model/conversation_response.dart';
 import 'package:campus_api/src/model/course_response.dart';
 import 'package:campus_api/src/model/daily_metric_item.dart';
 import 'package:campus_api/src/model/flag_item.dart';
+import 'package:campus_api/src/model/food_spot_category.dart';
+import 'package:campus_api/src/model/food_spot_response.dart';
 import 'package:campus_api/src/model/forgot_password_request.dart';
 import 'package:campus_api/src/model/http_validation_error.dart';
 import 'package:campus_api/src/model/health_response.dart';
@@ -79,6 +81,15 @@ import 'package:campus_api/src/model/report_target_type.dart';
 import 'package:campus_api/src/model/report_update_request.dart';
 import 'package:campus_api/src/model/resend_code_request.dart';
 import 'package:campus_api/src/model/reset_password_request.dart';
+import 'package:campus_api/src/model/run_create_request.dart';
+import 'package:campus_api/src/model/run_order_create_request.dart';
+import 'package:campus_api/src/model/run_order_response.dart';
+import 'package:campus_api/src/model/run_order_status.dart';
+import 'package:campus_api/src/model/run_page_response.dart';
+import 'package:campus_api/src/model/run_response.dart';
+import 'package:campus_api/src/model/run_status.dart';
+import 'package:campus_api/src/model/run_status_update_request.dart';
+import 'package:campus_api/src/model/run_user_summary.dart';
 import 'package:campus_api/src/model/subscription_response.dart';
 import 'package:campus_api/src/model/token_response.dart';
 import 'package:campus_api/src/model/tutor_search_response.dart';
@@ -112,6 +123,8 @@ part 'serializers.g.dart';
   CourseResponse,
   DailyMetricItem,
   FlagItem,
+  FoodSpotCategory,
+  FoodSpotResponse,
   ForgotPasswordRequest,
   HTTPValidationError,
   HealthResponse,
@@ -157,6 +170,15 @@ part 'serializers.g.dart';
   ReportUpdateRequest,
   ResendCodeRequest,
   ResetPasswordRequest,
+  RunCreateRequest,
+  RunOrderCreateRequest,
+  RunOrderResponse,
+  RunOrderStatus,
+  RunPageResponse,
+  RunResponse,
+  RunStatus,
+  RunStatusUpdateRequest,
+  RunUserSummary,
   SubscriptionResponse,
   TokenResponse,
   TutorSearchResponse,
@@ -171,6 +193,10 @@ Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(NotificationPreferenceItem)]),
         () => ListBuilder<NotificationPreferenceItem>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(FoodSpotResponse)]),
+        () => ListBuilder<FoodSpotResponse>(),
       )
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(CourseResponse)]),

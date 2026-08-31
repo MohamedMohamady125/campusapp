@@ -1,6 +1,14 @@
 # CampusConnect — RUN LOG
 
-▶ NEXT: Atlas Dark (whole.md) fully executed and green; optional stretch below unchanged.
+▶ NEXT: Food runs hero feature shipped and green. Optional: run detail live countdown polish, integration_test on emulator, real-device E2E with two accounts.
+
+## 2026-08-31 — Food Runs hero feature (runs-first GCU launch)
+
+Repositioned the app as runs-first per the approved plan (`~/.claude/plans/foamy-percolating-church.md`): a runner posts a food run, others attach orders for a small fee, group chat coordinates, Venmo settles off-app, two-way ratings feed the shared Bayesian reputation. Marketplace/tutoring/chats tabs hidden behind flags (`tab_marketplace|tutoring|chats=false`, `tab_food_runs=true`) — re-enabled later by flipping DB rows.
+
+- **Backend**: new enums (RunStatus, RunOrderStatus, FoodSpotCategory; `run` added to rating/conversation contexts), models FoodSpot/Run/RunOrder + `users.venmo_handle`, migration `7c41f00d21aa` (enum ADD VALUE in autocommit_block), schemas, repo (eager-load `_RUN_LOAD`, ASC leaving_at feed cursor, `populate_existing` to defeat expire_on_commit=False staleness), `RunService` state machine (open→locked→at_store→delivering→done; orders requested→accepted|declined|cancelled→delivered→received|no_show; FOR UPDATE race guard on spots cap; group Conversation created on first accept; `delivered` counts as resolved so a silent requester can't block `done`), 15-endpoint router, run branch in rating `_validate_context` (RUN_NOT_COMPLETED / INVALID_RATING_PARTY), notifications via dedup upsert (5 types), `expire_runs_job` (Celery beat */5: quiet-expire, auto-lock, 90-min ghost hard-expiry), seed (4 tab flags, 11 GCU food spots, 3 demo runs + run ratings).
+- **Flutter**: client regenerated from contract; `core/flags/flags_provider.dart` (failure default = food runs only); router: `/runs` first branch + initialLocation, flag-filtered NavigationBar with branch-index mapping, redirect guard bounces hidden-tab deep links to `/runs`; `features/food_runs/` — feed (15s poll, countdown/fee/spots chips, skeletons, EmptyState CTA, FAB), create run (spot picker, leaving chips, fee, stepper, prepay, inline Venmo prompt), detail (visitor/requester/runner variants, status stepper, accept/decline, delivered/no-show/received, payment card, group chat via ThreadScreen), rate sheet, 5 notification presenter cases.
+- **Verified**: API lint/mypy/pytest 71 passed (12 new in `test_runs.py`: validations, cap race, full state machine, authz matrix, conversation participants, expiry 3 branches, two-way run ratings); Flutter analyze 0 issues, 43/43 tests; fresh DB drop→migrate→seed clean; live E2E smoke: login A/B → B requests → A accepts (convo created) → at_store→delivering→delivered→received→done → B rates 5★ → runner reputation 4.03(1) → notifications `run_request_accepted|run_status|run_completed` landed. OpenAPI re-exported.
 
 ## 2026-08-04 — Atlas Dark gap-closure pass (whole.md re-issued)
 

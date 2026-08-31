@@ -22,6 +22,8 @@ class User(TimestampedBase):
     major: Mapped[str | None] = mapped_column(String(120))
     bio: Mapped[str | None] = mapped_column(Text)
     avatar_key: Mapped[str | None] = mapped_column(String(255))
+    # Off-app payment handle for food runs ("no payment, no handoff").
+    venmo_handle: Mapped[str | None] = mapped_column(String(30))
     # Cached Bayesian reputation (spec §5.2); recomputed inside each rating transaction.
     reputation_score: Mapped[float] = mapped_column(Numeric(3, 2), default=4.0)
     rating_count: Mapped[int] = mapped_column(Integer, default=0)

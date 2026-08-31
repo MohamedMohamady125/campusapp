@@ -9,13 +9,14 @@ from datetime import datetime
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
 from app.core.scoring import GLOBAL_MEAN_SEED, bayesian_reputation
 from app.integrations.analytics.base import EVENT_RATING_SUBMITTED
 from app.integrations.analytics.provider import get_analytics_provider
-from app.models import AuditLog, Listing, Rating, Report, User
-from app.models.enums import RatingContext, ReportStatus
+from app.models import AuditLog, Listing, Rating, Report, RunOrder, User
+from app.models.enums import RatingContext, ReportStatus, RunStatus
 from app.repositories.user_repo import UserRepository
 from app.schemas.rating import RatingCreateRequest, ReportCreateRequest
 
@@ -31,7 +32,7 @@ class RatingService:
         rated = await self._users.get_by_id(body.rated_user_id)
         if rated is None:
             raise NotFoundError("User not found.", code="USER_NOT_FOUND")
-        await self._validate_context(body)
+        await self._validate_context(body, rater_id=rater.id)
 
         duplicate = (
             await self._session.execute(
@@ -87,7 +88,7 @@ class RatingService:
         await self._session.refresh(rating)
         return rating
 
-    async def _validate_context(self, body: RatingCreateRequest) -> None:
+    async def _validate_context(self, body: RatingCreateRequest, *, rater_id: uuid.UUID) -> None:
         """The context must reference a real transaction object."""
         if body.context_type == RatingContext.listing:
             exists = (
@@ -99,6 +100,32 @@ class RatingService:
             ).scalar_one_or_none()
             if exists is None:
                 raise NotFoundError("Listing not found.", code="LISTING_NOT_FOUND")
+        elif body.context_type == RatingContext.run:
+            # Food-runs spec: context_id = RunOrder.id; both directions of a
+            # completed order (runner ↔ requester) may rate exactly once each.
+            order = (
+                (
+                    await self._session.execute(
+                        select(RunOrder)
+                        .where(RunOrder.id == body.context_id)
+                        .options(selectinload(RunOrder.run))
+                    )
+                )
+                .scalars()
+                .first()
+            )
+            if order is None:
+                raise NotFoundError("Run order not found.", code="ORDER_NOT_FOUND")
+            if order.run.status != RunStatus.done:
+                raise BusinessRuleError(
+                    "You can rate only after the run is done.", code="RUN_NOT_COMPLETED"
+                )
+            parties = {order.run.runner_id, order.requester_id}
+            if rater_id not in parties or body.rated_user_id not in parties:
+                raise BusinessRuleError(
+                    "Only the runner and requester on this order can rate each other.",
+                    code="INVALID_RATING_PARTY",
+                )
         # tutoring context references a tutor offering — validated in M6 when
         # offerings gain endpoints; existence of the rated tutor is checked above.
 

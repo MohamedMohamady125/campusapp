@@ -18,6 +18,7 @@ class UserMeResponse(BaseModel):
     major: str | None
     bio: str | None
     avatar_key: str | None
+    venmo_handle: str | None
     reputation_score: float
     rating_count: int
     role: UserRole
@@ -45,3 +46,6 @@ class UserUpdateRequest(BaseModel):
     year: str | None = Field(default=None, max_length=20)
     major: str | None = Field(default=None, max_length=120)
     bio: str | None = Field(default=None, max_length=1000)
+    venmo_handle: str | None = Field(
+        default=None, max_length=30, pattern=r"^@?[A-Za-z0-9_-]{3,30}$"
+    )

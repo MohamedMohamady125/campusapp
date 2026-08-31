@@ -9,6 +9,7 @@ from app.models.messaging import Conversation, ConversationParticipant, Message
 from app.models.moderation import AuditLog, Rating, Report
 from app.models.monetization import Payment, Subscription
 from app.models.notification import Notification, NotificationPreference
+from app.models.run import FoodSpot, Run, RunOrder
 from app.models.user import RefreshToken, User, VerificationCode
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "Course",
     "DailyMetric",
     "Flag",
+    "FoodSpot",
     "Listing",
     "ListingImage",
     "Message",
@@ -31,6 +33,8 @@ __all__ = [
     "Rating",
     "RefreshToken",
     "Report",
+    "Run",
+    "RunOrder",
     "Subscription",
     "TutorOffering",
     "User",

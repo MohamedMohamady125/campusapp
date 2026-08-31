@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/fake_auth.dart';
+import 'helpers/fake_flags.dart';
 
 Widget _app(AuthState initial) => ProviderScope(
   overrides: [
     authControllerProvider.overrideWith(() => FakeAuthController(initial)),
+    ...shellOverrides(),
   ],
   child: const CampusConnectApp(),
 );
@@ -68,7 +70,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Search listings'), findsOneWidget);
+    // Runs-first launch: the food-runs feed is the landing screen.
+    expect(find.text('Food runs'), findsOneWidget);
   });
 
   testWidgets('sign out returns to login', (tester) async {

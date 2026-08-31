@@ -15,6 +15,8 @@ class RatingContext extends EnumClass {
   static const RatingContext listing = _$listing;
   @BuiltValueEnumConst(wireName: r'tutoring')
   static const RatingContext tutoring = _$tutoring;
+  @BuiltValueEnumConst(wireName: r'run')
+  static const RatingContext run = _$run;
 
   static Serializer<RatingContext> get serializer => _$ratingContextSerializer;
 
