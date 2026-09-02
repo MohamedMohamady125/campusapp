@@ -7,6 +7,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.enums import PaymentMethodType, UserRole
 
+# Bounded, printable set covering every rail's handle shape: Venmo/Zelle
+# tags (@foo), Cash App cashtags ($foo), phones (+1 (555) 1234), emails
+# (a@b.co) and PayPal.me links (paypal.me/foo). Rejects control chars /
+# injection payloads.
+_HANDLE_CHARS = "@._+-()$/: "
+
 
 class PaymentMethod(BaseModel):
     """One off-app payment rail a runner advertises (food-runs spec).
@@ -24,9 +30,7 @@ class PaymentMethod(BaseModel):
     @classmethod
     def _clean_handle(cls, value: str) -> str:
         cleaned = value.strip()
-        # Bounded, printable set covering tags (@foo), phones (+1 (555) 1234)
-        # and emails (a@b.co). Rejects control chars / injection payloads.
-        if not all(c.isalnum() or c in "@._+-() " for c in cleaned):
+        if not all(c.isalnum() or c in _HANDLE_CHARS for c in cleaned):
             raise ValueError("Handle has unsupported characters.")
         return cleaned
 

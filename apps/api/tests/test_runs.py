@@ -54,6 +54,27 @@ async def _create_run(
 # -- creation -----------------------------------------------------------------
 
 
+async def test_payment_methods_accept_rail_specific_handles(
+    client: httpx.AsyncClient,
+) -> None:
+    # Regression: Cash App cashtags ($foo) and PayPal.me links must round-trip.
+    # A too-strict handle validator once 500'd GET /users/me on saved data.
+    runner = await make_user(client, "runner@campus.edu")
+    methods = [
+        {"type": "cashapp", "handle": "$ben1"},
+        {"type": "paypal", "handle": "paypal.me/ben1"},
+        {"type": "zelle", "handle": "ben1@campus.edu"},
+    ]
+    patch = await client.patch(
+        "/api/v1/users/me", json={"payment_methods": methods}, headers=runner
+    )
+    assert patch.status_code == 200, patch.text
+
+    me = await client.get("/api/v1/users/me", headers=runner)
+    assert me.status_code == 200, me.text
+    assert me.json()["payment_methods"] == methods
+
+
 async def test_create_and_feed(client: httpx.AsyncClient) -> None:
     runner = await make_user(client, "runner@campus.edu")
     spot_id = await _make_spot()
