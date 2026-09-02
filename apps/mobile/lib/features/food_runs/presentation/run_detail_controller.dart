@@ -68,8 +68,13 @@ class RunDetailController
     state = RunDetailState(run: run, loading: false);
   }
 
-  Future<void> requestSpot(String orderText, String dropoff) =>
-      _mutate(() => _repo.requestSpot(arg, orderText, dropoff));
+  Future<void> requestSpot(
+    String orderText,
+    String dropoff, {
+    String? pickupCode,
+  }) => _mutate(
+    () => _repo.requestSpot(arg, orderText, dropoff, pickupCode: pickupCode),
+  );
 
   Future<void> withdraw(String orderId) async {
     await _repo.withdrawOrder(arg, orderId);

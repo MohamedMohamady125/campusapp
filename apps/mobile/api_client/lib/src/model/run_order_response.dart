@@ -17,6 +17,7 @@ part 'run_order_response.g.dart';
 /// * [dropoff] 
 /// * [id] 
 /// * [orderText] 
+/// * [pickupCode] 
 /// * [requester] 
 /// * [runId] 
 /// * [status] 
@@ -33,6 +34,9 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
 
   @BuiltValueField(wireName: r'order_text')
   String get orderText;
+
+  @BuiltValueField(wireName: r'pickup_code')
+  String? get pickupCode;
 
   @BuiltValueField(wireName: r'requester')
   RunUserSummary get requester;
@@ -87,6 +91,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       object.orderText,
       specifiedType: const FullType(String),
     );
+    if (object.pickupCode != null) {
+      yield r'pickup_code';
+      yield serializers.serialize(
+        object.pickupCode,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
     yield r'requester';
     yield serializers.serialize(
       object.requester,
@@ -152,6 +163,14 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
             specifiedType: const FullType(String),
           ) as String;
           result.orderText = valueDes;
+          break;
+        case r'pickup_code':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.pickupCode = valueDes;
           break;
         case r'requester':
           final valueDes = serializers.deserialize(

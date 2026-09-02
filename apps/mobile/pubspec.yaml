@@ -45,8 +45,15 @@ dependencies:
   geolocator: ^13.0.2
   go_router: ^17.2.3
   google_fonts: ^8.1.0
+  # Mobile Order pickup QR: image_picker grabs the requester's own QR
+  # screenshot, mobile_scanner decodes it to its payload string (dodging the
+  # messaging-app compression that corrupts a shared screenshot's error
+  # correction), qr_flutter re-renders a crisp scannable code for the runner.
+  image_picker: ^1.1.2
   json_annotation: ^4.9.0
   latlong2: ^0.9.1
+  mobile_scanner: ^6.0.2
+  qr_flutter: ^4.1.0
   riverpod_annotation: ^2.6.1
 
 dev_dependencies:

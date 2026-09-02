@@ -74,14 +74,16 @@ class RunsRepository {
   Future<RunResponse> requestSpot(
     String runId,
     String orderText,
-    String dropoff,
-  ) async {
+    String dropoff, {
+    String? pickupCode,
+  }) async {
     final res = await _runs.requestSpotApiV1RunsRunIdOrdersPost(
       runId: runId,
       runOrderCreateRequest: RunOrderCreateRequest(
         (b) => b
           ..orderText = orderText
-          ..dropoff = dropoff,
+          ..dropoff = dropoff
+          ..pickupCode = pickupCode,
       ),
     );
     return res.data!;

@@ -13,6 +13,7 @@ part 'run_order_create_request.g.dart';
 /// Properties:
 /// * [dropoff] 
 /// * [orderText] 
+/// * [pickupCode] 
 @BuiltValue()
 abstract class RunOrderCreateRequest implements Built<RunOrderCreateRequest, RunOrderCreateRequestBuilder> {
   @BuiltValueField(wireName: r'dropoff')
@@ -20,6 +21,9 @@ abstract class RunOrderCreateRequest implements Built<RunOrderCreateRequest, Run
 
   @BuiltValueField(wireName: r'order_text')
   String get orderText;
+
+  @BuiltValueField(wireName: r'pickup_code')
+  String? get pickupCode;
 
   RunOrderCreateRequest._();
 
@@ -54,6 +58,13 @@ class _$RunOrderCreateRequestSerializer implements PrimitiveSerializer<RunOrderC
       object.orderText,
       specifiedType: const FullType(String),
     );
+    if (object.pickupCode != null) {
+      yield r'pickup_code';
+      yield serializers.serialize(
+        object.pickupCode,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
   }
 
   @override
@@ -90,6 +101,14 @@ class _$RunOrderCreateRequestSerializer implements PrimitiveSerializer<RunOrderC
             specifiedType: const FullType(String),
           ) as String;
           result.orderText = valueDes;
+          break;
+        case r'pickup_code':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.pickupCode = valueDes;
           break;
         default:
           unhandled.add(key);

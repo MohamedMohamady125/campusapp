@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **dropoff** | **String** |  | 
 **id** | **String** |  | 
 **orderText** | **String** |  | 
+**pickupCode** | **String** |  | [optional] 
 **requester** | [**RunUserSummary**](RunUserSummary.md) |  | 
 **runId** | **String** |  | 
 **status** | [**RunOrderStatus**](RunOrderStatus.md) |  | 

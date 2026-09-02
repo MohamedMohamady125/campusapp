@@ -12,6 +12,7 @@ import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/live_map_card.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
+import 'package:campusconnect/features/food_runs/presentation/pickup_qr.dart';
 import 'package:campusconnect/features/food_runs/presentation/rate_run_sheet.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_detail_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
@@ -165,78 +166,95 @@ class _RunDetailBody extends ConsumerWidget {
   ) {
     final text = TextEditingController();
     final dropoff = TextEditingController();
+    // The requester's own decoded Mobile Order QR payload, if they attach one.
+    String? pickupCode;
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) {
         final tokens = sheetContext.tokens;
-        return Padding(
-          padding: EdgeInsets.only(
-            left: tokens.space4,
-            right: tokens.space4,
-            top: tokens.space4,
-            bottom:
-                MediaQuery.viewInsetsOf(sheetContext).bottom + tokens.space6,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text("What's your order?", style: AppTextStyles.subheading),
-              SizedBox(height: tokens.space3),
-              TextField(
-                controller: text,
-                autofocus: true,
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText: 'e.g. Medium iced latte, oat milk, no sugar',
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              left: tokens.space4,
+              right: tokens.space4,
+              top: tokens.space4,
+              bottom:
+                  MediaQuery.viewInsetsOf(sheetContext).bottom + tokens.space6,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text("What's your order?", style: AppTextStyles.subheading),
+                SizedBox(height: tokens.space3),
+                TextField(
+                  controller: text,
+                  autofocus: true,
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. Medium iced latte, oat milk, no sugar',
+                  ),
                 ),
-              ),
-              SizedBox(height: tokens.space4),
-              Text('Where should they drop it?', style: AppTextStyles.label),
-              SizedBox(height: tokens.space2),
-              TextField(
-                controller: dropoff,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText: 'e.g. Juniper Hall lobby, room 214',
+                SizedBox(height: tokens.space4),
+                Text('Where should they drop it?', style: AppTextStyles.label),
+                SizedBox(height: tokens.space2),
+                TextField(
+                  controller: dropoff,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. Juniper Hall lobby, room 214',
+                  ),
                 ),
-              ),
-              SizedBox(height: tokens.space2),
-              Text(
-                run.prepayRequired
-                    ? '${runFeeLabel(run.feeCents)} · pay before '
-                          'pickup (runner requires prepay).'
-                    : '${runFeeLabel(run.feeCents)} · pay the runner '
-                          'on delivery, off-app.',
-                style: sheetContext.text.bodySmall?.copyWith(
-                  color: sheetContext.colors.onSurfaceVariant,
+                SizedBox(height: tokens.space4),
+                _PickupAttachRow(
+                  attached: pickupCode != null,
+                  onAttach: () async {
+                    final code = await pickMobileOrderCode(sheetContext);
+                    if (code != null) setSheetState(() => pickupCode = code);
+                  },
+                  onRemove: () => setSheetState(() => pickupCode = null),
                 ),
-              ),
-              SizedBox(height: tokens.space4),
-              FilledButton(
-                onPressed: () {
-                  final order = text.text.trim();
-                  final spot = dropoff.text.trim();
-                  if (order.isEmpty) {
-                    _snack(sheetContext, 'Add your order first.');
-                    return;
-                  }
-                  if (spot.length < 2) {
-                    _snack(sheetContext, 'Add where to drop it off.');
-                    return;
-                  }
-                  Navigator.of(sheetContext).pop();
-                  _act(
-                    context,
-                    () => controller.requestSpot(order, spot),
-                    success: "Request sent — you'll hear back soon.",
-                  ).ignore();
-                },
-                child: const Text('Send request'),
-              ),
-            ],
+                SizedBox(height: tokens.space2),
+                Text(
+                  run.prepayRequired
+                      ? '${runFeeLabel(run.feeCents)} · pay before '
+                            'pickup (runner requires prepay).'
+                      : '${runFeeLabel(run.feeCents)} · pay the runner '
+                            'on delivery, off-app.',
+                  style: sheetContext.text.bodySmall?.copyWith(
+                    color: sheetContext.colors.onSurfaceVariant,
+                  ),
+                ),
+                SizedBox(height: tokens.space4),
+                FilledButton(
+                  onPressed: () {
+                    final order = text.text.trim();
+                    final spot = dropoff.text.trim();
+                    if (order.isEmpty) {
+                      _snack(sheetContext, 'Add your order first.');
+                      return;
+                    }
+                    if (spot.length < 2) {
+                      _snack(sheetContext, 'Add where to drop it off.');
+                      return;
+                    }
+                    Navigator.of(sheetContext).pop();
+                    _act(
+                      context,
+                      () => controller.requestSpot(
+                        order,
+                        spot,
+                        pickupCode: pickupCode,
+                      ),
+                      success: "Request sent — you'll hear back soon.",
+                    ).ignore();
+                  },
+                  child: const Text('Send request'),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -688,6 +706,13 @@ class _MyOrderCard extends StatelessWidget {
             icon: Icons.place_outlined,
             label: 'Drop at ${order.dropoff}',
           ),
+          if (order.pickupCode != null) ...[
+            SizedBox(height: tokens.space2),
+            const _InfoRow(
+              icon: Icons.qr_code_2,
+              label: 'Mobile Order QR attached for the runner',
+            ),
+          ],
           SizedBox(height: tokens.space2),
           Text(
             copy,
@@ -697,6 +722,58 @@ class _MyOrderCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The requester's optional attach control inside the request sheet. Toggles
+/// between "attach my Mobile Order QR" and an attached/remove state.
+class _PickupAttachRow extends StatelessWidget {
+  const _PickupAttachRow({
+    required this.attached,
+    required this.onAttach,
+    required this.onRemove,
+  });
+
+  final bool attached;
+  final Future<void> Function() onAttach;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    if (attached) {
+      return Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.space3,
+          vertical: tokens.space2,
+        ),
+        decoration: BoxDecoration(
+          color: tokens.success.withValues(alpha: .10),
+          borderRadius: tokens.brSm,
+          border: Border.all(color: tokens.success.withValues(alpha: .4)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.qr_code_2, size: 18, color: tokens.success),
+            SizedBox(width: tokens.space2),
+            Expanded(
+              child: Text(
+                'Mobile Order QR attached',
+                style: context.text.bodySmall?.copyWith(color: tokens.success),
+              ),
+            ),
+            TextButton(onPressed: onRemove, child: const Text('Remove')),
+          ],
+        ),
+      );
+    }
+    return OutlinedButton.icon(
+      icon: const Icon(Icons.qr_code_scanner, size: 18),
+      label: const Text('Attach my Mobile Order QR (optional)'),
+      style: OutlinedButton.styleFrom(foregroundColor: colors.onSurface),
+      onPressed: () => onAttach().ignore(),
     );
   }
 }
@@ -939,6 +1016,20 @@ class _OrderCard extends StatelessWidget {
             icon: Icons.place_outlined,
             label: 'Drop at ${order.dropoff}',
           ),
+          // Revealed by the server only once the runner accepts. Present the
+          // requester's own paid Mobile Order QR at the counter.
+          if (order.pickupCode != null) ...[
+            SizedBox(height: tokens.space3),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.qr_code_2, size: 18),
+              label: const Text('Show pickup QR'),
+              onPressed: () => showPickupQr(
+                context,
+                code: order.pickupCode!,
+                requesterName: requester.displayName,
+              ),
+            ),
+          ],
           SizedBox(height: tokens.space3),
           switch (order.status) {
             RunOrderStatus.requested => Row(

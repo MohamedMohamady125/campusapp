@@ -47,5 +47,9 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>CampusConnect shares your live location with people on your food run so they can see you approaching.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CampusConnect reads a photo you pick so it can attach your Mobile Order pickup QR to a food run.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>CampusConnect uses the camera to scan a Mobile Order pickup QR code.</string>
 </dict>
 </plist>
