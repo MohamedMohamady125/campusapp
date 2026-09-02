@@ -19,7 +19,6 @@ part 'run_response.g.dart';
 /// * [acceptedCount] 
 /// * [conversationId] 
 /// * [createdAt] 
-/// * [deliverySpot] 
 /// * [feeCents] 
 /// * [foodSpot] 
 /// * [id] 
@@ -43,9 +42,6 @@ abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
 
   @BuiltValueField(wireName: r'created_at')
   DateTime get createdAt;
-
-  @BuiltValueField(wireName: r'delivery_spot')
-  String get deliverySpot;
 
   @BuiltValueField(wireName: r'fee_cents')
   int get feeCents;
@@ -125,11 +121,6 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
     yield serializers.serialize(
       object.createdAt,
       specifiedType: const FullType(DateTime),
-    );
-    yield r'delivery_spot';
-    yield serializers.serialize(
-      object.deliverySpot,
-      specifiedType: const FullType(String),
     );
     yield r'fee_cents';
     yield serializers.serialize(
@@ -244,13 +235,6 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
             specifiedType: const FullType(DateTime),
           ) as DateTime;
           result.createdAt = valueDes;
-          break;
-        case r'delivery_spot':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
-          result.deliverySpot = valueDes;
           break;
         case r'fee_cents':
           final valueDes = serializers.deserialize(

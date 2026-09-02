@@ -211,5 +211,3 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/payment_method_test.dart
-test/payment_method_type_test.dart

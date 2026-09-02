@@ -88,7 +88,7 @@ _EXTRA_FIRST = [
     "Owen",
 ]
 
-_DELIVERY_SPOTS = [
+_DROPOFFS = [
     "Juniper Hall lobby",
     "Ironwood Hall front desk",
     "Acacia Hall study room",
@@ -270,7 +270,6 @@ async def _seed(session: AsyncSession) -> None:
         run = Run(
             runner_id=runner.id,
             food_spot_id=rng.choice(spots).id,
-            delivery_spot=rng.choice(_DELIVERY_SPOTS),
             note=rng.choice(_NOTES),
             leaving_at=leaving_at,
             fee_cents=rng.choice([0, 100, 100, 150, 200, 200, 250, 300, 500]),
@@ -296,6 +295,7 @@ async def _seed(session: AsyncSession) -> None:
                 run_id=run.id,
                 requester_id=requester.id,
                 order_text=_order_text(_spot_name(run)),
+                dropoff=rng.choice(_DROPOFFS),
                 status=order_status,
             )
             session.add(order)
@@ -324,7 +324,7 @@ async def _seed(session: AsyncSession) -> None:
         openers = [
             f"Heading to {_spot_name(run)} soon, got everyone's orders!",
             "On my way, anything else before I leave?",
-            f"Meet at {run.delivery_spot} in ~15.",
+            f"First stop {active[0].dropoff} in ~15.",
         ]
         session.add(
             Message(conversation_id=convo.id, sender_id=runner.id, body=rng.choice(openers))

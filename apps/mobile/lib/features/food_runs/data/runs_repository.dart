@@ -49,7 +49,6 @@ class RunsRepository {
 
   Future<RunResponse> createRun({
     required String foodSpotId,
-    required String deliverySpot,
     required DateTime leavingAt,
     required int feeCents,
     required int spotsMax,
@@ -61,7 +60,6 @@ class RunsRepository {
       runCreateRequest: RunCreateRequest(
         (b) => b
           ..foodSpotId = foodSpotId
-          ..deliverySpot = deliverySpot
           ..leavingAt = leavingAt
           ..feeCents = feeCents
           ..spotsMax = spotsMax
@@ -73,11 +71,17 @@ class RunsRepository {
     return res.data!;
   }
 
-  Future<RunResponse> requestSpot(String runId, String orderText) async {
+  Future<RunResponse> requestSpot(
+    String runId,
+    String orderText,
+    String dropoff,
+  ) async {
     final res = await _runs.requestSpotApiV1RunsRunIdOrdersPost(
       runId: runId,
       runOrderCreateRequest: RunOrderCreateRequest(
-        (b) => b..orderText = orderText,
+        (b) => b
+          ..orderText = orderText
+          ..dropoff = dropoff,
       ),
     );
     return res.data!;

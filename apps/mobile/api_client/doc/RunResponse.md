@@ -11,7 +11,6 @@ Name | Type | Description | Notes
 **acceptedCount** | **int** |  | 
 **conversationId** | **String** |  | 
 **createdAt** | [**DateTime**](DateTime.md) |  | 
-**deliverySpot** | **String** |  | 
 **feeCents** | **int** |  | 
 **foodSpot** | [**FoodSpotResponse**](FoodSpotResponse.md) |  | 
 **id** | **String** |  | 

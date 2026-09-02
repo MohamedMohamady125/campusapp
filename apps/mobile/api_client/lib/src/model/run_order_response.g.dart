@@ -10,6 +10,8 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   final DateTime createdAt;
   @override
+  final String dropoff;
+  @override
   final String id;
   @override
   final String orderText;
@@ -26,6 +28,7 @@ class _$RunOrderResponse extends RunOrderResponse {
 
   _$RunOrderResponse._(
       {required this.createdAt,
+      required this.dropoff,
       required this.id,
       required this.orderText,
       required this.requester,
@@ -45,6 +48,7 @@ class _$RunOrderResponse extends RunOrderResponse {
     if (identical(other, this)) return true;
     return other is RunOrderResponse &&
         createdAt == other.createdAt &&
+        dropoff == other.dropoff &&
         id == other.id &&
         orderText == other.orderText &&
         requester == other.requester &&
@@ -56,6 +60,7 @@ class _$RunOrderResponse extends RunOrderResponse {
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, createdAt.hashCode);
+    _$hash = $jc(_$hash, dropoff.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
     _$hash = $jc(_$hash, requester.hashCode);
@@ -69,6 +74,7 @@ class _$RunOrderResponse extends RunOrderResponse {
   String toString() {
     return (newBuiltValueToStringHelper(r'RunOrderResponse')
           ..add('createdAt', createdAt)
+          ..add('dropoff', dropoff)
           ..add('id', id)
           ..add('orderText', orderText)
           ..add('requester', requester)
@@ -85,6 +91,10 @@ class RunOrderResponseBuilder
   DateTime? _createdAt;
   DateTime? get createdAt => _$this._createdAt;
   set createdAt(DateTime? createdAt) => _$this._createdAt = createdAt;
+
+  String? _dropoff;
+  String? get dropoff => _$this._dropoff;
+  set dropoff(String? dropoff) => _$this._dropoff = dropoff;
 
   String? _id;
   String? get id => _$this._id;
@@ -116,6 +126,7 @@ class RunOrderResponseBuilder
     final $v = _$v;
     if ($v != null) {
       _createdAt = $v.createdAt;
+      _dropoff = $v.dropoff;
       _id = $v.id;
       _orderText = $v.orderText;
       _requester = $v.requester.toBuilder();
@@ -146,6 +157,8 @@ class RunOrderResponseBuilder
           _$RunOrderResponse._(
             createdAt: BuiltValueNullFieldError.checkNotNull(
                 createdAt, r'RunOrderResponse', 'createdAt'),
+            dropoff: BuiltValueNullFieldError.checkNotNull(
+                dropoff, r'RunOrderResponse', 'dropoff'),
             id: BuiltValueNullFieldError.checkNotNull(
                 id, r'RunOrderResponse', 'id'),
             orderText: BuiltValueNullFieldError.checkNotNull(

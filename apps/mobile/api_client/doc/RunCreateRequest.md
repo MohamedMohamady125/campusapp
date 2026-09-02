@@ -8,7 +8,6 @@ import 'package:campus_api/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**deliverySpot** | **String** |  | 
 **feeCents** | **int** |  | [optional] [default to 0]
 **foodSpotId** | **String** |  | 
 **leavingAt** | [**DateTime**](DateTime.md) |  | 

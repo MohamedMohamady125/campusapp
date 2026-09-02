@@ -14,8 +14,6 @@ class _$RunResponse extends RunResponse {
   @override
   final DateTime createdAt;
   @override
-  final String deliverySpot;
-  @override
   final int feeCents;
   @override
   final FoodSpotResponse foodSpot;
@@ -49,7 +47,6 @@ class _$RunResponse extends RunResponse {
       {required this.acceptedCount,
       this.conversationId,
       required this.createdAt,
-      required this.deliverySpot,
       required this.feeCents,
       required this.foodSpot,
       required this.id,
@@ -78,7 +75,6 @@ class _$RunResponse extends RunResponse {
         acceptedCount == other.acceptedCount &&
         conversationId == other.conversationId &&
         createdAt == other.createdAt &&
-        deliverySpot == other.deliverySpot &&
         feeCents == other.feeCents &&
         foodSpot == other.foodSpot &&
         id == other.id &&
@@ -100,7 +96,6 @@ class _$RunResponse extends RunResponse {
     _$hash = $jc(_$hash, acceptedCount.hashCode);
     _$hash = $jc(_$hash, conversationId.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
-    _$hash = $jc(_$hash, deliverySpot.hashCode);
     _$hash = $jc(_$hash, feeCents.hashCode);
     _$hash = $jc(_$hash, foodSpot.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
@@ -124,7 +119,6 @@ class _$RunResponse extends RunResponse {
           ..add('acceptedCount', acceptedCount)
           ..add('conversationId', conversationId)
           ..add('createdAt', createdAt)
-          ..add('deliverySpot', deliverySpot)
           ..add('feeCents', feeCents)
           ..add('foodSpot', foodSpot)
           ..add('id', id)
@@ -158,10 +152,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
   DateTime? _createdAt;
   DateTime? get createdAt => _$this._createdAt;
   set createdAt(DateTime? createdAt) => _$this._createdAt = createdAt;
-
-  String? _deliverySpot;
-  String? get deliverySpot => _$this._deliverySpot;
-  set deliverySpot(String? deliverySpot) => _$this._deliverySpot = deliverySpot;
 
   int? _feeCents;
   int? get feeCents => _$this._feeCents;
@@ -232,7 +222,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
       _acceptedCount = $v.acceptedCount;
       _conversationId = $v.conversationId;
       _createdAt = $v.createdAt;
-      _deliverySpot = $v.deliverySpot;
       _feeCents = $v.feeCents;
       _foodSpot = $v.foodSpot.toBuilder();
       _id = $v.id;
@@ -274,8 +263,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
             conversationId: conversationId,
             createdAt: BuiltValueNullFieldError.checkNotNull(
                 createdAt, r'RunResponse', 'createdAt'),
-            deliverySpot: BuiltValueNullFieldError.checkNotNull(
-                deliverySpot, r'RunResponse', 'deliverySpot'),
             feeCents: BuiltValueNullFieldError.checkNotNull(
                 feeCents, r'RunResponse', 'feeCents'),
             foodSpot: foodSpot.build(),

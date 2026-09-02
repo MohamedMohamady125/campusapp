@@ -9,6 +9,7 @@ import 'package:campus_api/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **createdAt** | [**DateTime**](DateTime.md) |  | 
+**dropoff** | **String** |  | 
 **id** | **String** |  | 
 **orderText** | **String** |  | 
 **requester** | [**RunUserSummary**](RunUserSummary.md) |  | 

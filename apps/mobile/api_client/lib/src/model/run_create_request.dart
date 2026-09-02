@@ -11,7 +11,6 @@ part 'run_create_request.g.dart';
 /// RunCreateRequest
 ///
 /// Properties:
-/// * [deliverySpot] 
 /// * [feeCents] 
 /// * [foodSpotId] 
 /// * [leavingAt] 
@@ -21,9 +20,6 @@ part 'run_create_request.g.dart';
 /// * [spotsMax] 
 @BuiltValue()
 abstract class RunCreateRequest implements Built<RunCreateRequest, RunCreateRequestBuilder> {
-  @BuiltValueField(wireName: r'delivery_spot')
-  String get deliverySpot;
-
   @BuiltValueField(wireName: r'fee_cents')
   int? get feeCents;
 
@@ -72,11 +68,6 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
     RunCreateRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
-    yield r'delivery_spot';
-    yield serializers.serialize(
-      object.deliverySpot,
-      specifiedType: const FullType(String),
-    );
     if (object.feeCents != null) {
       yield r'fee_cents';
       yield serializers.serialize(
@@ -145,13 +136,6 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
-        case r'delivery_spot':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
-          result.deliverySpot = valueDes;
-          break;
         case r'fee_cents':
           final valueDes = serializers.deserialize(
             value,

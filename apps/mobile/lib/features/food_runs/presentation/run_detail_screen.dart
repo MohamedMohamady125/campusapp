@@ -156,6 +156,7 @@ class _RunDetailBody extends ConsumerWidget {
     RunDetailController controller,
   ) {
     final text = TextEditingController();
+    final dropoff = TextEditingController();
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -184,6 +185,16 @@ class _RunDetailBody extends ConsumerWidget {
                   hintText: 'e.g. Medium iced latte, oat milk, no sugar',
                 ),
               ),
+              SizedBox(height: tokens.space4),
+              Text('Where should they drop it?', style: AppTextStyles.label),
+              SizedBox(height: tokens.space2),
+              TextField(
+                controller: dropoff,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  hintText: 'e.g. Juniper Hall lobby, room 214',
+                ),
+              ),
               SizedBox(height: tokens.space2),
               Text(
                 run.prepayRequired
@@ -199,11 +210,19 @@ class _RunDetailBody extends ConsumerWidget {
               FilledButton(
                 onPressed: () {
                   final order = text.text.trim();
-                  if (order.isEmpty) return;
+                  final spot = dropoff.text.trim();
+                  if (order.isEmpty) {
+                    _snack(sheetContext, 'Add your order first.');
+                    return;
+                  }
+                  if (spot.length < 2) {
+                    _snack(sheetContext, 'Add where to drop it off.');
+                    return;
+                  }
                   Navigator.of(sheetContext).pop();
                   _act(
                     context,
-                    () => controller.requestSpot(order),
+                    () => controller.requestSpot(order, spot),
                     success: "Request sent — you'll hear back soon.",
                   ).ignore();
                 },
@@ -213,7 +232,16 @@ class _RunDetailBody extends ConsumerWidget {
           ),
         );
       },
-    ).whenComplete(text.dispose);
+    ).whenComplete(() {
+      text.dispose();
+      dropoff.dispose();
+    });
+  }
+
+  void _snack(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   // ── Requester ──────────────────────────────────────────────────────────
@@ -484,11 +512,6 @@ class _RunHeaderCard extends StatelessWidget {
           ),
           SizedBox(height: tokens.space2),
           _InfoRow(
-            icon: Icons.place_outlined,
-            label: 'Drops at ${run.deliverySpot}',
-          ),
-          SizedBox(height: tokens.space2),
-          _InfoRow(
             icon: Icons.payments_outlined,
             label: run.prepayRequired
                 ? '${runFeeLabel(run.feeCents)} · prepay required'
@@ -641,6 +664,11 @@ class _MyOrderCard extends StatelessWidget {
           ),
           SizedBox(height: tokens.space2),
           Text(order.orderText, style: context.text.bodyMedium),
+          SizedBox(height: tokens.space2),
+          _InfoRow(
+            icon: Icons.place_outlined,
+            label: 'Drop at ${order.dropoff}',
+          ),
           SizedBox(height: tokens.space2),
           Text(
             copy,
@@ -887,6 +915,11 @@ class _OrderCard extends StatelessWidget {
           ),
           SizedBox(height: tokens.space2),
           Text(order.orderText, style: context.text.bodyMedium),
+          SizedBox(height: tokens.space2),
+          _InfoRow(
+            icon: Icons.place_outlined,
+            label: 'Drop at ${order.dropoff}',
+          ),
           SizedBox(height: tokens.space3),
           switch (order.status) {
             RunOrderStatus.requested => Row(

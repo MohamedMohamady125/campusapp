@@ -8,8 +8,6 @@ part of 'run_create_request.dart';
 
 class _$RunCreateRequest extends RunCreateRequest {
   @override
-  final String deliverySpot;
-  @override
   final int? feeCents;
   @override
   final String foodSpotId;
@@ -29,8 +27,7 @@ class _$RunCreateRequest extends RunCreateRequest {
       (RunCreateRequestBuilder()..update(updates))._build();
 
   _$RunCreateRequest._(
-      {required this.deliverySpot,
-      this.feeCents,
+      {this.feeCents,
       required this.foodSpotId,
       required this.leavingAt,
       this.note,
@@ -50,7 +47,6 @@ class _$RunCreateRequest extends RunCreateRequest {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is RunCreateRequest &&
-        deliverySpot == other.deliverySpot &&
         feeCents == other.feeCents &&
         foodSpotId == other.foodSpotId &&
         leavingAt == other.leavingAt &&
@@ -63,7 +59,6 @@ class _$RunCreateRequest extends RunCreateRequest {
   @override
   int get hashCode {
     var _$hash = 0;
-    _$hash = $jc(_$hash, deliverySpot.hashCode);
     _$hash = $jc(_$hash, feeCents.hashCode);
     _$hash = $jc(_$hash, foodSpotId.hashCode);
     _$hash = $jc(_$hash, leavingAt.hashCode);
@@ -78,7 +73,6 @@ class _$RunCreateRequest extends RunCreateRequest {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'RunCreateRequest')
-          ..add('deliverySpot', deliverySpot)
           ..add('feeCents', feeCents)
           ..add('foodSpotId', foodSpotId)
           ..add('leavingAt', leavingAt)
@@ -93,10 +87,6 @@ class _$RunCreateRequest extends RunCreateRequest {
 class RunCreateRequestBuilder
     implements Builder<RunCreateRequest, RunCreateRequestBuilder> {
   _$RunCreateRequest? _$v;
-
-  String? _deliverySpot;
-  String? get deliverySpot => _$this._deliverySpot;
-  set deliverySpot(String? deliverySpot) => _$this._deliverySpot = deliverySpot;
 
   int? _feeCents;
   int? get feeCents => _$this._feeCents;
@@ -135,7 +125,6 @@ class RunCreateRequestBuilder
   RunCreateRequestBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
-      _deliverySpot = $v.deliverySpot;
       _feeCents = $v.feeCents;
       _foodSpotId = $v.foodSpotId;
       _leavingAt = $v.leavingAt;
@@ -164,8 +153,6 @@ class RunCreateRequestBuilder
   _$RunCreateRequest _build() {
     final _$result = _$v ??
         _$RunCreateRequest._(
-          deliverySpot: BuiltValueNullFieldError.checkNotNull(
-              deliverySpot, r'RunCreateRequest', 'deliverySpot'),
           feeCents: feeCents,
           foodSpotId: BuiltValueNullFieldError.checkNotNull(
               foodSpotId, r'RunCreateRequest', 'foodSpotId'),

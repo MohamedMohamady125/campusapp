@@ -279,7 +279,6 @@ async def _seed(session: AsyncSession) -> None:
     open_run = Run(
         runner_id=users[0].id,
         food_spot_id=spots[0].id,
-        delivery_spot="Juniper Hall lobby",
         note="Leaving right after class, drop your order!",
         leaving_at=now + timedelta(minutes=25),
         fee_cents=200,
@@ -294,6 +293,7 @@ async def _seed(session: AsyncSession) -> None:
             run_id=open_run.id,
             requester_id=users[3].id,
             order_text="Spicy deluxe meal, lemonade, Polynesian sauce",
+            dropoff="Juniper Hall lobby",
             status=RunOrderStatus.requested,
         )
     )
@@ -302,7 +302,6 @@ async def _seed(session: AsyncSession) -> None:
     delivering_run = Run(
         runner_id=users[1].id,
         food_spot_id=spots[7].id,
-        delivery_spot="Encanto Apartments courtyard",
         leaving_at=now - timedelta(minutes=20),
         fee_cents=300,
         spots_max=3,
@@ -316,6 +315,7 @@ async def _seed(session: AsyncSession) -> None:
             run_id=delivering_run.id,
             requester_id=users[4].id,
             order_text="Chicken bowl, white rice, double chicken, mild salsa",
+            dropoff="Encanto Apartments courtyard",
             status=RunOrderStatus.accepted,
         )
     )
@@ -324,7 +324,6 @@ async def _seed(session: AsyncSession) -> None:
     done_run = Run(
         runner_id=users[2].id,
         food_spot_id=spots[9].id,
-        delivery_spot="Library front steps",
         leaving_at=now - timedelta(hours=3),
         fee_cents=150,
         spots_max=2,
@@ -338,6 +337,7 @@ async def _seed(session: AsyncSession) -> None:
         run_id=done_run.id,
         requester_id=users[5].id,
         order_text="Golden eagle, medium, soft top",
+        dropoff="Library front steps",
         status=RunOrderStatus.received,
     )
     session.add(done_order)

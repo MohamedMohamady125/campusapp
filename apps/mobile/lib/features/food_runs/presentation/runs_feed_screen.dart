@@ -371,27 +371,6 @@ class RunCard extends StatelessWidget {
                   ),
               ],
             ),
-            SizedBox(height: tokens.space2),
-            Row(
-              children: [
-                Icon(
-                  Icons.place_outlined,
-                  size: 14,
-                  color: colors.onSurfaceVariant,
-                ),
-                SizedBox(width: tokens.space1),
-                Expanded(
-                  child: Text(
-                    'Drops at ${run.deliverySpot}',
-                    style: context.text.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),

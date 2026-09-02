@@ -20,7 +20,6 @@ class FoodSpotResponse(BaseModel):
 
 class RunCreateRequest(BaseModel):
     food_spot_id: uuid.UUID
-    delivery_spot: str = Field(min_length=2, max_length=120)
     note: str | None = Field(default=None, max_length=500)
     leaving_at: datetime
     fee_cents: int = Field(default=0, ge=0, le=2000)
@@ -48,6 +47,8 @@ class RunOrderResponse(BaseModel):
     run_id: uuid.UUID
     requester: RunUserSummary
     order_text: str
+    # Where this requester wants their food — their hall / dorm / spot.
+    dropoff: str
     status: RunOrderStatus
     created_at: datetime
 
@@ -56,7 +57,6 @@ class RunResponse(BaseModel):
     id: uuid.UUID
     runner: RunUserSummary
     food_spot: FoodSpotResponse
-    delivery_spot: str
     note: str | None
     leaving_at: datetime
     fee_cents: int
@@ -81,6 +81,8 @@ class RunPageResponse(BaseModel):
 
 class RunOrderCreateRequest(BaseModel):
     order_text: str = Field(min_length=1, max_length=500)
+    # Requester's own drop-off — which hall / dorm / spot to bring it to.
+    dropoff: str = Field(min_length=2, max_length=120)
 
 
 class RunStatusUpdateRequest(BaseModel):

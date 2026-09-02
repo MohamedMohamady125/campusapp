@@ -8,13 +8,16 @@ part of 'run_order_create_request.dart';
 
 class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   @override
+  final String dropoff;
+  @override
   final String orderText;
 
   factory _$RunOrderCreateRequest(
           [void Function(RunOrderCreateRequestBuilder)? updates]) =>
       (RunOrderCreateRequestBuilder()..update(updates))._build();
 
-  _$RunOrderCreateRequest._({required this.orderText}) : super._();
+  _$RunOrderCreateRequest._({required this.dropoff, required this.orderText})
+      : super._();
   @override
   RunOrderCreateRequest rebuild(
           void Function(RunOrderCreateRequestBuilder) updates) =>
@@ -27,12 +30,15 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    return other is RunOrderCreateRequest && orderText == other.orderText;
+    return other is RunOrderCreateRequest &&
+        dropoff == other.dropoff &&
+        orderText == other.orderText;
   }
 
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, dropoff.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -41,6 +47,7 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'RunOrderCreateRequest')
+          ..add('dropoff', dropoff)
           ..add('orderText', orderText))
         .toString();
   }
@@ -49,6 +56,10 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
 class RunOrderCreateRequestBuilder
     implements Builder<RunOrderCreateRequest, RunOrderCreateRequestBuilder> {
   _$RunOrderCreateRequest? _$v;
+
+  String? _dropoff;
+  String? get dropoff => _$this._dropoff;
+  set dropoff(String? dropoff) => _$this._dropoff = dropoff;
 
   String? _orderText;
   String? get orderText => _$this._orderText;
@@ -61,6 +72,7 @@ class RunOrderCreateRequestBuilder
   RunOrderCreateRequestBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _dropoff = $v.dropoff;
       _orderText = $v.orderText;
       _$v = null;
     }
@@ -83,6 +95,8 @@ class RunOrderCreateRequestBuilder
   _$RunOrderCreateRequest _build() {
     final _$result = _$v ??
         _$RunOrderCreateRequest._(
+          dropoff: BuiltValueNullFieldError.checkNotNull(
+              dropoff, r'RunOrderCreateRequest', 'dropoff'),
           orderText: BuiltValueNullFieldError.checkNotNull(
               orderText, r'RunOrderCreateRequest', 'orderText'),
         );

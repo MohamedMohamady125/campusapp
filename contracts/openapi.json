@@ -1770,12 +1770,6 @@
       },
       "RunCreateRequest": {
         "properties": {
-          "delivery_spot": {
-            "maxLength": 120,
-            "minLength": 2,
-            "title": "Delivery Spot",
-            "type": "string"
-          },
           "fee_cents": {
             "default": 0,
             "maximum": 2000.0,
@@ -1825,7 +1819,6 @@
         },
         "required": [
           "food_spot_id",
-          "delivery_spot",
           "leaving_at"
         ],
         "title": "RunCreateRequest",
@@ -1833,6 +1826,12 @@
       },
       "RunOrderCreateRequest": {
         "properties": {
+          "dropoff": {
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Dropoff",
+            "type": "string"
+          },
           "order_text": {
             "maxLength": 500,
             "minLength": 1,
@@ -1841,7 +1840,8 @@
           }
         },
         "required": [
-          "order_text"
+          "order_text",
+          "dropoff"
         ],
         "title": "RunOrderCreateRequest",
         "type": "object"
@@ -1851,6 +1851,10 @@
           "created_at": {
             "format": "date-time",
             "title": "Created At",
+            "type": "string"
+          },
+          "dropoff": {
+            "title": "Dropoff",
             "type": "string"
           },
           "id": {
@@ -1879,6 +1883,7 @@
           "run_id",
           "requester",
           "order_text",
+          "dropoff",
           "status",
           "created_at"
         ],
@@ -1948,10 +1953,6 @@
           "created_at": {
             "format": "date-time",
             "title": "Created At",
-            "type": "string"
-          },
-          "delivery_spot": {
-            "title": "Delivery Spot",
             "type": "string"
           },
           "fee_cents": {
@@ -2027,7 +2028,6 @@
           "id",
           "runner",
           "food_spot",
-          "delivery_spot",
           "note",
           "leaving_at",
           "fee_cents",

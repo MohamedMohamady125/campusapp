@@ -11,9 +11,13 @@ part 'run_order_create_request.g.dart';
 /// RunOrderCreateRequest
 ///
 /// Properties:
+/// * [dropoff] 
 /// * [orderText] 
 @BuiltValue()
 abstract class RunOrderCreateRequest implements Built<RunOrderCreateRequest, RunOrderCreateRequestBuilder> {
+  @BuiltValueField(wireName: r'dropoff')
+  String get dropoff;
+
   @BuiltValueField(wireName: r'order_text')
   String get orderText;
 
@@ -40,6 +44,11 @@ class _$RunOrderCreateRequestSerializer implements PrimitiveSerializer<RunOrderC
     RunOrderCreateRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    yield r'dropoff';
+    yield serializers.serialize(
+      object.dropoff,
+      specifiedType: const FullType(String),
+    );
     yield r'order_text';
     yield serializers.serialize(
       object.orderText,
@@ -68,6 +77,13 @@ class _$RunOrderCreateRequestSerializer implements PrimitiveSerializer<RunOrderC
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'dropoff':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.dropoff = valueDes;
+          break;
         case r'order_text':
           final valueDes = serializers.deserialize(
             value,

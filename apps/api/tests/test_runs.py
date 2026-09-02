@@ -24,7 +24,6 @@ async def _make_spot(name: str = "Chick-fil-A") -> str:
 def _payload(spot_id: str, **overrides: object) -> dict[str, object]:
     body: dict[str, object] = {
         "food_spot_id": spot_id,
-        "delivery_spot": "Juniper Hall lobby",
         "leaving_at": (datetime.now(UTC) + timedelta(minutes=30)).isoformat(),
         "fee_cents": 0,
         "spots_max": 2,
@@ -32,6 +31,11 @@ def _payload(spot_id: str, **overrides: object) -> dict[str, object]:
     }
     body.update(overrides)
     return body
+
+
+def _order_body(order_text: str = "food", dropoff: str = "Chaparral Hall lobby") -> dict[str, str]:
+    """A requester's order body — order text plus their own drop-off spot."""
+    return {"order_text": order_text, "dropoff": dropoff}
 
 
 async def _set_payment(client: httpx.AsyncClient, headers: dict[str, str]) -> None:
@@ -144,20 +148,24 @@ async def test_order_request_accept_flow(client: httpx.AsyncClient) -> None:
 
     # Runner cannot join own run.
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json={"order_text": "x"}, headers=runner
+        f"/api/v1/runs/{run['id']}/orders", json=_order_body("x"), headers=runner
     )
     assert resp.json()["error"]["code"] == "SELF_ORDER"
 
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json={"order_text": "Spicy deluxe"}, headers=req
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("Spicy deluxe", dropoff="Willow Hall room 214"),
+        headers=req,
     )
     assert resp.status_code == 201
     order = resp.json()["my_order"]
     assert order["status"] == "requested"
+    # Each requester carries their own drop-off (their hall/dorm).
+    assert order["dropoff"] == "Willow Hall room 214"
 
     # Duplicate blocked.
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json={"order_text": "again"}, headers=req
+        f"/api/v1/runs/{run['id']}/orders", json=_order_body("again"), headers=req
     )
     assert resp.json()["error"]["code"] == "DUPLICATE_ORDER"
 
@@ -194,7 +202,7 @@ async def test_run_full_and_decline_and_withdraw(client: httpx.AsyncClient) -> N
 
     async def order(headers: dict[str, str]) -> dict:
         resp = await client.post(
-            f"/api/v1/runs/{run['id']}/orders", json={"order_text": "food"}, headers=headers
+            f"/api/v1/runs/{run['id']}/orders", json=_order_body("food"), headers=headers
         )
         return resp.json()
 
@@ -229,7 +237,7 @@ async def test_visitor_sees_counts_only(client: httpx.AsyncClient) -> None:
     await _set_payment(client, runner)
     run = await _create_run(client, runner, spot_id, fee_cents=300)
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json={"order_text": "bowl"}, headers=req
+        f"/api/v1/runs/{run['id']}/orders", json=_order_body("bowl"), headers=req
     )
     oid = resp.json()["my_order"]["id"]
     await client.post(f"/api/v1/runs/{run['id']}/orders/{oid}/accept", headers=runner)
@@ -254,7 +262,7 @@ async def _accepted_run(
 ) -> tuple[dict, str]:
     run = await _create_run(client, runner, spot_id)
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json={"order_text": "food"}, headers=req
+        f"/api/v1/runs/{run['id']}/orders", json=_order_body("food"), headers=req
     )
     oid = resp.json()["my_order"]["id"]
     await client.post(f"/api/v1/runs/{run['id']}/orders/{oid}/accept", headers=runner)
@@ -299,7 +307,7 @@ async def test_illegal_transitions_and_at_store_declines(client: httpx.AsyncClie
     spot_id = await _make_spot()
     run, _ = await _accepted_run(client, runner, req, spot_id)
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json={"order_text": "late"}, headers=late
+        f"/api/v1/runs/{run['id']}/orders", json=_order_body("late"), headers=late
     )
     assert resp.status_code == 201
 
@@ -318,7 +326,7 @@ async def test_illegal_transitions_and_at_store_declines(client: httpx.AsyncClie
     # New orders are closed once at the store.
     other = await make_user(client, "other@campus.edu")
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json={"order_text": "x"}, headers=other
+        f"/api/v1/runs/{run['id']}/orders", json=_order_body("x"), headers=other
     )
     assert resp.json()["error"]["code"] == "RUN_NOT_OPEN"
 
@@ -364,7 +372,7 @@ async def test_expire_runs_job_branches(client: httpx.AsyncClient) -> None:
     # a) open, no accepted → expired quietly (pending request declined).
     lonely = await _create_run(client, runner, spot_id)
     resp = await client.post(
-        f"/api/v1/runs/{lonely['id']}/orders", json={"order_text": "x"}, headers=req
+        f"/api/v1/runs/{lonely['id']}/orders", json=_order_body("x"), headers=req
     )
     assert resp.status_code == 201
     # b) open with an accepted order → auto-locked.

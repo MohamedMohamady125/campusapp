@@ -52,8 +52,6 @@ class Run(TimestampedBase):
     food_spot_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("food_spots.id", ondelete="CASCADE"), index=True
     )
-    # Where the runner hands food off ("Keller Hall lobby").
-    delivery_spot: Mapped[str] = mapped_column(String(120))
     note: Mapped[str | None] = mapped_column(Text)
     leaving_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     # Runner's per-order fee; payment itself is off-app (Venmo).
@@ -95,6 +93,9 @@ class RunOrder(TimestampedBase):
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     order_text: Mapped[str] = mapped_column(Text)
+    # Where this requester wants their food dropped — their own hall / dorm /
+    # spot. Each order carries its own location; the runner delivers per order.
+    dropoff: Mapped[str] = mapped_column(String(120))
     status: Mapped[RunOrderStatus] = mapped_column(
         Enum(RunOrderStatus, name="run_order_status"), default=RunOrderStatus.requested
     )

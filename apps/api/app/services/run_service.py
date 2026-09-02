@@ -74,6 +74,7 @@ def _order_response(order: RunOrder) -> RunOrderResponse:
         run_id=order.run_id,
         requester=_user_summary(order.requester),
         order_text=order.order_text,
+        dropoff=order.dropoff,
         status=order.status,
         created_at=order.created_at,
     )
@@ -102,7 +103,6 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
         id=run.id,
         runner=_user_summary(run.runner, include_payment=show_payment),
         food_spot=FoodSpotResponse.model_validate(run.food_spot),
-        delivery_spot=run.delivery_spot,
         note=run.note,
         leaving_at=run.leaving_at,
         fee_cents=run.fee_cents,
@@ -141,7 +141,6 @@ class RunService:
         run = Run(
             runner_id=runner.id,
             food_spot_id=spot.id,
-            delivery_spot=body.delivery_spot,
             note=body.note,
             leaving_at=body.leaving_at,
             fee_cents=body.fee_cents,
@@ -164,7 +163,9 @@ class RunService:
 
     # -- orders ------------------------------------------------------------
 
-    async def request_spot(self, *, run_id: uuid.UUID, user: User, order_text: str) -> Run:
+    async def request_spot(
+        self, *, run_id: uuid.UUID, user: User, order_text: str, dropoff: str
+    ) -> Run:
         run = await self._get_or_404(run_id, for_update=True)
         if run.runner_id == user.id:
             raise BusinessRuleError("You cannot join your own run.", code="SELF_ORDER")
@@ -174,7 +175,9 @@ class RunService:
             raise ConflictError("You already have an order on this run.", code="DUPLICATE_ORDER")
         if self._accepted_count(run) >= run.spots_max:
             raise ConflictError("All spots on this run are taken.", code="RUN_FULL")
-        order = RunOrder(run_id=run.id, requester_id=user.id, order_text=order_text)
+        order = RunOrder(
+            run_id=run.id, requester_id=user.id, order_text=order_text, dropoff=dropoff
+        )
         self._repo.add(order)
         await self._session.flush()
         await self._notify(

@@ -22,7 +22,6 @@ class CreateRunScreen extends ConsumerStatefulWidget {
 
 class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _deliverySpot = TextEditingController();
   final _fee = TextEditingController();
   final _note = TextEditingController();
   final _quickHandle = TextEditingController();
@@ -55,7 +54,6 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
 
   @override
   void dispose() {
-    _deliverySpot.dispose();
     _fee.dispose();
     _note.dispose();
     _quickHandle.dispose();
@@ -102,7 +100,6 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
       }
       final run = await repo.createRun(
         foodSpotId: _spot!.id,
-        deliverySpot: _deliverySpot.text.trim(),
         leavingAt: DateTime.now().toUtc().add(
           Duration(minutes: _leavingMinutes),
         ),
@@ -315,19 +312,7 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                 ],
                 SizedBox(height: tokens.space6),
 
-                const _SectionLabel(label: 'Drop-off'),
-                SizedBox(height: tokens.space3),
-                TextFormField(
-                  controller: _deliverySpot,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Delivery spot',
-                    hintText: 'e.g. Library steps, 2nd floor lounge',
-                  ),
-                  validator: (v) => (v == null || v.trim().length < 3)
-                      ? 'Where should people meet you?'
-                      : null,
-                ),
+                const _SectionLabel(label: 'Anything else?'),
                 SizedBox(height: tokens.space3),
                 TextFormField(
                   controller: _note,
