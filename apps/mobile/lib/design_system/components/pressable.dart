@@ -1,12 +1,15 @@
 import 'dart:async' show unawaited;
 
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
 /// Press feedback for tappable cards/rows (Fifty Free §6).
 ///
-/// Scales to 0.97 and dims to 90% opacity while pressed (120ms easeOut),
-/// springs back on release, and fires a light haptic on tap.
+/// Scales to 0.97 and dims to 90% opacity while pressed, springs back on
+/// release, and fires a light haptic on tap. Timing comes from
+/// [AppMotion.feedback] (100ms — Nielsen's "instantaneous" limit) so the touch
+/// reads as direct manipulation. Collapses to no motion under reduce-motion.
 class Pressable extends StatefulWidget {
   const Pressable({required this.child, super.key, this.onTap});
 
@@ -39,12 +42,12 @@ class _PressableState extends State<Pressable> {
             },
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
+        duration: AppMotion.resolve(context, AppMotion.feedback),
+        curve: AppMotion.standard,
         child: AnimatedOpacity(
           opacity: _pressed ? 0.9 : 1,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
+          duration: AppMotion.resolve(context, AppMotion.feedback),
+          curve: AppMotion.standard,
           child: widget.child,
         ),
       ),

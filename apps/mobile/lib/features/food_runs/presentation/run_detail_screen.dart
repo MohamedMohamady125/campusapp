@@ -5,6 +5,7 @@ import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
+import 'package:campusconnect/design_system/components/swipe_action.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
@@ -898,7 +899,7 @@ class _OrderCard extends StatelessWidget {
         runDone &&
         (order.status == RunOrderStatus.delivered ||
             order.status == RunOrderStatus.received);
-    return Container(
+    final card = Container(
       padding: EdgeInsets.all(tokens.space4),
       decoration: BoxDecoration(
         color: colors.surface,
@@ -998,6 +999,24 @@ class _OrderCard extends StatelessWidget {
         ],
       ),
     );
+
+    // Swipe accelerator on pending requests: swipe right to accept, left to
+    // decline. The Accept/Decline buttons above remain the primary,
+    // discoverable path (this gesture is a power-user shortcut, not the only
+    // way — Fitts's & Hick's laws + accessibility).
+    if (order.status == RunOrderStatus.requested) {
+      return SwipeAction(
+        borderRadius: tokens.brMd,
+        onSwipeRight: onAccept,
+        onSwipeLeft: onDecline,
+        rightIcon: Icons.check_rounded,
+        rightLabel: 'Accept',
+        leftIcon: Icons.close_rounded,
+        leftLabel: 'Decline',
+        child: card,
+      );
+    }
+    return card;
   }
 }
 

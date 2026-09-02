@@ -1,9 +1,11 @@
 import 'dart:async' show unawaited;
 
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_motion.dart';
 
-/// Entrance animation (Fifty Free §6): fade in + slide up 16px, 320ms,
-/// easeOutExpo-ish curve, staggered by `index * 40ms` (index clamped to 10).
+/// Entrance animation (Fifty Free §6): fade in + slide up 16px, staggered per
+/// item. Timing and curve come from [AppMotion] ([AppMotion.enter] with the M3
+/// emphasized-decelerate "arriving" curve, [AppMotion.stagger] between items).
 /// Respects reduce-motion.
 class FadeSlideIn extends StatefulWidget {
   const FadeSlideIn({required this.child, super.key, this.index = 0});
@@ -17,17 +19,15 @@ class FadeSlideIn extends StatefulWidget {
 
 class _FadeSlideInState extends State<FadeSlideIn>
     with SingleTickerProviderStateMixin {
-  static const _curve = Cubic(0.16, 1, 0.3, 1);
-
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 320),
+    duration: AppMotion.enter,
   );
 
   @override
   void initState() {
     super.initState();
-    final delay = Duration(milliseconds: widget.index.clamp(0, 10) * 40);
+    final delay = AppMotion.stagger * widget.index.clamp(0, 10);
     unawaited(
       Future<void>.delayed(delay, () {
         if (mounted) unawaited(_controller.forward());
@@ -44,7 +44,10 @@ class _FadeSlideInState extends State<FadeSlideIn>
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.of(context).disableAnimations) return widget.child;
-    final anim = CurvedAnimation(parent: _controller, curve: _curve);
+    final anim = CurvedAnimation(
+      parent: _controller,
+      curve: AppMotion.decelerate,
+    );
     return FadeTransition(
       opacity: anim,
       child: AnimatedBuilder(
