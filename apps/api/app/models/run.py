@@ -107,14 +107,6 @@ class RunOrder(TimestampedBase):
     # Where this requester wants their food dropped — their own hall / dorm /
     # spot. Each order carries its own location; the runner delivers per order.
     dropoff: Mapped[str] = mapped_column(String(120))
-    # Optional campus Mobile Order pickup token. When a requester places and
-    # pays their OWN Mobile Order (their own dining dollars / card) they attach
-    # the decoded QR payload here so the accepted runner can re-render a crisp,
-    # scannable code and collect the order at the counter. This is the
-    # requester's own single-use pickup code for their own paid order — it never
-    # moves money in-app and is revealed to the runner only once they accept the
-    # order (see run_service.run_response).
-    pickup_code: Mapped[str | None] = mapped_column(Text)
     status: Mapped[RunOrderStatus] = mapped_column(
         Enum(RunOrderStatus, name="run_order_status"), default=RunOrderStatus.requested
     )

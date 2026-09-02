@@ -11,15 +11,12 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   final String dropoff;
   @override
   final String orderText;
-  @override
-  final String? pickupCode;
 
   factory _$RunOrderCreateRequest(
           [void Function(RunOrderCreateRequestBuilder)? updates]) =>
       (RunOrderCreateRequestBuilder()..update(updates))._build();
 
-  _$RunOrderCreateRequest._(
-      {required this.dropoff, required this.orderText, this.pickupCode})
+  _$RunOrderCreateRequest._({required this.dropoff, required this.orderText})
       : super._();
   @override
   RunOrderCreateRequest rebuild(
@@ -35,8 +32,7 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
     if (identical(other, this)) return true;
     return other is RunOrderCreateRequest &&
         dropoff == other.dropoff &&
-        orderText == other.orderText &&
-        pickupCode == other.pickupCode;
+        orderText == other.orderText;
   }
 
   @override
@@ -44,7 +40,6 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
     var _$hash = 0;
     _$hash = $jc(_$hash, dropoff.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
-    _$hash = $jc(_$hash, pickupCode.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -53,8 +48,7 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   String toString() {
     return (newBuiltValueToStringHelper(r'RunOrderCreateRequest')
           ..add('dropoff', dropoff)
-          ..add('orderText', orderText)
-          ..add('pickupCode', pickupCode))
+          ..add('orderText', orderText))
         .toString();
   }
 }
@@ -71,10 +65,6 @@ class RunOrderCreateRequestBuilder
   String? get orderText => _$this._orderText;
   set orderText(String? orderText) => _$this._orderText = orderText;
 
-  String? _pickupCode;
-  String? get pickupCode => _$this._pickupCode;
-  set pickupCode(String? pickupCode) => _$this._pickupCode = pickupCode;
-
   RunOrderCreateRequestBuilder() {
     RunOrderCreateRequest._defaults(this);
   }
@@ -84,7 +74,6 @@ class RunOrderCreateRequestBuilder
     if ($v != null) {
       _dropoff = $v.dropoff;
       _orderText = $v.orderText;
-      _pickupCode = $v.pickupCode;
       _$v = null;
     }
     return this;
@@ -110,7 +99,6 @@ class RunOrderCreateRequestBuilder
               dropoff, r'RunOrderCreateRequest', 'dropoff'),
           orderText: BuiltValueNullFieldError.checkNotNull(
               orderText, r'RunOrderCreateRequest', 'orderText'),
-          pickupCode: pickupCode,
         );
     replace(_$result);
     return _$result;

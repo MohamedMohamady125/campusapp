@@ -128,7 +128,6 @@ async def request_spot(
         user=user,
         order_text=body.order_text,
         dropoff=body.dropoff,
-        pickup_code=body.pickup_code,
     )
     return run_response(run, viewer_id=user.id)
 

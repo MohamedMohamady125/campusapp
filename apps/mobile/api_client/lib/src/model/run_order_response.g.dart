@@ -16,8 +16,6 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   final String orderText;
   @override
-  final String? pickupCode;
-  @override
   final RunUserSummary requester;
   @override
   final String runId;
@@ -33,7 +31,6 @@ class _$RunOrderResponse extends RunOrderResponse {
       required this.dropoff,
       required this.id,
       required this.orderText,
-      this.pickupCode,
       required this.requester,
       required this.runId,
       required this.status})
@@ -54,7 +51,6 @@ class _$RunOrderResponse extends RunOrderResponse {
         dropoff == other.dropoff &&
         id == other.id &&
         orderText == other.orderText &&
-        pickupCode == other.pickupCode &&
         requester == other.requester &&
         runId == other.runId &&
         status == other.status;
@@ -67,7 +63,6 @@ class _$RunOrderResponse extends RunOrderResponse {
     _$hash = $jc(_$hash, dropoff.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
-    _$hash = $jc(_$hash, pickupCode.hashCode);
     _$hash = $jc(_$hash, requester.hashCode);
     _$hash = $jc(_$hash, runId.hashCode);
     _$hash = $jc(_$hash, status.hashCode);
@@ -82,7 +77,6 @@ class _$RunOrderResponse extends RunOrderResponse {
           ..add('dropoff', dropoff)
           ..add('id', id)
           ..add('orderText', orderText)
-          ..add('pickupCode', pickupCode)
           ..add('requester', requester)
           ..add('runId', runId)
           ..add('status', status))
@@ -110,10 +104,6 @@ class RunOrderResponseBuilder
   String? get orderText => _$this._orderText;
   set orderText(String? orderText) => _$this._orderText = orderText;
 
-  String? _pickupCode;
-  String? get pickupCode => _$this._pickupCode;
-  set pickupCode(String? pickupCode) => _$this._pickupCode = pickupCode;
-
   RunUserSummaryBuilder? _requester;
   RunUserSummaryBuilder get requester =>
       _$this._requester ??= RunUserSummaryBuilder();
@@ -139,7 +129,6 @@ class RunOrderResponseBuilder
       _dropoff = $v.dropoff;
       _id = $v.id;
       _orderText = $v.orderText;
-      _pickupCode = $v.pickupCode;
       _requester = $v.requester.toBuilder();
       _runId = $v.runId;
       _status = $v.status;
@@ -174,7 +163,6 @@ class RunOrderResponseBuilder
                 id, r'RunOrderResponse', 'id'),
             orderText: BuiltValueNullFieldError.checkNotNull(
                 orderText, r'RunOrderResponse', 'orderText'),
-            pickupCode: pickupCode,
             requester: requester.build(),
             runId: BuiltValueNullFieldError.checkNotNull(
                 runId, r'RunOrderResponse', 'runId'),
