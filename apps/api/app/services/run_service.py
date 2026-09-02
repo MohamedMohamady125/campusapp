@@ -55,6 +55,13 @@ _LEGAL_TRANSITIONS: dict[RunStatus, set[RunStatus]] = {
 
 _ACTIVE_ORDER_STATUSES = (RunOrderStatus.accepted, RunOrderStatus.delivered)
 
+# A requester's Mobile Order pickup code is shown to the runner only once the
+# order is accepted — the runner then needs it to collect the food. Mirrors the
+# payment-rail reveal-on-accept gate.
+_PICKUP_REVEAL_STATUSES = frozenset(
+    {RunOrderStatus.accepted, RunOrderStatus.delivered, RunOrderStatus.received}
+)
+
 # Live location is only shared while the runner is actually en route — from the
 # moment the run locks through delivery. Never before leaving, never after done.
 _LOCATION_SHARE_STATUSES = frozenset({RunStatus.locked, RunStatus.at_store, RunStatus.delivering})
@@ -73,7 +80,7 @@ def _user_summary(user: User, *, include_payment: bool = False) -> RunUserSummar
     )
 
 
-def _order_response(order: RunOrder) -> RunOrderResponse:
+def _order_response(order: RunOrder, *, reveal_pickup: bool = False) -> RunOrderResponse:
     return RunOrderResponse(
         id=order.id,
         run_id=order.run_id,
@@ -81,6 +88,8 @@ def _order_response(order: RunOrder) -> RunOrderResponse:
         order_text=order.order_text,
         dropoff=order.dropoff,
         status=order.status,
+        # The requester's own pickup token — see run_response for who's entitled.
+        pickup_code=order.pickup_code if reveal_pickup else None,
         created_at=order.created_at,
     )
 
@@ -134,8 +143,16 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
         accepted_count=len(accepted) + len(received),
         pending_count=len(pending),
         created_at=run.created_at,
-        orders=[_order_response(o) for o in run.orders] if is_runner else [],
-        my_order=_order_response(my_order) if my_order is not None else None,
+        # Runner sees every order; a requester's pickup code is revealed to the
+        # runner only once accepted (reveal-on-accept, same gate as payment
+        # rails). The requester always sees their own order's code.
+        orders=[
+            _order_response(o, reveal_pickup=o.status in _PICKUP_REVEAL_STATUSES)
+            for o in run.orders
+        ]
+        if is_runner
+        else [],
+        my_order=_order_response(my_order, reveal_pickup=True) if my_order is not None else None,
         runner_location=runner_location,
     )
 
@@ -185,7 +202,13 @@ class RunService:
     # -- orders ------------------------------------------------------------
 
     async def request_spot(
-        self, *, run_id: uuid.UUID, user: User, order_text: str, dropoff: str
+        self,
+        *,
+        run_id: uuid.UUID,
+        user: User,
+        order_text: str,
+        dropoff: str,
+        pickup_code: str | None = None,
     ) -> Run:
         run = await self._get_or_404(run_id, for_update=True)
         if run.runner_id == user.id:
@@ -197,7 +220,11 @@ class RunService:
         if self._accepted_count(run) >= run.spots_max:
             raise ConflictError("All spots on this run are taken.", code="RUN_FULL")
         order = RunOrder(
-            run_id=run.id, requester_id=user.id, order_text=order_text, dropoff=dropoff
+            run_id=run.id,
+            requester_id=user.id,
+            order_text=order_text,
+            dropoff=dropoff,
+            pickup_code=pickup_code,
         )
         self._repo.add(order)
         await self._session.flush()

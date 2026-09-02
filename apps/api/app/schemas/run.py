@@ -3,10 +3,27 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.enums import FoodSpotCategory, RunOrderStatus, RunStatus
 from app.schemas.user import PaymentMethod
+
+# A campus Mobile Order QR encodes a short pickup token or URL. Accept the
+# printable characters those payloads use (alphanumerics, URL/query punctuation)
+# and reject control chars / injection payloads. Stored and re-rendered as a QR
+# for the runner; never interpreted as HTML or SQL.
+_PICKUP_CODE_EXTRA = "@._+-()$/:?=&%#~ "
+
+
+def _validate_pickup_code(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    if not all(c.isalnum() or c in _PICKUP_CODE_EXTRA for c in cleaned):
+        raise ValueError("Pickup code has unsupported characters.")
+    return cleaned
 
 
 class FoodSpotResponse(BaseModel):
@@ -61,6 +78,10 @@ class RunOrderResponse(BaseModel):
     # Where this requester wants their food — their hall / dorm / spot.
     dropoff: str
     status: RunOrderStatus
+    # The requester's own Mobile Order pickup code (decoded QR payload), if they
+    # attached one. Revealed only to the requester themselves and to the runner
+    # once they accept the order; null for everyone else (see run_service).
+    pickup_code: str | None = None
     created_at: datetime
 
 
@@ -97,6 +118,15 @@ class RunOrderCreateRequest(BaseModel):
     order_text: str = Field(min_length=1, max_length=500)
     # Requester's own drop-off — which hall / dorm / spot to bring it to.
     dropoff: str = Field(min_length=2, max_length=120)
+    # Optional: the requester's own Mobile Order pickup code (the payload their
+    # app decoded from the QR). Lets the accepted runner re-render a scannable
+    # code and collect the requester's own paid order at the counter.
+    pickup_code: str | None = Field(default=None, max_length=1024)
+
+    @field_validator("pickup_code")
+    @classmethod
+    def _clean_pickup_code(cls, value: str | None) -> str | None:
+        return _validate_pickup_code(value)
 
 
 class RunStatusUpdateRequest(BaseModel):

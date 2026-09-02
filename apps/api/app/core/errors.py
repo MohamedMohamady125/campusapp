@@ -8,6 +8,7 @@ Clients switch on `code`, never on message text.
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -97,6 +98,9 @@ def register_error_handlers(app: FastAPI) -> None:
             content=_envelope(
                 "VALIDATION_ERROR",
                 "Request validation failed.",
-                {"errors": exc.errors()},
+                # jsonable_encoder strips non-serializable bits (e.g. the raw
+                # ValueError a custom field_validator puts in ctx) so the
+                # envelope can't itself 500 while reporting a 400.
+                {"errors": jsonable_encoder(exc.errors())},
             ),
         )

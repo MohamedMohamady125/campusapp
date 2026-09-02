@@ -124,7 +124,11 @@ async def request_spot(
     svc: RunService = Depends(_service),
 ) -> RunResponse:
     run = await svc.request_spot(
-        run_id=run_id, user=user, order_text=body.order_text, dropoff=body.dropoff
+        run_id=run_id,
+        user=user,
+        order_text=body.order_text,
+        dropoff=body.dropoff,
+        pickup_code=body.pickup_code,
     )
     return run_response(run, viewer_id=user.id)
 

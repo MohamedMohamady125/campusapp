@@ -192,6 +192,61 @@ async def test_order_request_accept_flow(client: httpx.AsyncClient) -> None:
         assert len(participants) == 2
 
 
+async def test_pickup_code_revealed_to_runner_only_after_accept(
+    client: httpx.AsyncClient,
+) -> None:
+    # A requester attaches their OWN Mobile Order pickup code. It stays hidden
+    # from the runner (and everyone else) until the runner accepts the order,
+    # then is revealed so the runner can re-render a scannable QR at the counter.
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    passer = await make_user(client, "passer@campus.edu")
+    spot_id = await _make_spot()
+    run = await _create_run(client, runner, spot_id)
+
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json={**_order_body("Spicy deluxe"), "pickup_code": "GCU-MOBILE-1234ABCD"},
+        headers=req,
+    )
+    assert resp.status_code == 201, resp.text
+    # The requester always sees their own pickup code.
+    order = resp.json()["my_order"]
+    assert order["pickup_code"] == "GCU-MOBILE-1234ABCD"
+
+    # Runner sees the order pending but NOT the pickup code yet.
+    detail = (await client.get(f"/api/v1/runs/{run['id']}", headers=runner)).json()
+    assert detail["orders"][0]["status"] == "requested"
+    assert detail["orders"][0]["pickup_code"] is None
+
+    # A passer-by never sees orders at all (and thus no pickup code).
+    passer_view = (await client.get(f"/api/v1/runs/{run['id']}", headers=passer)).json()
+    assert passer_view["orders"] == []
+    assert passer_view["my_order"] is None
+
+    # After accepting, the runner sees the pickup code.
+    accepted = (
+        await client.post(f"/api/v1/runs/{run['id']}/orders/{order['id']}/accept", headers=runner)
+    ).json()
+    assert accepted["orders"][0]["status"] == "accepted"
+    assert accepted["orders"][0]["pickup_code"] == "GCU-MOBILE-1234ABCD"
+
+
+async def test_pickup_code_rejects_control_characters(client: httpx.AsyncClient) -> None:
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    spot_id = await _make_spot()
+    run = await _create_run(client, runner, spot_id)
+
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json={**_order_body("food"), "pickup_code": "bad\x00code"},
+        headers=req,
+    )
+    assert resp.status_code == 400, resp.text
+    assert resp.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
 async def test_run_full_and_decline_and_withdraw(client: httpx.AsyncClient) -> None:
     runner = await make_user(client, "runner@campus.edu")
     r1 = await make_user(client, "r1@campus.edu")

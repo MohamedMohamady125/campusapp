@@ -1907,6 +1907,18 @@
             "minLength": 1,
             "title": "Order Text",
             "type": "string"
+          },
+          "pickup_code": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pickup Code"
           }
         },
         "required": [
@@ -1935,6 +1947,17 @@
           "order_text": {
             "title": "Order Text",
             "type": "string"
+          },
+          "pickup_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pickup Code"
           },
           "requester": {
             "$ref": "#/components/schemas/RunUserSummary"
