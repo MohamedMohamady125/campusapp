@@ -3,6 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +16,19 @@ class Settings(BaseSettings):
     app_name: str = "CampusConnect API"
 
     database_url: str = "postgresql+asyncpg://campus:campus@localhost:5434/campusconnect"
+
+    @field_validator("database_url", mode="after")
+    @classmethod
+    def _use_async_driver(cls, v: str) -> str:
+        # Managed Postgres (Railway/Render/Heroku) injects a sync-driver URL like
+        # `postgres://` or `postgresql://`; our async stack (asyncpg) needs the
+        # `+asyncpg` dialect. Rewrite the scheme so the platform URL works as-is.
+        if v.startswith("postgres://"):
+            return "postgresql+asyncpg://" + v[len("postgres://") :]
+        if v.startswith("postgresql://"):
+            return "postgresql+asyncpg://" + v[len("postgresql://") :]
+        return v
+
     redis_url: str = "redis://localhost:6380/0"
 
     jwt_secret: str = "dev-secret-do-not-use-in-prod-0123456789ab"  # >=32 bytes (RFC 7518 §3.2)
