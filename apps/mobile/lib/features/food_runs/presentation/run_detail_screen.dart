@@ -10,9 +10,11 @@ import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
+import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
 import 'package:campusconnect/features/food_runs/presentation/rate_run_sheet.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_detail_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -185,7 +187,7 @@ class _RunDetailBody extends ConsumerWidget {
               SizedBox(height: tokens.space2),
               Text(
                 run.prepayRequired
-                    ? '${runFeeLabel(run.feeCents)} · Venmo before '
+                    ? '${runFeeLabel(run.feeCents)} · pay before '
                           'pickup (runner requires prepay).'
                     : '${runFeeLabel(run.feeCents)} · pay the runner '
                           'on delivery, off-app.',
@@ -652,7 +654,9 @@ class _MyOrderCard extends StatelessWidget {
   }
 }
 
-/// "Venmo @handle · $X" — payment happens off-app, stated plainly.
+/// Revealed only after the runner accepts you (spec: PII stays hidden until
+/// then). Lists every rail the runner saved with a tap-to-copy handle —
+/// payment always happens off-app, stated plainly.
 class _PaymentCard extends StatelessWidget {
   const _PaymentCard({required this.run});
 
@@ -662,7 +666,7 @@ class _PaymentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
-    final handle = run.runner.venmoHandle;
+    final methods = run.runner.paymentMethods ?? const <PaymentMethod>[];
     return Container(
       padding: EdgeInsets.all(tokens.space4),
       decoration: BoxDecoration(
@@ -687,16 +691,29 @@ class _PaymentCard extends StatelessWidget {
               SizedBox(width: tokens.space2),
               Expanded(
                 child: Text(
-                  handle == null || handle.isEmpty
-                      ? '${runFeeAmount(run.feeCents)} to the runner'
-                      : 'Venmo @$handle · ${runFeeAmount(run.feeCents)}',
+                  '${runFeeAmount(run.feeCents)} to the runner',
                   style: context.text.titleSmall,
                 ),
               ),
             ],
           ),
+          if (methods.isEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: tokens.space2),
+              child: Text(
+                'Pay the runner off-app — ask them how in the group chat.',
+                style: context.text.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            for (final m in methods) ...[
+              SizedBox(height: tokens.space3),
+              _PaymentMethodRow(method: m),
+            ],
           if (run.prepayRequired) ...[
-            SizedBox(height: tokens.space2),
+            SizedBox(height: tokens.space3),
             Text(
               'This runner requires prepay — send it before pickup.',
               style: context.text.bodySmall?.copyWith(
@@ -706,6 +723,47 @@ class _PaymentCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// One revealed rail: icon + app label + handle, with tap-to-copy.
+class _PaymentMethodRow extends StatelessWidget {
+  const _PaymentMethodRow({required this.method});
+
+  final PaymentMethod method;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return Row(
+      children: [
+        Icon(method.type.icon, size: 20, color: colors.onSurfaceVariant),
+        SizedBox(width: tokens.space3),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(method.type.label, style: context.text.labelSmall),
+              Text(method.handle, style: context.text.bodyMedium),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'Copy',
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.copy_outlined, size: 18),
+          onPressed: () {
+            unawaited(
+              Clipboard.setData(ClipboardData(text: method.handle)),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${method.type.label} handle copied')),
+            );
+          },
+        ),
+      ],
     );
   }
 }

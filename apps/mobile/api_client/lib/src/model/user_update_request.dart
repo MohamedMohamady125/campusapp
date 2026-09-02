@@ -3,6 +3,8 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:built_collection/built_collection.dart';
+import 'package:campus_api/src/model/payment_method.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -14,7 +16,7 @@ part 'user_update_request.g.dart';
 /// * [bio] 
 /// * [displayName] 
 /// * [major] 
-/// * [venmoHandle] 
+/// * [paymentMethods] 
 /// * [year] 
 @BuiltValue()
 abstract class UserUpdateRequest implements Built<UserUpdateRequest, UserUpdateRequestBuilder> {
@@ -27,8 +29,8 @@ abstract class UserUpdateRequest implements Built<UserUpdateRequest, UserUpdateR
   @BuiltValueField(wireName: r'major')
   String? get major;
 
-  @BuiltValueField(wireName: r'venmo_handle')
-  String? get venmoHandle;
+  @BuiltValueField(wireName: r'payment_methods')
+  BuiltList<PaymentMethod>? get paymentMethods;
 
   @BuiltValueField(wireName: r'year')
   String? get year;
@@ -77,11 +79,11 @@ class _$UserUpdateRequestSerializer implements PrimitiveSerializer<UserUpdateReq
         specifiedType: const FullType.nullable(String),
       );
     }
-    if (object.venmoHandle != null) {
-      yield r'venmo_handle';
+    if (object.paymentMethods != null) {
+      yield r'payment_methods';
       yield serializers.serialize(
-        object.venmoHandle,
-        specifiedType: const FullType.nullable(String),
+        object.paymentMethods,
+        specifiedType: const FullType.nullable(BuiltList, [FullType(PaymentMethod)]),
       );
     }
     if (object.year != null) {
@@ -138,13 +140,13 @@ class _$UserUpdateRequestSerializer implements PrimitiveSerializer<UserUpdateReq
           if (valueDes == null) continue;
           result.major = valueDes;
           break;
-        case r'venmo_handle':
+        case r'payment_methods':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType.nullable(String),
-          ) as String?;
+            specifiedType: const FullType.nullable(BuiltList, [FullType(PaymentMethod)]),
+          ) as BuiltList<PaymentMethod>?;
           if (valueDes == null) continue;
-          result.venmoHandle = valueDes;
+          result.paymentMethods.replace(valueDes);
           break;
         case r'year':
           final valueDes = serializers.deserialize(

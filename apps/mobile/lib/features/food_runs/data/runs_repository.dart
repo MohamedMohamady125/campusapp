@@ -145,16 +145,20 @@ class RunsRepository {
     return res.data!;
   }
 
-  /// Current profile — used to check for a Venmo handle before paid runs.
+  /// Current profile — used to check for a payment method before paid runs.
   Future<UserMeResponse> fetchMe() async {
     final res = await _api.getUsersApi().getMeApiV1UsersMeGet();
     return res.data!;
   }
 
-  /// Saves the runner's Venmo handle (PATCH /users/me).
-  Future<UserMeResponse> saveVenmoHandle(String handle) async {
+  /// Replaces the runner's payment methods wholesale (PATCH /users/me).
+  Future<UserMeResponse> savePaymentMethods(
+    List<PaymentMethod> methods,
+  ) async {
     final res = await _api.getUsersApi().updateMeApiV1UsersMePatch(
-      userUpdateRequest: UserUpdateRequest((b) => b..venmoHandle = handle),
+      userUpdateRequest: UserUpdateRequest(
+        (b) => b..paymentMethods.replace(methods),
+      ),
     );
     return res.data!;
   }

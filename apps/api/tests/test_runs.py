@@ -34,9 +34,11 @@ def _payload(spot_id: str, **overrides: object) -> dict[str, object]:
     return body
 
 
-async def _set_venmo(client: httpx.AsyncClient, headers: dict[str, str]) -> None:
+async def _set_payment(client: httpx.AsyncClient, headers: dict[str, str]) -> None:
     resp = await client.patch(
-        "/api/v1/users/me", json={"venmo_handle": "@runner-gcu"}, headers=headers
+        "/api/v1/users/me",
+        json={"payment_methods": [{"type": "venmo", "handle": "@runner-gcu"}]},
+        headers=headers,
     )
     assert resp.status_code == 200, resp.text
 
@@ -81,10 +83,10 @@ async def test_create_validations(client: httpx.AsyncClient) -> None:
     )
     assert resp.json()["error"]["code"] == "LEAVING_AT_PAST"
 
-    # Fee without a Venmo handle is blocked; adding the handle unblocks it.
+    # Fee without a payment method is blocked; adding one unblocks it.
     resp = await client.post("/api/v1/runs", json=_payload(spot_id, fee_cents=200), headers=runner)
-    assert resp.json()["error"]["code"] == "VENMO_HANDLE_REQUIRED"
-    await _set_venmo(client, runner)
+    assert resp.json()["error"]["code"] == "PAYMENT_METHOD_REQUIRED"
+    await _set_payment(client, runner)
     run = await _create_run(client, runner, spot_id, fee_cents=200)
     assert run["fee_cents"] == 200
 
@@ -203,7 +205,7 @@ async def test_visitor_sees_counts_only(client: httpx.AsyncClient) -> None:
     req = await make_user(client, "req@campus.edu")
     visitor = await make_user(client, "visitor@campus.edu")
     spot_id = await _make_spot()
-    await _set_venmo(client, runner)
+    await _set_payment(client, runner)
     run = await _create_run(client, runner, spot_id, fee_cents=300)
     resp = await client.post(
         f"/api/v1/runs/{run['id']}/orders", json={"order_text": "bowl"}, headers=req
@@ -215,12 +217,12 @@ async def test_visitor_sees_counts_only(client: httpx.AsyncClient) -> None:
     assert view["orders"] == []
     assert view["my_order"] is None
     assert view["conversation_id"] is None
-    assert view["runner"]["venmo_handle"] is None  # payment info hidden from passers-by
+    assert view["runner"]["payment_methods"] == []  # payment info hidden from passers-by
     assert view["accepted_count"] == 1
 
-    # The accepted requester sees the handle (it's the payment instruction).
+    # The accepted requester sees the methods (they're the payment instruction).
     view = (await client.get(f"/api/v1/runs/{run['id']}", headers=req)).json()
-    assert view["runner"]["venmo_handle"] == "@runner-gcu"
+    assert view["runner"]["payment_methods"] == [{"type": "venmo", "handle": "@runner-gcu"}]
 
 
 # -- state machine ------------------------------------------------------------

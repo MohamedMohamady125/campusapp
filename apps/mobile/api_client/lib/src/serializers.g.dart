@@ -59,6 +59,8 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(OfferingCreateRequest.serializer)
       ..add(OfferingCreateRequestGradeReceivedEnum.serializer)
       ..add(OfferingResponse.serializer)
+      ..add(PaymentMethod.serializer)
+      ..add(PaymentMethodType.serializer)
       ..add(RankedTutorResponse.serializer)
       ..add(RatingContext.serializer)
       ..add(RatingCreateRequest.serializer)
@@ -135,6 +137,15 @@ Serializers _$serializers = (Serializers().toBuilder()
           const FullType(
               BuiltList, const [const FullType(NotificationResponse)]),
           () => ListBuilder<NotificationResponse>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(PaymentMethod)]),
+          () => ListBuilder<PaymentMethod>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(PaymentMethod)]),
+          () => ListBuilder<PaymentMethod>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(PaymentMethod)]),
+          () => ListBuilder<PaymentMethod>())
       ..addBuilderFactory(
           const FullType(
               BuiltList, const [const FullType(RankedTutorResponse)]),

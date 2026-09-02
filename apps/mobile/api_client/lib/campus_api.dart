@@ -73,6 +73,8 @@ export 'package:campus_api/src/model/notification_response.dart';
 export 'package:campus_api/src/model/notifications_read_request.dart';
 export 'package:campus_api/src/model/offering_create_request.dart';
 export 'package:campus_api/src/model/offering_response.dart';
+export 'package:campus_api/src/model/payment_method.dart';
+export 'package:campus_api/src/model/payment_method_type.dart';
 export 'package:campus_api/src/model/ranked_tutor_response.dart';
 export 'package:campus_api/src/model/rating_context.dart';
 export 'package:campus_api/src/model/rating_create_request.dart';

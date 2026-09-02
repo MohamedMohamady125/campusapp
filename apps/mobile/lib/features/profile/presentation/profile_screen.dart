@@ -71,6 +71,16 @@ class ProfileScreen extends ConsumerWidget {
                         onTap: () => context.go('/profile/my-listings'),
                       ),
                       const Divider(height: 1, indent: 56),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.account_balance_wallet_outlined,
+                        ),
+                        title: const Text('Payment methods'),
+                        subtitle: const Text('How runners get paid off-app'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.go('/profile/payment-methods'),
+                      ),
+                      const Divider(height: 1, indent: 56),
                       const ListTile(
                         leading: Icon(Icons.person_outline),
                         title: Text('Edit profile'),

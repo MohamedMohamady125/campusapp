@@ -111,6 +111,20 @@ class RunOrderStatus(enum.StrEnum):
     no_show = "no_show"
 
 
+class PaymentMethodType(enum.StrEnum):
+    """Off-app peer payment rails a runner can advertise (food-runs spec).
+
+    CampusConnect never moves money — these are just handles a requester
+    uses to pay the runner in the corresponding third-party app.
+    """
+
+    venmo = "venmo"
+    zelle = "zelle"
+    cashapp = "cashapp"
+    paypal = "paypal"
+    apple_cash = "apple_cash"
+
+
 class ReportTargetType(enum.StrEnum):
     listing = "listing"
     message = "message"

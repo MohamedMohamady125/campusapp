@@ -33,6 +33,7 @@ from app.schemas.run import (
     RunResponse,
     RunUserSummary,
 )
+from app.schemas.user import PaymentMethod
 from app.services.notification_dispatch import upsert_deduped_notification
 
 NOTIFICATION_TYPE_RUN_REQUEST = "run_request"
@@ -54,13 +55,16 @@ _LEGAL_TRANSITIONS: dict[RunStatus, set[RunStatus]] = {
 _ACTIVE_ORDER_STATUSES = (RunOrderStatus.accepted, RunOrderStatus.delivered)
 
 
-def _user_summary(user: User, *, include_venmo: bool = False) -> RunUserSummary:
+def _user_summary(user: User, *, include_payment: bool = False) -> RunUserSummary:
     return RunUserSummary(
         id=user.id,
         display_name=user.display_name,
         reputation_score=float(user.reputation_score),
         rating_count=user.rating_count,
-        venmo_handle=user.venmo_handle if include_venmo else None,
+        # Reveal payment rails only when the caller is entitled (see gate below).
+        payment_methods=[PaymentMethod.model_validate(m) for m in user.payment_methods]
+        if include_payment
+        else [],
     )
 
 
@@ -81,22 +85,22 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
     - runner sees every order;
     - a requester sees only their own order (as my_order);
     - everyone else sees counts only.
-    The runner's venmo handle is exposed to accepted requesters + the runner
-    (it is the payment instruction), hidden from passers-by.
+    The runner's payment methods are exposed to accepted requesters + the
+    runner (they are the payment instructions), hidden from passers-by.
     """
     is_runner = run.runner_id == viewer_id
     my_order = next((o for o in run.orders if o.requester_id == viewer_id), None)
     accepted = [o for o in run.orders if o.status in _ACTIVE_ORDER_STATUSES]
     received = [o for o in run.orders if o.status == RunOrderStatus.received]
     pending = [o for o in run.orders if o.status == RunOrderStatus.requested]
-    show_venmo = is_runner or (
+    show_payment = is_runner or (
         my_order is not None
         and my_order.status
         in (RunOrderStatus.accepted, RunOrderStatus.delivered, RunOrderStatus.received)
     )
     return RunResponse(
         id=run.id,
-        runner=_user_summary(run.runner, include_venmo=show_venmo),
+        runner=_user_summary(run.runner, include_payment=show_payment),
         food_spot=FoodSpotResponse.model_validate(run.food_spot),
         delivery_spot=run.delivery_spot,
         note=run.note,
@@ -129,10 +133,10 @@ class RunService:
             raise NotFoundError("Food spot not found.", code="FOOD_SPOT_NOT_FOUND")
         if body.leaving_at <= datetime.now(UTC):
             raise BusinessRuleError("Leaving time must be in the future.", code="LEAVING_AT_PAST")
-        if (body.fee_cents > 0 or body.prepay_required) and not runner.venmo_handle:
+        if (body.fee_cents > 0 or body.prepay_required) and not runner.payment_methods:
             raise BusinessRuleError(
-                "Add your Venmo handle before charging a fee.",
-                code="VENMO_HANDLE_REQUIRED",
+                "Add a payment method before charging a fee.",
+                code="PAYMENT_METHOD_REQUIRED",
             )
         run = Run(
             runner_id=runner.id,

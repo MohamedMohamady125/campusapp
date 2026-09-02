@@ -7,6 +7,7 @@ import 'package:campusconnect/features/auth/presentation/verify_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chat_room_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chats_screen.dart';
 import 'package:campusconnect/features/food_runs/presentation/create_run_screen.dart';
+import 'package:campusconnect/features/food_runs/presentation/payment_methods_screen.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_detail_screen.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_screen.dart';
 import 'package:campusconnect/features/marketplace/presentation/browse_screen.dart';
@@ -183,6 +184,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'my-listings',
                     builder: (_, _) => const MyListingsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'payment-methods',
+                    builder: (_, _) => const PaymentMethodsScreen(),
                   ),
                 ],
               ),

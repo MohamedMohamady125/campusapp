@@ -58,6 +58,8 @@ doc/NotificationsApi.md
 doc/NotificationsReadRequest.md
 doc/OfferingCreateRequest.md
 doc/OfferingResponse.md
+doc/PaymentMethod.md
+doc/PaymentMethodType.md
 doc/RankedTutorResponse.md
 doc/RatingContext.md
 doc/RatingCreateRequest.md
@@ -170,6 +172,8 @@ lib/src/model/notification_response.dart
 lib/src/model/notifications_read_request.dart
 lib/src/model/offering_create_request.dart
 lib/src/model/offering_response.dart
+lib/src/model/payment_method.dart
+lib/src/model/payment_method_type.dart
 lib/src/model/ranked_tutor_response.dart
 lib/src/model/rating_context.dart
 lib/src/model/rating_create_request.dart
@@ -207,3 +211,5 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/payment_method_test.dart
+test/payment_method_type_test.dart

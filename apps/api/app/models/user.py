@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, Numeric, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,7 +24,14 @@ class User(TimestampedBase):
     bio: Mapped[str | None] = mapped_column(Text)
     avatar_key: Mapped[str | None] = mapped_column(String(255))
     # Off-app payment handle for food runs ("no payment, no handoff").
+    # Legacy single-rail field; superseded by payment_methods (kept for history).
     venmo_handle: Mapped[str | None] = mapped_column(String(30))
+    # Off-app payment rails the runner advertises: list of
+    # {"type": PaymentMethodType, "handle": str}. CampusConnect never moves
+    # money — these are shown to accepted requesters to pay the runner directly.
+    payment_methods: Mapped[list[dict[str, str]]] = mapped_column(
+        JSONB, default=list, server_default="[]", nullable=False
+    )
     # Cached Bayesian reputation (spec §5.2); recomputed inside each rating transaction.
     reputation_score: Mapped[float] = mapped_column(Numeric(3, 2), default=4.0)
     rating_count: Mapped[int] = mapped_column(Integer, default=0)

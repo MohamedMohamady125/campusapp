@@ -186,6 +186,8 @@ Class | Method | HTTP request | Description
  - [NotificationsReadRequest](doc/NotificationsReadRequest.md)
  - [OfferingCreateRequest](doc/OfferingCreateRequest.md)
  - [OfferingResponse](doc/OfferingResponse.md)
+ - [PaymentMethod](doc/PaymentMethod.md)
+ - [PaymentMethodType](doc/PaymentMethodType.md)
  - [RankedTutorResponse](doc/RankedTutorResponse.md)
  - [RatingContext](doc/RatingContext.md)
  - [RatingCreateRequest](doc/RatingCreateRequest.md)

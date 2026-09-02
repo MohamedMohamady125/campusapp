@@ -3,6 +3,8 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:built_collection/built_collection.dart';
+import 'package:campus_api/src/model/payment_method.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -13,9 +15,9 @@ part 'run_user_summary.g.dart';
 /// Properties:
 /// * [displayName] 
 /// * [id] 
+/// * [paymentMethods] 
 /// * [ratingCount] 
 /// * [reputationScore] 
-/// * [venmoHandle] 
 @BuiltValue()
 abstract class RunUserSummary implements Built<RunUserSummary, RunUserSummaryBuilder> {
   @BuiltValueField(wireName: r'display_name')
@@ -24,21 +26,22 @@ abstract class RunUserSummary implements Built<RunUserSummary, RunUserSummaryBui
   @BuiltValueField(wireName: r'id')
   String get id;
 
+  @BuiltValueField(wireName: r'payment_methods')
+  BuiltList<PaymentMethod>? get paymentMethods;
+
   @BuiltValueField(wireName: r'rating_count')
   int get ratingCount;
 
   @BuiltValueField(wireName: r'reputation_score')
   num get reputationScore;
 
-  @BuiltValueField(wireName: r'venmo_handle')
-  String? get venmoHandle;
-
   RunUserSummary._();
 
   factory RunUserSummary([void updates(RunUserSummaryBuilder b)]) = _$RunUserSummary;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(RunUserSummaryBuilder b) => b;
+  static void _defaults(RunUserSummaryBuilder b) => b
+      ..paymentMethods = ListBuilder();
 
   @BuiltValueSerializer(custom: true)
   static Serializer<RunUserSummary> get serializer => _$RunUserSummarySerializer();
@@ -66,6 +69,13 @@ class _$RunUserSummarySerializer implements PrimitiveSerializer<RunUserSummary> 
       object.id,
       specifiedType: const FullType(String),
     );
+    if (object.paymentMethods != null) {
+      yield r'payment_methods';
+      yield serializers.serialize(
+        object.paymentMethods,
+        specifiedType: const FullType(BuiltList, [FullType(PaymentMethod)]),
+      );
+    }
     yield r'rating_count';
     yield serializers.serialize(
       object.ratingCount,
@@ -76,13 +86,6 @@ class _$RunUserSummarySerializer implements PrimitiveSerializer<RunUserSummary> 
       object.reputationScore,
       specifiedType: const FullType(num),
     );
-    if (object.venmoHandle != null) {
-      yield r'venmo_handle';
-      yield serializers.serialize(
-        object.venmoHandle,
-        specifiedType: const FullType.nullable(String),
-      );
-    }
   }
 
   @override
@@ -120,6 +123,13 @@ class _$RunUserSummarySerializer implements PrimitiveSerializer<RunUserSummary> 
           ) as String;
           result.id = valueDes;
           break;
+        case r'payment_methods':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(BuiltList, [FullType(PaymentMethod)]),
+          ) as BuiltList<PaymentMethod>;
+          result.paymentMethods.replace(valueDes);
+          break;
         case r'rating_count':
           final valueDes = serializers.deserialize(
             value,
@@ -133,14 +143,6 @@ class _$RunUserSummarySerializer implements PrimitiveSerializer<RunUserSummary> 
             specifiedType: const FullType(num),
           ) as num;
           result.reputationScore = valueDes;
-          break;
-        case r'venmo_handle':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType.nullable(String),
-          ) as String?;
-          if (valueDes == null) continue;
-          result.venmoHandle = valueDes;
           break;
         default:
           unhandled.add(key);

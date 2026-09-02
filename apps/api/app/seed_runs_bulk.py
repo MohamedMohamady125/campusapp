@@ -245,10 +245,20 @@ async def _seed(session: AsyncSession) -> None:
         session.add(user)
     await session.flush()
 
-    # Everyone gets a Venmo handle — every user can post fee runs.
+    # Everyone gets payment rails — every user can post fee runs. Mix in
+    # Zelle/CashApp so the multi-method picker has realistic variety.
     for user in users:
+        first = user.display_name.split()[0]
+        tag = f"@{first}-GCU{rng.randint(1, 99)}"
         if not user.venmo_handle:
-            user.venmo_handle = f"@{user.display_name.split()[0]}-GCU{rng.randint(1, 99)}"
+            user.venmo_handle = tag
+        if not user.payment_methods:
+            methods = [{"type": "venmo", "handle": user.venmo_handle}]
+            if rng.random() < 0.4:
+                methods.append({"type": "cashapp", "handle": f"${first}{rng.randint(1, 99)}"})
+            if rng.random() < 0.3:
+                methods.append({"type": "zelle", "handle": f"{first.lower()}@campus.edu"})
+            user.payment_methods = methods
 
     def _new_run(
         runner: User,

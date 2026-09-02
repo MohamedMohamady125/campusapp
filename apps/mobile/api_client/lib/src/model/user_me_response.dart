@@ -4,6 +4,8 @@
 
 // ignore_for_file: unused_element
 import 'package:campus_api/src/model/user_role.dart';
+import 'package:built_collection/built_collection.dart';
+import 'package:campus_api/src/model/payment_method.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -19,10 +21,10 @@ part 'user_me_response.g.dart';
 /// * [email] 
 /// * [id] 
 /// * [major] 
+/// * [paymentMethods] 
 /// * [ratingCount] 
 /// * [reputationScore] 
 /// * [role] 
-/// * [venmoHandle] 
 /// * [year] 
 @BuiltValue()
 abstract class UserMeResponse implements Built<UserMeResponse, UserMeResponseBuilder> {
@@ -47,6 +49,9 @@ abstract class UserMeResponse implements Built<UserMeResponse, UserMeResponseBui
   @BuiltValueField(wireName: r'major')
   String? get major;
 
+  @BuiltValueField(wireName: r'payment_methods')
+  BuiltList<PaymentMethod> get paymentMethods;
+
   @BuiltValueField(wireName: r'rating_count')
   int get ratingCount;
 
@@ -56,9 +61,6 @@ abstract class UserMeResponse implements Built<UserMeResponse, UserMeResponseBui
   @BuiltValueField(wireName: r'role')
   UserRole get role;
   // enum roleEnum {  student,  moderator,  admin,  };
-
-  @BuiltValueField(wireName: r'venmo_handle')
-  String? get venmoHandle;
 
   @BuiltValueField(wireName: r'year')
   String? get year;
@@ -121,6 +123,11 @@ class _$UserMeResponseSerializer implements PrimitiveSerializer<UserMeResponse> 
       object.major,
       specifiedType: const FullType.nullable(String),
     );
+    yield r'payment_methods';
+    yield serializers.serialize(
+      object.paymentMethods,
+      specifiedType: const FullType(BuiltList, [FullType(PaymentMethod)]),
+    );
     yield r'rating_count';
     yield serializers.serialize(
       object.ratingCount,
@@ -135,11 +142,6 @@ class _$UserMeResponseSerializer implements PrimitiveSerializer<UserMeResponse> 
     yield serializers.serialize(
       object.role,
       specifiedType: const FullType(UserRole),
-    );
-    yield r'venmo_handle';
-    yield object.venmoHandle == null ? null : serializers.serialize(
-      object.venmoHandle,
-      specifiedType: const FullType.nullable(String),
     );
     yield r'year';
     yield object.year == null ? null : serializers.serialize(
@@ -221,6 +223,13 @@ class _$UserMeResponseSerializer implements PrimitiveSerializer<UserMeResponse> 
           if (valueDes == null) continue;
           result.major = valueDes;
           break;
+        case r'payment_methods':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(BuiltList, [FullType(PaymentMethod)]),
+          ) as BuiltList<PaymentMethod>;
+          result.paymentMethods.replace(valueDes);
+          break;
         case r'rating_count':
           final valueDes = serializers.deserialize(
             value,
@@ -241,14 +250,6 @@ class _$UserMeResponseSerializer implements PrimitiveSerializer<UserMeResponse> 
             specifiedType: const FullType(UserRole),
           ) as UserRole;
           result.role = valueDes;
-          break;
-        case r'venmo_handle':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType.nullable(String),
-          ) as String?;
-          if (valueDes == null) continue;
-          result.venmoHandle = valueDes;
           break;
         case r'year':
           final valueDes = serializers.deserialize(

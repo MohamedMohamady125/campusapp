@@ -340,6 +340,7 @@ class RunCard extends StatelessWidget {
                       : null,
                   ratingCount: runner.ratingCount,
                   variant: ReputationVariant.compact,
+                  showCount: false,
                 ),
               ],
             ),

@@ -14,7 +14,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
   @override
   final String? major;
   @override
-  final String? venmoHandle;
+  final BuiltList<PaymentMethod>? paymentMethods;
   @override
   final String? year;
 
@@ -23,7 +23,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
       (UserUpdateRequestBuilder()..update(updates))._build();
 
   _$UserUpdateRequest._(
-      {this.bio, this.displayName, this.major, this.venmoHandle, this.year})
+      {this.bio, this.displayName, this.major, this.paymentMethods, this.year})
       : super._();
   @override
   UserUpdateRequest rebuild(void Function(UserUpdateRequestBuilder) updates) =>
@@ -40,7 +40,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
         bio == other.bio &&
         displayName == other.displayName &&
         major == other.major &&
-        venmoHandle == other.venmoHandle &&
+        paymentMethods == other.paymentMethods &&
         year == other.year;
   }
 
@@ -50,7 +50,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
     _$hash = $jc(_$hash, bio.hashCode);
     _$hash = $jc(_$hash, displayName.hashCode);
     _$hash = $jc(_$hash, major.hashCode);
-    _$hash = $jc(_$hash, venmoHandle.hashCode);
+    _$hash = $jc(_$hash, paymentMethods.hashCode);
     _$hash = $jc(_$hash, year.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -62,7 +62,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
           ..add('bio', bio)
           ..add('displayName', displayName)
           ..add('major', major)
-          ..add('venmoHandle', venmoHandle)
+          ..add('paymentMethods', paymentMethods)
           ..add('year', year))
         .toString();
   }
@@ -84,9 +84,11 @@ class UserUpdateRequestBuilder
   String? get major => _$this._major;
   set major(String? major) => _$this._major = major;
 
-  String? _venmoHandle;
-  String? get venmoHandle => _$this._venmoHandle;
-  set venmoHandle(String? venmoHandle) => _$this._venmoHandle = venmoHandle;
+  ListBuilder<PaymentMethod>? _paymentMethods;
+  ListBuilder<PaymentMethod> get paymentMethods =>
+      _$this._paymentMethods ??= ListBuilder<PaymentMethod>();
+  set paymentMethods(ListBuilder<PaymentMethod>? paymentMethods) =>
+      _$this._paymentMethods = paymentMethods;
 
   String? _year;
   String? get year => _$this._year;
@@ -102,7 +104,7 @@ class UserUpdateRequestBuilder
       _bio = $v.bio;
       _displayName = $v.displayName;
       _major = $v.major;
-      _venmoHandle = $v.venmoHandle;
+      _paymentMethods = $v.paymentMethods?.toBuilder();
       _year = $v.year;
       _$v = null;
     }
@@ -123,14 +125,27 @@ class UserUpdateRequestBuilder
   UserUpdateRequest build() => _build();
 
   _$UserUpdateRequest _build() {
-    final _$result = _$v ??
-        _$UserUpdateRequest._(
-          bio: bio,
-          displayName: displayName,
-          major: major,
-          venmoHandle: venmoHandle,
-          year: year,
-        );
+    _$UserUpdateRequest _$result;
+    try {
+      _$result = _$v ??
+          _$UserUpdateRequest._(
+            bio: bio,
+            displayName: displayName,
+            major: major,
+            paymentMethods: _paymentMethods?.build(),
+            year: year,
+          );
+    } catch (_) {
+      late String _$failedField;
+      try {
+        _$failedField = 'paymentMethods';
+        _paymentMethods?.build();
+      } catch (e) {
+        throw BuiltValueNestedFieldError(
+            r'UserUpdateRequest', _$failedField, e.toString());
+      }
+      rethrow;
+    }
     replace(_$result);
     return _$result;
   }

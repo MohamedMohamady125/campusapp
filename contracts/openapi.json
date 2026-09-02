@@ -1285,6 +1285,38 @@
         "title": "OfferingResponse",
         "type": "object"
       },
+      "PaymentMethod": {
+        "description": "One off-app payment rail a runner advertises (food-runs spec).\n\n`handle` is a plain-text tag / phone / email for the third-party app;\nit is escaped on display and never used to move money in-app.",
+        "properties": {
+          "handle": {
+            "maxLength": 64,
+            "minLength": 2,
+            "title": "Handle",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PaymentMethodType"
+          }
+        },
+        "required": [
+          "type",
+          "handle"
+        ],
+        "title": "PaymentMethod",
+        "type": "object"
+      },
+      "PaymentMethodType": {
+        "description": "Off-app peer payment rails a runner can advertise (food-runs spec).\n\nCampusConnect never moves money \u2014 these are just handles a requester\nuses to pay the runner in the corresponding third-party app.",
+        "enum": [
+          "venmo",
+          "zelle",
+          "cashapp",
+          "paypal",
+          "apple_cash"
+        ],
+        "title": "PaymentMethodType",
+        "type": "string"
+      },
       "RankedTutorResponse": {
         "properties": {
           "offering": {
@@ -2049,6 +2081,14 @@
             "title": "Id",
             "type": "string"
           },
+          "payment_methods": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            },
+            "title": "Payment Methods",
+            "type": "array"
+          },
           "rating_count": {
             "title": "Rating Count",
             "type": "integer"
@@ -2056,17 +2096,6 @@
           "reputation_score": {
             "title": "Reputation Score",
             "type": "number"
-          },
-          "venmo_handle": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Venmo Handle"
           }
         },
         "required": [
@@ -2204,6 +2233,13 @@
             ],
             "title": "Major"
           },
+          "payment_methods": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            },
+            "title": "Payment Methods",
+            "type": "array"
+          },
           "rating_count": {
             "title": "Rating Count",
             "type": "integer"
@@ -2214,17 +2250,6 @@
           },
           "role": {
             "$ref": "#/components/schemas/UserRole"
-          },
-          "venmo_handle": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Venmo Handle"
           },
           "year": {
             "anyOf": [
@@ -2246,7 +2271,7 @@
           "major",
           "bio",
           "avatar_key",
-          "venmo_handle",
+          "payment_methods",
           "reputation_score",
           "rating_count",
           "role",
@@ -2387,18 +2412,20 @@
             ],
             "title": "Major"
           },
-          "venmo_handle": {
+          "payment_methods": {
             "anyOf": [
               {
-                "maxLength": 30,
-                "pattern": "^@?[A-Za-z0-9_-]{3,30}$",
-                "type": "string"
+                "items": {
+                  "$ref": "#/components/schemas/PaymentMethod"
+                },
+                "maxItems": 6,
+                "type": "array"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Venmo Handle"
+            "title": "Payment Methods"
           },
           "year": {
             "anyOf": [

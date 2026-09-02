@@ -6,6 +6,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import FoodSpotCategory, RunOrderStatus, RunStatus
+from app.schemas.user import PaymentMethod
 
 
 class FoodSpotResponse(BaseModel):
@@ -37,7 +38,9 @@ class RunUserSummary(BaseModel):
     display_name: str
     reputation_score: float
     rating_count: int
-    venmo_handle: str | None = None
+    # Payment rails, revealed only to accepted requesters + the runner
+    # (empty for passers-by). See run_service.run_response.
+    payment_methods: list[PaymentMethod] = []
 
 
 class RunOrderResponse(BaseModel):

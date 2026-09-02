@@ -22,13 +22,13 @@ class _$UserMeResponse extends UserMeResponse {
   @override
   final String? major;
   @override
+  final BuiltList<PaymentMethod> paymentMethods;
+  @override
   final int ratingCount;
   @override
   final num reputationScore;
   @override
   final UserRole role;
-  @override
-  final String? venmoHandle;
   @override
   final String? year;
 
@@ -43,10 +43,10 @@ class _$UserMeResponse extends UserMeResponse {
       required this.email,
       required this.id,
       this.major,
+      required this.paymentMethods,
       required this.ratingCount,
       required this.reputationScore,
       required this.role,
-      this.venmoHandle,
       this.year})
       : super._();
   @override
@@ -67,10 +67,10 @@ class _$UserMeResponse extends UserMeResponse {
         email == other.email &&
         id == other.id &&
         major == other.major &&
+        paymentMethods == other.paymentMethods &&
         ratingCount == other.ratingCount &&
         reputationScore == other.reputationScore &&
         role == other.role &&
-        venmoHandle == other.venmoHandle &&
         year == other.year;
   }
 
@@ -84,10 +84,10 @@ class _$UserMeResponse extends UserMeResponse {
     _$hash = $jc(_$hash, email.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, major.hashCode);
+    _$hash = $jc(_$hash, paymentMethods.hashCode);
     _$hash = $jc(_$hash, ratingCount.hashCode);
     _$hash = $jc(_$hash, reputationScore.hashCode);
     _$hash = $jc(_$hash, role.hashCode);
-    _$hash = $jc(_$hash, venmoHandle.hashCode);
     _$hash = $jc(_$hash, year.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -103,10 +103,10 @@ class _$UserMeResponse extends UserMeResponse {
           ..add('email', email)
           ..add('id', id)
           ..add('major', major)
+          ..add('paymentMethods', paymentMethods)
           ..add('ratingCount', ratingCount)
           ..add('reputationScore', reputationScore)
           ..add('role', role)
-          ..add('venmoHandle', venmoHandle)
           ..add('year', year))
         .toString();
   }
@@ -144,6 +144,12 @@ class UserMeResponseBuilder
   String? get major => _$this._major;
   set major(String? major) => _$this._major = major;
 
+  ListBuilder<PaymentMethod>? _paymentMethods;
+  ListBuilder<PaymentMethod> get paymentMethods =>
+      _$this._paymentMethods ??= ListBuilder<PaymentMethod>();
+  set paymentMethods(ListBuilder<PaymentMethod>? paymentMethods) =>
+      _$this._paymentMethods = paymentMethods;
+
   int? _ratingCount;
   int? get ratingCount => _$this._ratingCount;
   set ratingCount(int? ratingCount) => _$this._ratingCount = ratingCount;
@@ -156,10 +162,6 @@ class UserMeResponseBuilder
   UserRole? _role;
   UserRole? get role => _$this._role;
   set role(UserRole? role) => _$this._role = role;
-
-  String? _venmoHandle;
-  String? get venmoHandle => _$this._venmoHandle;
-  set venmoHandle(String? venmoHandle) => _$this._venmoHandle = venmoHandle;
 
   String? _year;
   String? get year => _$this._year;
@@ -179,10 +181,10 @@ class UserMeResponseBuilder
       _email = $v.email;
       _id = $v.id;
       _major = $v.major;
+      _paymentMethods = $v.paymentMethods.toBuilder();
       _ratingCount = $v.ratingCount;
       _reputationScore = $v.reputationScore;
       _role = $v.role;
-      _venmoHandle = $v.venmoHandle;
       _year = $v.year;
       _$v = null;
     }
@@ -203,28 +205,41 @@ class UserMeResponseBuilder
   UserMeResponse build() => _build();
 
   _$UserMeResponse _build() {
-    final _$result = _$v ??
-        _$UserMeResponse._(
-          avatarKey: avatarKey,
-          bio: bio,
-          createdAt: BuiltValueNullFieldError.checkNotNull(
-              createdAt, r'UserMeResponse', 'createdAt'),
-          displayName: BuiltValueNullFieldError.checkNotNull(
-              displayName, r'UserMeResponse', 'displayName'),
-          email: BuiltValueNullFieldError.checkNotNull(
-              email, r'UserMeResponse', 'email'),
-          id: BuiltValueNullFieldError.checkNotNull(
-              id, r'UserMeResponse', 'id'),
-          major: major,
-          ratingCount: BuiltValueNullFieldError.checkNotNull(
-              ratingCount, r'UserMeResponse', 'ratingCount'),
-          reputationScore: BuiltValueNullFieldError.checkNotNull(
-              reputationScore, r'UserMeResponse', 'reputationScore'),
-          role: BuiltValueNullFieldError.checkNotNull(
-              role, r'UserMeResponse', 'role'),
-          venmoHandle: venmoHandle,
-          year: year,
-        );
+    _$UserMeResponse _$result;
+    try {
+      _$result = _$v ??
+          _$UserMeResponse._(
+            avatarKey: avatarKey,
+            bio: bio,
+            createdAt: BuiltValueNullFieldError.checkNotNull(
+                createdAt, r'UserMeResponse', 'createdAt'),
+            displayName: BuiltValueNullFieldError.checkNotNull(
+                displayName, r'UserMeResponse', 'displayName'),
+            email: BuiltValueNullFieldError.checkNotNull(
+                email, r'UserMeResponse', 'email'),
+            id: BuiltValueNullFieldError.checkNotNull(
+                id, r'UserMeResponse', 'id'),
+            major: major,
+            paymentMethods: paymentMethods.build(),
+            ratingCount: BuiltValueNullFieldError.checkNotNull(
+                ratingCount, r'UserMeResponse', 'ratingCount'),
+            reputationScore: BuiltValueNullFieldError.checkNotNull(
+                reputationScore, r'UserMeResponse', 'reputationScore'),
+            role: BuiltValueNullFieldError.checkNotNull(
+                role, r'UserMeResponse', 'role'),
+            year: year,
+          );
+    } catch (_) {
+      late String _$failedField;
+      try {
+        _$failedField = 'paymentMethods';
+        paymentMethods.build();
+      } catch (e) {
+        throw BuiltValueNestedFieldError(
+            r'UserMeResponse', _$failedField, e.toString());
+      }
+      rethrow;
+    }
     replace(_$result);
     return _$result;
   }

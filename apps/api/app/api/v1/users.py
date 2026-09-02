@@ -26,7 +26,9 @@ async def update_me(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> User:
-    for field, value in body.model_dump(exclude_unset=True).items():
+    # mode="json" coerces PaymentMethod enums to their string values so the
+    # JSONB column stores plain {type, handle} dicts.
+    for field, value in body.model_dump(mode="json", exclude_unset=True).items():
         setattr(user, field, value)
     await session.commit()
     await session.refresh(user)

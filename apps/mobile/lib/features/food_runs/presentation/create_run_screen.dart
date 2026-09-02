@@ -5,13 +5,14 @@ import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
+import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// Start-a-run form: where you're going, when you're leaving, what it
-/// costs to tag along. Paid/prepay runs require a Venmo handle — prompted
-/// inline, saved via PATCH /users/me before submit.
+/// costs to tag along. Paid/prepay runs require a payment method —
+/// prompted inline, saved via PATCH /users/me before submit.
 class CreateRunScreen extends ConsumerStatefulWidget {
   const CreateRunScreen({super.key});
 
@@ -24,7 +25,7 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
   final _deliverySpot = TextEditingController();
   final _fee = TextEditingController();
   final _note = TextEditingController();
-  final _venmo = TextEditingController();
+  final _quickHandle = TextEditingController();
 
   FoodSpotResponse? _spot;
   int _leavingMinutes = 15;
@@ -33,7 +34,8 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
   bool _diningDollars = false;
   bool _submitting = false;
   List<FoodSpotResponse> _spots = [];
-  String? _savedVenmoHandle;
+  bool _hasPaymentMethod = false;
+  PaymentMethodType _quickType = kSelectablePaymentTypes.first;
 
   static const _quickMinutes = [10, 15, 30, 45];
 
@@ -45,7 +47,9 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
       if (mounted) setState(() => _spots = spots);
     }).ignore();
     repo.fetchMe().then((me) {
-      if (mounted) setState(() => _savedVenmoHandle = me.venmoHandle);
+      if (mounted) {
+        setState(() => _hasPaymentMethod = me.paymentMethods.isNotEmpty);
+      }
     }).ignore();
   }
 
@@ -54,7 +58,7 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
     _deliverySpot.dispose();
     _fee.dispose();
     _note.dispose();
-    _venmo.dispose();
+    _quickHandle.dispose();
     super.dispose();
   }
 
@@ -67,11 +71,10 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
     return cents > 2000 ? null : cents;
   }
 
-  bool get _needsVenmo {
+  bool get _needsPayment {
     final fee = _feeCents() ?? 0;
     if (fee == 0 && !_prepay) return false;
-    final saved = _savedVenmoHandle;
-    return saved == null || saved.isEmpty;
+    return !_hasPaymentMethod;
   }
 
   Future<void> _submit() async {
@@ -80,18 +83,22 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
       _snack("Pick where you're headed first.");
       return;
     }
-    if (_needsVenmo && _venmo.text.trim().isEmpty) {
-      _snack('Add your Venmo handle so people can pay you.');
+    if (_needsPayment && _quickHandle.text.trim().length < 2) {
+      _snack('Add a payment handle so people can pay you.');
       return;
     }
     setState(() => _submitting = true);
     final repo = ref.read(runsRepositoryProvider);
     try {
-      if (_needsVenmo) {
-        final me = await repo.saveVenmoHandle(
-          _venmo.text.trim().replaceFirst('@', ''),
-        );
-        _savedVenmoHandle = me.venmoHandle;
+      if (_needsPayment) {
+        final me = await repo.savePaymentMethods([
+          PaymentMethod(
+            (b) => b
+              ..type = _quickType
+              ..handle = _quickHandle.text.trim(),
+          ),
+        ]);
+        _hasPaymentMethod = me.paymentMethods.isNotEmpty;
       }
       final run = await repo.createRun(
         foodSpotId: _spot!.id,
@@ -281,7 +288,7 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Require prepay'),
                   subtitle: const Text(
-                    'People Venmo you before you order',
+                    'People pay you before you order',
                   ),
                 ),
                 SwitchListTile(
@@ -295,12 +302,16 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                   title: const Text('Paying with dining dollars'),
                   subtitle: const Text(
                     "You'll buy on your meal plan — "
-                    'people still Venmo you back',
+                    'people still pay you back',
                   ),
                 ),
-                if (_needsVenmo) ...[
+                if (_needsPayment) ...[
                   SizedBox(height: tokens.space3),
-                  _VenmoPromptCard(controller: _venmo),
+                  _PaymentPromptCard(
+                    type: _quickType,
+                    handle: _quickHandle,
+                    onTypeChanged: (t) => setState(() => _quickType = t),
+                  ),
                 ],
                 SizedBox(height: tokens.space6),
 
@@ -345,7 +356,7 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                 SizedBox(height: tokens.space2),
                 Text(
                   'Payment stays off-app — accepted people see your '
-                  'Venmo handle.',
+                  'payment methods.',
                   style: context.text.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant.withValues(alpha: .8),
                   ),
@@ -416,12 +427,19 @@ class _SpotsStepper extends StatelessWidget {
   }
 }
 
-/// Inline Venmo prompt: paid/prepay runs can't post without a handle
-/// (the API enforces VENMO_HANDLE_REQUIRED — we fix it before submit).
-class _VenmoPromptCard extends StatelessWidget {
-  const _VenmoPromptCard({required this.controller});
+/// Inline payment prompt: paid/prepay runs can't post without a method
+/// (the API enforces PAYMENT_METHOD_REQUIRED — we fix it before submit).
+/// You can add more rails later in Profile → Payment methods.
+class _PaymentPromptCard extends StatelessWidget {
+  const _PaymentPromptCard({
+    required this.type,
+    required this.handle,
+    required this.onTypeChanged,
+  });
 
-  final TextEditingController controller;
+  final PaymentMethodType type;
+  final TextEditingController handle;
+  final ValueChanged<PaymentMethodType> onTypeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -451,12 +469,31 @@ class _VenmoPromptCard extends StatelessWidget {
               ),
             ],
           ),
+          SizedBox(height: tokens.space3),
+          DropdownButtonFormField<PaymentMethodType>(
+            initialValue: type,
+            decoration: const InputDecoration(labelText: 'App'),
+            items: [
+              for (final t in kSelectablePaymentTypes)
+                DropdownMenuItem(
+                  value: t,
+                  child: Row(
+                    children: [
+                      Icon(t.icon, size: 20),
+                      SizedBox(width: tokens.space2),
+                      Text(t.label),
+                    ],
+                  ),
+                ),
+            ],
+            onChanged: (t) => onTypeChanged(t ?? type),
+          ),
           SizedBox(height: tokens.space2),
           TextFormField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Venmo handle',
-              prefixText: '@',
+            controller: handle,
+            decoration: InputDecoration(
+              labelText: 'Handle',
+              hintText: type.handleHint,
             ),
           ),
         ],

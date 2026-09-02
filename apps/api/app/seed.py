@@ -268,9 +268,11 @@ async def _seed(session: AsyncSession) -> None:
         spot = FoodSpot(name=spot_name, category=spot_category, description=spot_desc, active=True)
         spots.append(spot)
         session.add(spot)
-    # Runners need a Venmo handle to charge a fee.
+    # Runners need at least one payment method to charge a fee.
     for user in users[:6]:
-        user.venmo_handle = f"@{user.display_name.split()[0]}-GCU"
+        handle = f"@{user.display_name.split()[0]}-GCU"
+        user.venmo_handle = handle
+        user.payment_methods = [{"type": "venmo", "handle": handle}]
     await session.flush()
 
     # 1) An open run leaving soon — the feed's hero card.

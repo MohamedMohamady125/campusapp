@@ -9,7 +9,9 @@ enum ReputationVariant { compact, standard, detailed }
 /// Rules enforced here so they cannot be violated at call sites:
 /// - `rating == null || ratingCount == 0` renders `New member`. No exceptions.
 /// - Rating formatted to exactly one decimal, truncated, never rounded up.
-/// - The count is never hidden — it is half the signal.
+/// - The count is shown by default — it is half the signal. Dense surfaces
+///   (e.g. the runs feed card) may opt out with `showCount: false`, but the
+///   count still shows wherever a trust decision is made (profile, detail).
 class ReputationChip extends StatelessWidget {
   const ReputationChip({
     required this.rating,
@@ -18,6 +20,7 @@ class ReputationChip extends StatelessWidget {
     this.marketplaceCount,
     this.tutoringCount,
     this.variant = ReputationVariant.standard,
+    this.showCount = true,
     this.onTap,
   });
 
@@ -27,6 +30,9 @@ class ReputationChip extends StatelessWidget {
   final int? marketplaceCount;
   final int? tutoringCount;
   final ReputationVariant variant;
+
+  /// Whether to render the rating count (`· 12`). Off only on dense surfaces.
+  final bool showCount;
   final VoidCallback? onTap;
 
   /// One decimal place, truncated: 4.749 displays as 4.7 (spec §4.2).
@@ -84,15 +90,16 @@ class ReputationChip extends StatelessWidget {
             color: compact ? colors.onSurfaceVariant : colors.onSurface,
           ),
         ),
-        Text(
-          ' · $countLabel',
-          style: context.text.labelSmall?.copyWith(
-            fontSize: compact ? 11 : 13,
-            color: colors.onSurfaceVariant.withValues(
-              alpha: compact ? .8 : 1,
+        if (showCount)
+          Text(
+            ' · $countLabel',
+            style: context.text.labelSmall?.copyWith(
+              fontSize: compact ? 11 : 13,
+              color: colors.onSurfaceVariant.withValues(
+                alpha: compact ? .8 : 1,
+              ),
             ),
           ),
-        ),
       ],
     );
 
