@@ -353,6 +353,56 @@ async def test_cancel_and_no_show(client: httpx.AsyncClient) -> None:
     assert resp.json()["error"]["code"] == "INVALID_TRANSITION"
 
 
+# -- live location ------------------------------------------------------------
+
+
+async def test_live_location_sharing(client: httpx.AsyncClient) -> None:
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    visitor = await make_user(client, "visitor@campus.edu")
+    spot_id = await _make_spot()
+    run, _oid = await _accepted_run(client, runner, req, spot_id)
+
+    loc = {"lat": 33.5095, "lng": -112.122}
+
+    # Not en route yet (still open): sharing is rejected.
+    resp = await client.post(f"/api/v1/runs/{run['id']}/location", json=loc, headers=runner)
+    assert resp.json()["error"]["code"] == "RUN_NOT_EN_ROUTE"
+
+    # Runner heads to the store — now en route.
+    await client.post(
+        f"/api/v1/runs/{run['id']}/status", json={"status": "at_store"}, headers=runner
+    )
+
+    # Before any ping, the accepted requester sees no location.
+    view = (await client.get(f"/api/v1/runs/{run['id']}", headers=req)).json()
+    assert view["runner_location"] is None
+
+    # Only the runner may report position.
+    resp = await client.post(f"/api/v1/runs/{run['id']}/location", json=loc, headers=req)
+    assert resp.status_code == 403
+
+    # Out-of-range coordinates are rejected by validation.
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/location", json={"lat": 200, "lng": 0}, headers=runner
+    )
+    assert resp.status_code == 400
+
+    # Runner pings their live position.
+    resp = await client.post(f"/api/v1/runs/{run['id']}/location", json=loc, headers=runner)
+    assert resp.status_code == 200
+
+    # Accepted requester sees the live point...
+    view = (await client.get(f"/api/v1/runs/{run['id']}", headers=req)).json()
+    assert view["runner_location"]["lat"] == loc["lat"]
+    assert view["runner_location"]["lng"] == loc["lng"]
+    assert view["runner_location"]["updated_at"] is not None
+
+    # ...but a passer-by never does (privacy gate).
+    view = (await client.get(f"/api/v1/runs/{run['id']}", headers=visitor)).json()
+    assert view["runner_location"] is None
+
+
 # -- expiry job ---------------------------------------------------------------
 
 

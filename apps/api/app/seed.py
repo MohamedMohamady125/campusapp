@@ -145,18 +145,69 @@ _FLAGS = [
 ]
 
 # GCU launch catalog: Lopes Way venues + walkable off-campus staples.
-_FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str]] = [
-    ("Chick-fil-A (Lopes Way)", FoodSpotCategory.campus, "Closed Sundays. Lines get long at noon."),
-    ("Panda Express (Lopes Way)", FoodSpotCategory.campus, "Orange chicken never misses."),
-    ("Qdoba (Lopes Way)", FoodSpotCategory.campus, "Burritos, bowls, queso."),
-    ("Subway (Lopes Way)", FoodSpotCategory.campus, "Footlongs on Lopes Way."),
-    ("Pita Jungle (GCU)", FoodSpotCategory.campus, "Fresh Mediterranean on campus."),
-    ("Canyon Pizza Co.", FoodSpotCategory.campus, "Late-night slices."),
-    ("The Grid (POD Market)", FoodSpotCategory.campus, "Snacks, drinks, essentials."),
-    ("Chipotle (27th Ave)", FoodSpotCategory.off_campus, "Just off campus — bowl run classic."),
-    ("Raising Cane's (Camelback)", FoodSpotCategory.off_campus, "Box combos + Cane's sauce."),
-    ("Dutch Bros (Camelback)", FoodSpotCategory.off_campus, "Coffee runs before 8am class."),
-    ("In-N-Out (Northern Ave)", FoodSpotCategory.off_campus, "Worth the drive. Animal style."),
+# name, category, description, lat, lng — coordinates cluster around GCU
+# (3300 W Camelback Rd, Phoenix) so the live map's destination pins land in
+# the real campus neighborhood. Approximate demo values.
+_FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float]] = [
+    (
+        "Chick-fil-A (Lopes Way)",
+        FoodSpotCategory.campus,
+        "Closed Sundays. Lines get long at noon.",
+        33.5098,
+        -112.1276,
+    ),
+    (
+        "Panda Express (Lopes Way)",
+        FoodSpotCategory.campus,
+        "Orange chicken never misses.",
+        33.5099,
+        -112.1279,
+    ),
+    ("Qdoba (Lopes Way)", FoodSpotCategory.campus, "Burritos, bowls, queso.", 33.5097, -112.1281),
+    ("Subway (Lopes Way)", FoodSpotCategory.campus, "Footlongs on Lopes Way.", 33.5100, -112.1274),
+    (
+        "Pita Jungle (GCU)",
+        FoodSpotCategory.campus,
+        "Fresh Mediterranean on campus.",
+        33.5094,
+        -112.1283,
+    ),
+    ("Canyon Pizza Co.", FoodSpotCategory.campus, "Late-night slices.", 33.5092, -112.1278),
+    (
+        "The Grid (POD Market)",
+        FoodSpotCategory.campus,
+        "Snacks, drinks, essentials.",
+        33.5091,
+        -112.1285,
+    ),
+    (
+        "Chipotle (27th Ave)",
+        FoodSpotCategory.off_campus,
+        "Just off campus — bowl run classic.",
+        33.5093,
+        -112.1168,
+    ),
+    (
+        "Raising Cane's (Camelback)",
+        FoodSpotCategory.off_campus,
+        "Box combos + Cane's sauce.",
+        33.5095,
+        -112.1003,
+    ),
+    (
+        "Dutch Bros (Camelback)",
+        FoodSpotCategory.off_campus,
+        "Coffee runs before 8am class.",
+        33.5096,
+        -112.1102,
+    ),
+    (
+        "In-N-Out (Northern Ave)",
+        FoodSpotCategory.off_campus,
+        "Worth the drive. Animal style.",
+        33.5541,
+        -112.1289,
+    ),
 ]
 
 
@@ -264,8 +315,15 @@ async def _seed(session: AsyncSession) -> None:
 
     # Food spots + demo runs (food-runs spec).
     spots: list[FoodSpot] = []
-    for spot_name, spot_category, spot_desc in _FOOD_SPOTS:
-        spot = FoodSpot(name=spot_name, category=spot_category, description=spot_desc, active=True)
+    for spot_name, spot_category, spot_desc, spot_lat, spot_lng in _FOOD_SPOTS:
+        spot = FoodSpot(
+            name=spot_name,
+            category=spot_category,
+            description=spot_desc,
+            active=True,
+            lat=spot_lat,
+            lng=spot_lng,
+        )
         spots.append(spot)
         session.add(spot)
     # Runners need at least one payment method to charge a fee.
@@ -307,6 +365,11 @@ async def _seed(session: AsyncSession) -> None:
         spots_max=3,
         prepay_required=True,
         status=RunStatus.delivering,
+        # En route between Chipotle (spots[7]) and campus — the live map's
+        # moving runner pin for the demo.
+        runner_lat=33.5095,
+        runner_lng=-112.1220,
+        location_updated_at=now - timedelta(seconds=15),
     )
     session.add(delivering_run)
     await session.flush()

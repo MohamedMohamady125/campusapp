@@ -15,6 +15,8 @@ part 'food_spot_response.g.dart';
 /// * [category] 
 /// * [description] 
 /// * [id] 
+/// * [lat] 
+/// * [lng] 
 /// * [name] 
 @BuiltValue()
 abstract class FoodSpotResponse implements Built<FoodSpotResponse, FoodSpotResponseBuilder> {
@@ -27,6 +29,12 @@ abstract class FoodSpotResponse implements Built<FoodSpotResponse, FoodSpotRespo
 
   @BuiltValueField(wireName: r'id')
   String get id;
+
+  @BuiltValueField(wireName: r'lat')
+  num? get lat;
+
+  @BuiltValueField(wireName: r'lng')
+  num? get lng;
 
   @BuiltValueField(wireName: r'name')
   String get name;
@@ -69,6 +77,20 @@ class _$FoodSpotResponseSerializer implements PrimitiveSerializer<FoodSpotRespon
       object.id,
       specifiedType: const FullType(String),
     );
+    if (object.lat != null) {
+      yield r'lat';
+      yield serializers.serialize(
+        object.lat,
+        specifiedType: const FullType.nullable(num),
+      );
+    }
+    if (object.lng != null) {
+      yield r'lng';
+      yield serializers.serialize(
+        object.lng,
+        specifiedType: const FullType.nullable(num),
+      );
+    }
     yield r'name';
     yield serializers.serialize(
       object.name,
@@ -118,6 +140,22 @@ class _$FoodSpotResponseSerializer implements PrimitiveSerializer<FoodSpotRespon
             specifiedType: const FullType(String),
           ) as String;
           result.id = valueDes;
+          break;
+        case r'lat':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(num),
+          ) as num?;
+          if (valueDes == null) continue;
+          result.lat = valueDes;
+          break;
+        case r'lng':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(num),
+          ) as num?;
+          if (valueDes == null) continue;
+          result.lng = valueDes;
           break;
         case r'name':
           final valueDes = serializers.deserialize(

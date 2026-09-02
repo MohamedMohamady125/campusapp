@@ -36,6 +36,8 @@ class _$RunResponse extends RunResponse {
   @override
   final RunUserSummary runner;
   @override
+  final RunLocation? runnerLocation;
+  @override
   final int spotsMax;
   @override
   final RunStatus status;
@@ -58,6 +60,7 @@ class _$RunResponse extends RunResponse {
       required this.pendingCount,
       required this.prepayRequired,
       required this.runner,
+      this.runnerLocation,
       required this.spotsMax,
       required this.status})
       : super._();
@@ -86,6 +89,7 @@ class _$RunResponse extends RunResponse {
         pendingCount == other.pendingCount &&
         prepayRequired == other.prepayRequired &&
         runner == other.runner &&
+        runnerLocation == other.runnerLocation &&
         spotsMax == other.spotsMax &&
         status == other.status;
   }
@@ -107,6 +111,7 @@ class _$RunResponse extends RunResponse {
     _$hash = $jc(_$hash, pendingCount.hashCode);
     _$hash = $jc(_$hash, prepayRequired.hashCode);
     _$hash = $jc(_$hash, runner.hashCode);
+    _$hash = $jc(_$hash, runnerLocation.hashCode);
     _$hash = $jc(_$hash, spotsMax.hashCode);
     _$hash = $jc(_$hash, status.hashCode);
     _$hash = $jf(_$hash);
@@ -130,6 +135,7 @@ class _$RunResponse extends RunResponse {
           ..add('pendingCount', pendingCount)
           ..add('prepayRequired', prepayRequired)
           ..add('runner', runner)
+          ..add('runnerLocation', runnerLocation)
           ..add('spotsMax', spotsMax)
           ..add('status', status))
         .toString();
@@ -204,6 +210,12 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
       _$this._runner ??= RunUserSummaryBuilder();
   set runner(RunUserSummaryBuilder? runner) => _$this._runner = runner;
 
+  RunLocationBuilder? _runnerLocation;
+  RunLocationBuilder get runnerLocation =>
+      _$this._runnerLocation ??= RunLocationBuilder();
+  set runnerLocation(RunLocationBuilder? runnerLocation) =>
+      _$this._runnerLocation = runnerLocation;
+
   int? _spotsMax;
   int? get spotsMax => _$this._spotsMax;
   set spotsMax(int? spotsMax) => _$this._spotsMax = spotsMax;
@@ -233,6 +245,7 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
       _pendingCount = $v.pendingCount;
       _prepayRequired = $v.prepayRequired;
       _runner = $v.runner.toBuilder();
+      _runnerLocation = $v.runnerLocation?.toBuilder();
       _spotsMax = $v.spotsMax;
       _status = $v.status;
       _$v = null;
@@ -279,6 +292,7 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
             prepayRequired: BuiltValueNullFieldError.checkNotNull(
                 prepayRequired, r'RunResponse', 'prepayRequired'),
             runner: runner.build(),
+            runnerLocation: _runnerLocation?.build(),
             spotsMax: BuiltValueNullFieldError.checkNotNull(
                 spotsMax, r'RunResponse', 'spotsMax'),
             status: BuiltValueNullFieldError.checkNotNull(
@@ -298,6 +312,8 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
 
         _$failedField = 'runner';
         runner.build();
+        _$failedField = 'runnerLocation';
+        _runnerLocation?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
             r'RunResponse', _$failedField, e.toString());

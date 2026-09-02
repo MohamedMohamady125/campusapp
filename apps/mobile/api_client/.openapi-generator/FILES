@@ -80,6 +80,8 @@ doc/ReportsApi.md
 doc/ResendCodeRequest.md
 doc/ResetPasswordRequest.md
 doc/RunCreateRequest.md
+doc/RunLocation.md
+doc/RunLocationUpdateRequest.md
 doc/RunOrderCreateRequest.md
 doc/RunOrderResponse.md
 doc/RunOrderStatus.md
@@ -192,6 +194,8 @@ lib/src/model/report_update_request.dart
 lib/src/model/resend_code_request.dart
 lib/src/model/reset_password_request.dart
 lib/src/model/run_create_request.dart
+lib/src/model/run_location.dart
+lib/src/model/run_location_update_request.dart
 lib/src/model/run_order_create_request.dart
 lib/src/model/run_order_response.dart
 lib/src/model/run_order_status.dart
@@ -211,3 +215,5 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/run_location_test.dart
+test/run_location_update_request_test.dart

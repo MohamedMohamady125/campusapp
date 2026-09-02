@@ -14,6 +14,10 @@ class _$FoodSpotResponse extends FoodSpotResponse {
   @override
   final String id;
   @override
+  final num? lat;
+  @override
+  final num? lng;
+  @override
   final String name;
 
   factory _$FoodSpotResponse(
@@ -24,6 +28,8 @@ class _$FoodSpotResponse extends FoodSpotResponse {
       {required this.category,
       this.description,
       required this.id,
+      this.lat,
+      this.lng,
       required this.name})
       : super._();
   @override
@@ -41,6 +47,8 @@ class _$FoodSpotResponse extends FoodSpotResponse {
         category == other.category &&
         description == other.description &&
         id == other.id &&
+        lat == other.lat &&
+        lng == other.lng &&
         name == other.name;
   }
 
@@ -50,6 +58,8 @@ class _$FoodSpotResponse extends FoodSpotResponse {
     _$hash = $jc(_$hash, category.hashCode);
     _$hash = $jc(_$hash, description.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
+    _$hash = $jc(_$hash, lat.hashCode);
+    _$hash = $jc(_$hash, lng.hashCode);
     _$hash = $jc(_$hash, name.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -61,6 +71,8 @@ class _$FoodSpotResponse extends FoodSpotResponse {
           ..add('category', category)
           ..add('description', description)
           ..add('id', id)
+          ..add('lat', lat)
+          ..add('lng', lng)
           ..add('name', name))
         .toString();
   }
@@ -82,6 +94,14 @@ class FoodSpotResponseBuilder
   String? get id => _$this._id;
   set id(String? id) => _$this._id = id;
 
+  num? _lat;
+  num? get lat => _$this._lat;
+  set lat(num? lat) => _$this._lat = lat;
+
+  num? _lng;
+  num? get lng => _$this._lng;
+  set lng(num? lng) => _$this._lng = lng;
+
   String? _name;
   String? get name => _$this._name;
   set name(String? name) => _$this._name = name;
@@ -96,6 +116,8 @@ class FoodSpotResponseBuilder
       _category = $v.category;
       _description = $v.description;
       _id = $v.id;
+      _lat = $v.lat;
+      _lng = $v.lng;
       _name = $v.name;
       _$v = null;
     }
@@ -123,6 +145,8 @@ class FoodSpotResponseBuilder
           description: description,
           id: BuiltValueNullFieldError.checkNotNull(
               id, r'FoodSpotResponse', 'id'),
+          lat: lat,
+          lng: lng,
           name: BuiltValueNullFieldError.checkNotNull(
               name, r'FoodSpotResponse', 'name'),
         );

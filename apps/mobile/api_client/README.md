@@ -121,6 +121,7 @@ Class | Method | HTTP request | Description
 [*RunsApi*](doc/RunsApi.md) | [**myRunsApiV1RunsMineGet**](doc/RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs
 [*RunsApi*](doc/RunsApi.md) | [**requestSpotApiV1RunsRunIdOrdersPost**](doc/RunsApi.md#requestspotapiv1runsrunidorderspost) | **POST** /api/v1/runs/{run_id}/orders | Request Spot
 [*RunsApi*](doc/RunsApi.md) | [**runFeedApiV1RunsGet**](doc/RunsApi.md#runfeedapiv1runsget) | **GET** /api/v1/runs | Run Feed
+[*RunsApi*](doc/RunsApi.md) | [**updateLocationApiV1RunsRunIdLocationPost**](doc/RunsApi.md#updatelocationapiv1runsrunidlocationpost) | **POST** /api/v1/runs/{run_id}/location | Update Location
 [*RunsApi*](doc/RunsApi.md) | [**updateStatusApiV1RunsRunIdStatusPost**](doc/RunsApi.md#updatestatusapiv1runsrunidstatuspost) | **POST** /api/v1/runs/{run_id}/status | Update Status
 [*RunsApi*](doc/RunsApi.md) | [**withdrawOrderApiV1RunsRunIdOrdersOrderIdDelete**](doc/RunsApi.md#withdraworderapiv1runsrunidordersorderiddelete) | **DELETE** /api/v1/runs/{run_id}/orders/{order_id} | Withdraw Order
 [*TutoringApi*](doc/TutoringApi.md) | [**autocompleteCoursesApiV1CoursesGet**](doc/TutoringApi.md#autocompletecoursesapiv1coursesget) | **GET** /api/v1/courses | Autocomplete Courses
@@ -206,6 +207,8 @@ Class | Method | HTTP request | Description
  - [ResendCodeRequest](doc/ResendCodeRequest.md)
  - [ResetPasswordRequest](doc/ResetPasswordRequest.md)
  - [RunCreateRequest](doc/RunCreateRequest.md)
+ - [RunLocation](doc/RunLocation.md)
+ - [RunLocationUpdateRequest](doc/RunLocationUpdateRequest.md)
  - [RunOrderCreateRequest](doc/RunOrderCreateRequest.md)
  - [RunOrderResponse](doc/RunOrderResponse.md)
  - [RunOrderStatus](doc/RunOrderStatus.md)

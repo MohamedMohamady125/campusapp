@@ -22,6 +22,7 @@ Name | Type | Description | Notes
 **pendingCount** | **int** |  | 
 **prepayRequired** | **bool** |  | 
 **runner** | [**RunUserSummary**](RunUserSummary.md) |  | 
+**runnerLocation** | [**RunLocation**](RunLocation.md) |  | [optional] 
 **spotsMax** | **int** |  | 
 **status** | [**RunStatus**](RunStatus.md) |  | 
 

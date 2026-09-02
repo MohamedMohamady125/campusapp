@@ -15,6 +15,7 @@ from app.repositories.run_repo import RunRepository
 from app.schemas.run import (
     FoodSpotResponse,
     RunCreateRequest,
+    RunLocationUpdateRequest,
     RunOrderCreateRequest,
     RunPageResponse,
     RunResponse,
@@ -168,6 +169,17 @@ async def update_status(
     svc: RunService = Depends(_service),
 ) -> RunResponse:
     run = await svc.update_status(run_id=run_id, actor=user, status=body.status)
+    return run_response(run, viewer_id=user.id)
+
+
+@router.post("/{run_id}/location", response_model=RunResponse)
+async def update_location(
+    run_id: uuid.UUID,
+    body: RunLocationUpdateRequest,
+    user: User = Depends(get_current_user),
+    svc: RunService = Depends(_service),
+) -> RunResponse:
+    run = await svc.update_location(run_id=run_id, actor=user, lat=body.lat, lng=body.lng)
     return run_response(run, viewer_id=user.id)
 
 

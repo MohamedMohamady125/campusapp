@@ -13,6 +13,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     Enum,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -40,6 +41,10 @@ class FoodSpot(TimestampedBase):
     )
     description: Mapped[str | None] = mapped_column(String(200))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Destination coordinates for the live map's target pin. Nullable so a spot
+    # can exist without being geocoded; the map simply omits the pin.
+    lat: Mapped[float | None] = mapped_column(Float)
+    lng: Mapped[float | None] = mapped_column(Float)
 
 
 class Run(TimestampedBase):
@@ -72,6 +77,12 @@ class Run(TimestampedBase):
         PG_UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="SET NULL")
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Runner's last-known live position (Uber/Lyft-style tracking). Pushed by
+    # the runner's device while the run is active; exposed only to accepted
+    # requesters (see run_service.run_response). Null until the runner shares.
+    runner_lat: Mapped[float | None] = mapped_column(Float)
+    runner_lng: Mapped[float | None] = mapped_column(Float)
+    location_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     runner: Mapped[User] = relationship()
     food_spot: Mapped[FoodSpot] = relationship()

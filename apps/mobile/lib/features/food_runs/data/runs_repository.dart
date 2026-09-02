@@ -149,6 +149,24 @@ class RunsRepository {
     return res.data!;
   }
 
+  /// Runner pushes one live GPS ping (Uber/Lyft-style tracking). Server only
+  /// accepts it while the run is en route.
+  Future<RunResponse> updateLocation(
+    String runId,
+    double lat,
+    double lng,
+  ) async {
+    final res = await _runs.updateLocationApiV1RunsRunIdLocationPost(
+      runId: runId,
+      runLocationUpdateRequest: RunLocationUpdateRequest(
+        (b) => b
+          ..lat = lat
+          ..lng = lng,
+      ),
+    );
+    return res.data!;
+  }
+
   /// Current profile — used to check for a payment method before paid runs.
   Future<UserMeResponse> fetchMe() async {
     final res = await _api.getUsersApi().getMeApiV1UsersMeGet();

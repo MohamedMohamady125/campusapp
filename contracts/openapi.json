@@ -563,6 +563,28 @@
             "title": "Id",
             "type": "string"
           },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -1824,6 +1846,54 @@
         "title": "RunCreateRequest",
         "type": "object"
       },
+      "RunLocation": {
+        "description": "The runner's last-known live position, plus when it was reported.",
+        "properties": {
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lat",
+          "lng",
+          "updated_at"
+        ],
+        "title": "RunLocation",
+        "type": "object"
+      },
+      "RunLocationUpdateRequest": {
+        "description": "One GPS ping from the runner's device.",
+        "properties": {
+          "lat": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lng",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ],
+        "title": "RunLocationUpdateRequest",
+        "type": "object"
+      },
       "RunOrderCreateRequest": {
         "properties": {
           "dropoff": {
@@ -2015,6 +2085,16 @@
           },
           "runner": {
             "$ref": "#/components/schemas/RunUserSummary"
+          },
+          "runner_location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunLocation"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "spots_max": {
             "title": "Spots Max",
@@ -5152,6 +5232,64 @@
           }
         ],
         "summary": "Cancel Run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/location": {
+      "post": {
+        "operationId": "update_location_api_v1_runs__run_id__location_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunLocationUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Location",
         "tags": [
           "runs"
         ]

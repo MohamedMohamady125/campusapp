@@ -35,12 +35,18 @@ dependencies:
   dio: ^5.10.0
   flutter:
     sdk: flutter
+  # Live runner tracking: flutter_map renders the OpenStreetMap tiles (no API
+  # key needed), latlong2 supplies the LatLng type, geolocator reads the
+  # runner's device GPS.
+  flutter_map: ^8.1.1
   flutter_riverpod: ^2.6.1
   flutter_secure_storage: ^10.3.1
   freezed_annotation: ^2.4.4
+  geolocator: ^13.0.2
   go_router: ^17.2.3
   google_fonts: ^8.1.0
   json_annotation: ^4.9.0
+  latlong2: ^0.9.1
   riverpod_annotation: ^2.6.1
 
 dev_dependencies:

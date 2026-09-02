@@ -16,6 +16,17 @@ class FoodSpotResponse(BaseModel):
     name: str
     category: FoodSpotCategory
     description: str | None
+    # Destination coordinates for the live map (null if the spot isn't geocoded).
+    lat: float | None = None
+    lng: float | None = None
+
+
+class RunLocation(BaseModel):
+    """The runner's last-known live position, plus when it was reported."""
+
+    lat: float
+    lng: float
+    updated_at: datetime
 
 
 class RunCreateRequest(BaseModel):
@@ -72,6 +83,9 @@ class RunResponse(BaseModel):
     orders: list[RunOrderResponse] = []
     # Only for a requester: their own order on this run.
     my_order: RunOrderResponse | None = None
+    # Runner's live position — revealed only to the runner + accepted requesters
+    # while the run is active. Null for everyone else (privacy gate).
+    runner_location: RunLocation | None = None
 
 
 class RunPageResponse(BaseModel):
@@ -87,3 +101,10 @@ class RunOrderCreateRequest(BaseModel):
 
 class RunStatusUpdateRequest(BaseModel):
     status: RunStatus
+
+
+class RunLocationUpdateRequest(BaseModel):
+    """One GPS ping from the runner's device."""
+
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)

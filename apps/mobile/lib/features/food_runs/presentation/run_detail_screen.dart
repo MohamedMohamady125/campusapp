@@ -10,10 +10,12 @@ import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
+import 'package:campusconnect/features/food_runs/presentation/live_map_card.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
 import 'package:campusconnect/features/food_runs/presentation/rate_run_sheet.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_detail_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
+import 'package:campusconnect/features/food_runs/presentation/runner_location_broadcaster.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -104,6 +106,12 @@ class _RunDetailBody extends ConsumerWidget {
       children: [
         _RunHeaderCard(run: run),
         SizedBox(height: tokens.space4),
+        // Live "where's my runner" map — the response only carries
+        // runnerLocation when the viewer is entitled and the run is en route.
+        if (run.runnerLocation != null) ...[
+          LiveMapCard(run: run),
+          SizedBox(height: tokens.space4),
+        ],
         if (isRunner)
           ..._runnerSection(context, controller)
         else if (myOrder != null)
@@ -329,6 +337,13 @@ class _RunDetailBody extends ConsumerWidget {
       RunStatus.atStore,
       RunStatus.delivering,
     }.contains(run.status);
+    // Runner auto-shares GPS once en route (locked → delivering), matching the
+    // server's location-share window.
+    final enRoute = const {
+      RunStatus.locked,
+      RunStatus.atStore,
+      RunStatus.delivering,
+    }.contains(run.status);
 
     return [
       if (active) ...[
@@ -340,6 +355,10 @@ class _RunDetailBody extends ConsumerWidget {
             () => controller.updateStatus(next),
           ),
         ),
+        SizedBox(height: tokens.space3),
+      ],
+      if (enRoute) ...[
+        RunnerLocationBroadcaster(runId: run.id),
         SizedBox(height: tokens.space3),
       ],
       if (run.conversationId != null) ...[

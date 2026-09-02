@@ -29,6 +29,7 @@ from app.repositories.run_repo import RunRepository
 from app.schemas.run import (
     FoodSpotResponse,
     RunCreateRequest,
+    RunLocation,
     RunOrderResponse,
     RunResponse,
     RunUserSummary,
@@ -53,6 +54,10 @@ _LEGAL_TRANSITIONS: dict[RunStatus, set[RunStatus]] = {
 }
 
 _ACTIVE_ORDER_STATUSES = (RunOrderStatus.accepted, RunOrderStatus.delivered)
+
+# Live location is only shared while the runner is actually en route — from the
+# moment the run locks through delivery. Never before leaving, never after done.
+_LOCATION_SHARE_STATUSES = frozenset({RunStatus.locked, RunStatus.at_store, RunStatus.delivering})
 
 
 def _user_summary(user: User, *, include_payment: bool = False) -> RunUserSummary:
@@ -94,11 +99,26 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
     accepted = [o for o in run.orders if o.status in _ACTIVE_ORDER_STATUSES]
     received = [o for o in run.orders if o.status == RunOrderStatus.received]
     pending = [o for o in run.orders if o.status == RunOrderStatus.requested]
-    show_payment = is_runner or (
+    entitled = is_runner or (
         my_order is not None
         and my_order.status
         in (RunOrderStatus.accepted, RunOrderStatus.delivered, RunOrderStatus.received)
     )
+    show_payment = entitled
+    # Live location: entitled viewer, run en route, and the runner has pinged.
+    runner_location: RunLocation | None = None
+    if (
+        entitled
+        and run.status in _LOCATION_SHARE_STATUSES
+        and run.runner_lat is not None
+        and run.runner_lng is not None
+        and run.location_updated_at is not None
+    ):
+        runner_location = RunLocation(
+            lat=run.runner_lat,
+            lng=run.runner_lng,
+            updated_at=run.location_updated_at,
+        )
     return RunResponse(
         id=run.id,
         runner=_user_summary(run.runner, include_payment=show_payment),
@@ -116,6 +136,7 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
         created_at=run.created_at,
         orders=[_order_response(o) for o in run.orders] if is_runner else [],
         my_order=_order_response(my_order) if my_order is not None else None,
+        runner_location=runner_location,
     )
 
 
@@ -280,6 +301,28 @@ class RunService:
                     dedup_key="run_id",
                     extra={"run_status": str(status), "order_id": str(order.id)},
                 )
+        await self._session.commit()
+        return await self._get_or_404(run_id)
+
+    async def update_location(
+        self, *, run_id: uuid.UUID, actor: User, lat: float, lng: float
+    ) -> Run:
+        """Runner pings their live GPS position (Uber/Lyft-style tracking).
+
+        Only the runner may report, and only while the run is en route
+        (locked → delivering). The point is exposed to accepted requesters in
+        run_response; before locking / after done we drop the ping.
+        """
+        run = await self._get_or_404(run_id)
+        self._assert_runner(run, actor)
+        if run.status not in _LOCATION_SHARE_STATUSES:
+            raise ConflictError(
+                "Location sharing is only active while the run is en route.",
+                code="RUN_NOT_EN_ROUTE",
+            )
+        run.runner_lat = lat
+        run.runner_lng = lng
+        run.location_updated_at = datetime.now(UTC)
         await self._session.commit()
         return await self._get_or_404(run_id)
 

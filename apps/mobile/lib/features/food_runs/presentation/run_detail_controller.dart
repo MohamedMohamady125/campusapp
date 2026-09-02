@@ -95,6 +95,11 @@ class RunDetailController
       _mutate(() => _repo.updateStatus(arg, status));
 
   Future<void> cancelRun() => _mutate(() => _repo.cancelRun(arg));
+
+  /// Runner's device pushes one live GPS ping; the response re-syncs the run so
+  /// the runner sees their own dot move too.
+  Future<void> pushLocation(double lat, double lng) =>
+      _mutate(() => _repo.updateLocation(arg, lat, lng));
 }
 
 final AutoDisposeNotifierProviderFamily<

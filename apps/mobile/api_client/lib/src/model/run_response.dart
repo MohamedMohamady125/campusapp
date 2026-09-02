@@ -8,6 +8,7 @@ import 'package:built_collection/built_collection.dart';
 import 'package:campus_api/src/model/run_status.dart';
 import 'package:campus_api/src/model/run_order_response.dart';
 import 'package:campus_api/src/model/food_spot_response.dart';
+import 'package:campus_api/src/model/run_location.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -30,6 +31,7 @@ part 'run_response.g.dart';
 /// * [pendingCount] 
 /// * [prepayRequired] 
 /// * [runner] 
+/// * [runnerLocation] 
 /// * [spotsMax] 
 /// * [status] 
 @BuiltValue()
@@ -75,6 +77,9 @@ abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
 
   @BuiltValueField(wireName: r'runner')
   RunUserSummary get runner;
+
+  @BuiltValueField(wireName: r'runner_location')
+  RunLocation? get runnerLocation;
 
   @BuiltValueField(wireName: r'spots_max')
   int get spotsMax;
@@ -181,6 +186,13 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
       object.runner,
       specifiedType: const FullType(RunUserSummary),
     );
+    if (object.runnerLocation != null) {
+      yield r'runner_location';
+      yield serializers.serialize(
+        object.runnerLocation,
+        specifiedType: const FullType.nullable(RunLocation),
+      );
+    }
     yield r'spots_max';
     yield serializers.serialize(
       object.spotsMax,
@@ -314,6 +326,14 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
             specifiedType: const FullType(RunUserSummary),
           ) as RunUserSummary;
           result.runner.replace(valueDes);
+          break;
+        case r'runner_location':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(RunLocation),
+          ) as RunLocation?;
+          if (valueDes == null) continue;
+          result.runnerLocation.replace(valueDes);
           break;
         case r'spots_max':
           final valueDes = serializers.deserialize(
