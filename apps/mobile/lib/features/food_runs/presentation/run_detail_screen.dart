@@ -211,7 +211,7 @@ class _RunDetailBody extends ConsumerWidget {
                 _PickupAttachRow(
                   attached: pickupCode != null,
                   onAttach: () async {
-                    final code = await pickMobileOrderCode(sheetContext);
+                    final code = await obtainMobileOrderCode(sheetContext);
                     if (code != null) setSheetState(() => pickupCode = code);
                   },
                   onRemove: () => setSheetState(() => pickupCode = null),

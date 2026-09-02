@@ -1,9 +1,64 @@
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+
+/// Obtain the requester's Mobile Order pickup payload, by the best route the
+/// platform allows: decode a screenshot on mobile (where mobile_scanner's
+/// analyzeImage works), or a manual paste on web (where it doesn't).
+Future<String?> obtainMobileOrderCode(BuildContext context) {
+  return kIsWeb ? enterMobileOrderCode(context) : pickMobileOrderCode(context);
+}
+
+/// Manual paste — the requester types/pastes the code or URL under their
+/// Mobile Order QR. The runner still gets a crisp re-rendered QR from it.
+Future<String?> enterMobileOrderCode(BuildContext context) {
+  final controller = TextEditingController();
+  return showDialog<String>(
+    context: context,
+    builder: (dialogContext) {
+      final tokens = dialogContext.tokens;
+      return AlertDialog(
+        title: const Text('Paste your Mobile Order code'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Copy the code or link under your Mobile Order QR so the '
+              'runner can show it at the counter.',
+              style: dialogContext.text.bodySmall?.copyWith(
+                color: dialogContext.colors.onSurfaceVariant,
+              ),
+            ),
+            SizedBox(height: tokens.space3),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'e.g. GCU-MOBILE-…'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              Navigator.of(dialogContext).pop(value.isEmpty ? null : value);
+            },
+            child: const Text('Attach'),
+          ),
+        ],
+      );
+    },
+  ).whenComplete(controller.dispose);
+}
 
 /// The requester's Mobile Order pickup-QR flow.
 ///
