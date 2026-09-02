@@ -16,6 +16,7 @@ part 'run_create_request.g.dart';
 /// * [foodSpotId] 
 /// * [leavingAt] 
 /// * [note] 
+/// * [paysWithDiningDollars] 
 /// * [prepayRequired] 
 /// * [spotsMax] 
 @BuiltValue()
@@ -35,6 +36,9 @@ abstract class RunCreateRequest implements Built<RunCreateRequest, RunCreateRequ
   @BuiltValueField(wireName: r'note')
   String? get note;
 
+  @BuiltValueField(wireName: r'pays_with_dining_dollars')
+  bool? get paysWithDiningDollars;
+
   @BuiltValueField(wireName: r'prepay_required')
   bool? get prepayRequired;
 
@@ -48,6 +52,7 @@ abstract class RunCreateRequest implements Built<RunCreateRequest, RunCreateRequ
   @BuiltValueHook(initializeBuilder: true)
   static void _defaults(RunCreateRequestBuilder b) => b
       ..feeCents = 0
+      ..paysWithDiningDollars = false
       ..prepayRequired = false
       ..spotsMax = 3;
 
@@ -94,6 +99,13 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
       yield serializers.serialize(
         object.note,
         specifiedType: const FullType.nullable(String),
+      );
+    }
+    if (object.paysWithDiningDollars != null) {
+      yield r'pays_with_dining_dollars';
+      yield serializers.serialize(
+        object.paysWithDiningDollars,
+        specifiedType: const FullType(bool),
       );
     }
     if (object.prepayRequired != null) {
@@ -168,6 +180,13 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
           ) as String?;
           if (valueDes == null) continue;
           result.note = valueDes;
+          break;
+        case r'pays_with_dining_dollars':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(bool),
+          ) as bool;
+          result.paysWithDiningDollars = valueDes;
           break;
         case r'prepay_required':
           final valueDes = serializers.deserialize(

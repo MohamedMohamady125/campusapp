@@ -481,7 +481,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **runFeedApiV1RunsGet**
-> RunPageResponse runFeedApiV1RunsGet(cursor, limit)
+> RunPageResponse runFeedApiV1RunsGet(cursor, limit, diningDollars)
 
 Run Feed
 
@@ -492,9 +492,10 @@ import 'package:campus_api/api.dart';
 final api = CampusApi().getRunsApi();
 final String cursor = cursor_example; // String | 
 final int limit = 56; // int | 
+final bool diningDollars = true; // bool | Only runs where the runner pays with dining dollars.
 
 try {
-    final response = api.runFeedApiV1RunsGet(cursor, limit);
+    final response = api.runFeedApiV1RunsGet(cursor, limit, diningDollars);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling RunsApi->runFeedApiV1RunsGet: $e\n');
@@ -507,6 +508,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **cursor** | **String**|  | [optional] 
  **limit** | **int**|  | [optional] [default to 20]
+ **diningDollars** | **bool**| Only runs where the runner pays with dining dollars. | [optional] [default to false]
 
 ### Return type
 

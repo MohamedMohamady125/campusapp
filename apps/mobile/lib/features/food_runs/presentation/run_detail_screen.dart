@@ -492,6 +492,13 @@ class _RunHeaderCard extends StatelessWidget {
                 ? '${runFeeLabel(run.feeCents)} · prepay required'
                 : runFeeLabel(run.feeCents),
           ),
+          if (run.paysWithDiningDollars) ...[
+            SizedBox(height: tokens.space2),
+            const _InfoRow(
+              icon: Icons.credit_card_outlined,
+              label: 'Runner pays with dining dollars — Venmo them back',
+            ),
+          ],
           SizedBox(height: tokens.space2),
           _InfoRow(
             icon: Icons.group_outlined,

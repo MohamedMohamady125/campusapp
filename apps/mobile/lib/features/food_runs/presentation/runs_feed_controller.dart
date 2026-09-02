@@ -20,6 +20,7 @@ class RunsFeedState {
     this.loading = false,
     this.loadingMore = false,
     this.myRunsLoading = false,
+    this.diningDollarsOnly = false,
     this.error,
   });
 
@@ -29,6 +30,9 @@ class RunsFeedState {
   final bool loading;
   final bool loadingMore;
   final bool myRunsLoading;
+
+  /// Live-feed filter: only runs where the runner pays with dining dollars.
+  final bool diningDollarsOnly;
   final String? error;
 
   bool get hasMore => nextCursor != null;
@@ -40,6 +44,7 @@ class RunsFeedState {
     bool? loading,
     bool? loadingMore,
     bool? myRunsLoading,
+    bool? diningDollarsOnly,
     String? Function()? error,
   }) => RunsFeedState(
     items: items ?? this.items,
@@ -48,6 +53,7 @@ class RunsFeedState {
     loading: loading ?? this.loading,
     loadingMore: loadingMore ?? this.loadingMore,
     myRunsLoading: myRunsLoading ?? this.myRunsLoading,
+    diningDollarsOnly: diningDollarsOnly ?? this.diningDollarsOnly,
     error: error != null ? error() : this.error,
   );
 }
@@ -87,7 +93,9 @@ class RunsFeedController extends Notifier<RunsFeedState> {
 
   Future<void> _silentRefresh() async {
     try {
-      final page = await _repo.fetchFeed();
+      final page = await _repo.fetchFeed(
+        diningDollars: state.diningDollarsOnly,
+      );
       state = state._copyWith(
         items: page.items,
         nextCursor: () => page.nextCursor,
@@ -101,7 +109,9 @@ class RunsFeedController extends Notifier<RunsFeedState> {
   Future<void> refresh() async {
     state = state._copyWith(loading: state.items.isEmpty, error: () => null);
     try {
-      final page = await _repo.fetchFeed();
+      final page = await _repo.fetchFeed(
+        diningDollars: state.diningDollarsOnly,
+      );
       state = state._copyWith(
         loading: false,
         items: page.items,
@@ -113,12 +123,26 @@ class RunsFeedController extends Notifier<RunsFeedState> {
     }
   }
 
+  /// Flip the dining-dollars filter and reload the feed from the top.
+  Future<void> setDiningDollarsOnly({required bool value}) async {
+    if (state.diningDollarsOnly == value) return;
+    state = state._copyWith(
+      diningDollarsOnly: value,
+      items: const [],
+      nextCursor: () => null,
+    );
+    await refresh();
+  }
+
   Future<void> loadMore() async {
     final cursor = state.nextCursor;
     if (cursor == null || state.loadingMore || state.loading) return;
     state = state._copyWith(loadingMore: true);
     try {
-      final page = await _repo.fetchFeed(cursor: cursor);
+      final page = await _repo.fetchFeed(
+        cursor: cursor,
+        diningDollars: state.diningDollarsOnly,
+      );
       state = state._copyWith(
         loadingMore: false,
         items: [...state.items, ...page.items],

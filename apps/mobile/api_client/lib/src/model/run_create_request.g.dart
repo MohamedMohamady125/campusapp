@@ -18,6 +18,8 @@ class _$RunCreateRequest extends RunCreateRequest {
   @override
   final String? note;
   @override
+  final bool? paysWithDiningDollars;
+  @override
   final bool? prepayRequired;
   @override
   final int? spotsMax;
@@ -32,6 +34,7 @@ class _$RunCreateRequest extends RunCreateRequest {
       required this.foodSpotId,
       required this.leavingAt,
       this.note,
+      this.paysWithDiningDollars,
       this.prepayRequired,
       this.spotsMax})
       : super._();
@@ -52,6 +55,7 @@ class _$RunCreateRequest extends RunCreateRequest {
         foodSpotId == other.foodSpotId &&
         leavingAt == other.leavingAt &&
         note == other.note &&
+        paysWithDiningDollars == other.paysWithDiningDollars &&
         prepayRequired == other.prepayRequired &&
         spotsMax == other.spotsMax;
   }
@@ -64,6 +68,7 @@ class _$RunCreateRequest extends RunCreateRequest {
     _$hash = $jc(_$hash, foodSpotId.hashCode);
     _$hash = $jc(_$hash, leavingAt.hashCode);
     _$hash = $jc(_$hash, note.hashCode);
+    _$hash = $jc(_$hash, paysWithDiningDollars.hashCode);
     _$hash = $jc(_$hash, prepayRequired.hashCode);
     _$hash = $jc(_$hash, spotsMax.hashCode);
     _$hash = $jf(_$hash);
@@ -78,6 +83,7 @@ class _$RunCreateRequest extends RunCreateRequest {
           ..add('foodSpotId', foodSpotId)
           ..add('leavingAt', leavingAt)
           ..add('note', note)
+          ..add('paysWithDiningDollars', paysWithDiningDollars)
           ..add('prepayRequired', prepayRequired)
           ..add('spotsMax', spotsMax))
         .toString();
@@ -108,6 +114,11 @@ class RunCreateRequestBuilder
   String? get note => _$this._note;
   set note(String? note) => _$this._note = note;
 
+  bool? _paysWithDiningDollars;
+  bool? get paysWithDiningDollars => _$this._paysWithDiningDollars;
+  set paysWithDiningDollars(bool? paysWithDiningDollars) =>
+      _$this._paysWithDiningDollars = paysWithDiningDollars;
+
   bool? _prepayRequired;
   bool? get prepayRequired => _$this._prepayRequired;
   set prepayRequired(bool? prepayRequired) =>
@@ -129,6 +140,7 @@ class RunCreateRequestBuilder
       _foodSpotId = $v.foodSpotId;
       _leavingAt = $v.leavingAt;
       _note = $v.note;
+      _paysWithDiningDollars = $v.paysWithDiningDollars;
       _prepayRequired = $v.prepayRequired;
       _spotsMax = $v.spotsMax;
       _$v = null;
@@ -160,6 +172,7 @@ class RunCreateRequestBuilder
           leavingAt: BuiltValueNullFieldError.checkNotNull(
               leavingAt, r'RunCreateRequest', 'leavingAt'),
           note: note,
+          paysWithDiningDollars: paysWithDiningDollars,
           prepayRequired: prepayRequired,
           spotsMax: spotsMax,
         );

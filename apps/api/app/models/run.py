@@ -60,6 +60,12 @@ class Run(TimestampedBase):
     fee_cents: Mapped[int] = mapped_column(Integer, default=0)
     spots_max: Mapped[int] = mapped_column(Integer, default=3)
     prepay_required: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Runner is buying on their own (non-transferable) dining dollars at an
+    # on-campus spot; requesters still settle in Venmo. Descriptive metadata
+    # only — never moves money or changes the state machine.
+    pays_with_dining_dollars: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
     status: Mapped[RunStatus] = mapped_column(
         Enum(RunStatus, name="run_status"), default=RunStatus.open
     )

@@ -89,6 +89,27 @@ async def test_create_validations(client: httpx.AsyncClient) -> None:
     assert run["fee_cents"] == 200
 
 
+async def test_dining_dollars_flag_and_filter(client: httpx.AsyncClient) -> None:
+    runner = await make_user(client, "runner@campus.edu")
+    spot_id = await _make_spot()
+
+    # Defaults to False and round-trips on the response.
+    plain = await _create_run(client, runner, spot_id)
+    assert plain["pays_with_dining_dollars"] is False
+    dining = await _create_run(client, runner, spot_id, pays_with_dining_dollars=True)
+    assert dining["pays_with_dining_dollars"] is True
+
+    # Unfiltered feed shows both runs.
+    feed = (await client.get("/api/v1/runs", headers=runner)).json()
+    assert {r["id"] for r in feed["items"]} == {plain["id"], dining["id"]}
+
+    # dining_dollars=true narrows to just the dining-dollar run (filtered in SQL).
+    filtered = (
+        await client.get("/api/v1/runs", params={"dining_dollars": "true"}, headers=runner)
+    ).json()
+    assert [r["id"] for r in filtered["items"]] == [dining["id"]]
+
+
 # -- orders -------------------------------------------------------------------
 
 

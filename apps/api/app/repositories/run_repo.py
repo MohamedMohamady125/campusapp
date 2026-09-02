@@ -56,8 +56,14 @@ class RunRepository:
         now: datetime,
         cursor: tuple[datetime, uuid.UUID] | None,
         limit: int,
+        dining_dollars: bool = False,
     ) -> list[Run]:
-        """Open runs still in the future, soonest departure first."""
+        """Open runs still in the future, soonest departure first.
+
+        `dining_dollars=True` narrows to runners buying on their own dining
+        dollars — the discovery surface for students with surplus meal-plan
+        balance. Filtered in SQL (spec §5.3), never post-filtered.
+        """
         stmt = (
             select(Run)
             .where(Run.status == RunStatus.open, Run.leaving_at > now)
@@ -65,6 +71,8 @@ class RunRepository:
             .order_by(Run.leaving_at.asc(), Run.id.asc())
             .limit(limit)
         )
+        if dining_dollars:
+            stmt = stmt.where(Run.pays_with_dining_dollars.is_(True))
         if cursor is not None:
             ts, oid = cursor
             stmt = stmt.where(or_(Run.leaving_at > ts, (Run.leaving_at == ts) & (Run.id > oid)))

@@ -58,6 +58,10 @@ async def list_spots(
 async def run_feed(
     cursor: str | None = None,
     limit: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=50),
+    dining_dollars: bool = Query(
+        default=False,
+        description="Only runs where the runner pays with dining dollars.",
+    ),
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> RunPageResponse:
@@ -66,6 +70,7 @@ async def run_feed(
         now=datetime.now(UTC),
         cursor=_decode_feed_cursor(cursor) if cursor else None,
         limit=limit + 1,
+        dining_dollars=dining_dollars,
     )
     has_more = len(runs) > limit
     runs = runs[:limit]

@@ -25,8 +25,14 @@ class RunsRepository {
     return res.data!.toList();
   }
 
-  Future<RunsPage> fetchFeed({String? cursor}) async {
-    final res = await _runs.runFeedApiV1RunsGet(cursor: cursor);
+  Future<RunsPage> fetchFeed({
+    String? cursor,
+    bool diningDollars = false,
+  }) async {
+    final res = await _runs.runFeedApiV1RunsGet(
+      cursor: cursor,
+      diningDollars: diningDollars,
+    );
     final page = res.data!;
     return RunsPage(items: page.items.toList(), nextCursor: page.nextCursor);
   }
@@ -48,6 +54,7 @@ class RunsRepository {
     required int feeCents,
     required int spotsMax,
     required bool prepayRequired,
+    bool paysWithDiningDollars = false,
     String? note,
   }) async {
     final res = await _runs.createRunApiV1RunsPost(
@@ -59,6 +66,7 @@ class RunsRepository {
           ..feeCents = feeCents
           ..spotsMax = spotsMax
           ..prepayRequired = prepayRequired
+          ..paysWithDiningDollars = paysWithDiningDollars
           ..note = note,
       ),
     );

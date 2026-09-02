@@ -140,6 +140,24 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
                           onSelectionChanged: (selection) =>
                               _setSegment(mine: selection.first),
                         ),
+                        if (!_showMine) ...[
+                          SizedBox(height: tokens.space3),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: FilterChip(
+                              avatar: const Icon(
+                                Icons.credit_card_outlined,
+                                size: 18,
+                              ),
+                              label: const Text('Dining dollars'),
+                              selected: state.diningDollarsOnly,
+                              onSelected: (value) => ref
+                                  .read(runsFeedControllerProvider.notifier)
+                                  .setDiningDollarsOnly(value: value)
+                                  .ignore(),
+                            ),
+                          ),
+                        ],
                         SizedBox(height: tokens.space3),
                       ],
                     ),
@@ -344,6 +362,11 @@ class RunCard extends StatelessWidget {
                   const _MetaChip(
                     icon: Icons.lock_clock_outlined,
                     label: 'Prepay',
+                  ),
+                if (run.paysWithDiningDollars)
+                  const _MetaChip(
+                    icon: Icons.credit_card_outlined,
+                    label: 'Dining dollars',
                   ),
               ],
             ),

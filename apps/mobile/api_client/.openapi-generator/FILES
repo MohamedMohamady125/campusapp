@@ -207,15 +207,3 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/food_spot_category_test.dart
-test/food_spot_response_test.dart
-test/run_create_request_test.dart
-test/run_order_create_request_test.dart
-test/run_order_response_test.dart
-test/run_order_status_test.dart
-test/run_page_response_test.dart
-test/run_response_test.dart
-test/run_status_test.dart
-test/run_status_update_request_test.dart
-test/run_user_summary_test.dart
-test/runs_api_test.dart

@@ -1773,6 +1773,11 @@
             ],
             "title": "Note"
           },
+          "pays_with_dining_dollars": {
+            "default": false,
+            "title": "Pays With Dining Dollars",
+            "type": "boolean"
+          },
           "prepay_required": {
             "default": false,
             "title": "Prepay Required",
@@ -1963,6 +1968,10 @@
             "title": "Orders",
             "type": "array"
           },
+          "pays_with_dining_dollars": {
+            "title": "Pays With Dining Dollars",
+            "type": "boolean"
+          },
           "pending_count": {
             "title": "Pending Count",
             "type": "integer"
@@ -1992,6 +2001,7 @@
           "fee_cents",
           "spots_max",
           "prepay_required",
+          "pays_with_dining_dollars",
           "status",
           "conversation_id",
           "accepted_count",
@@ -4876,6 +4886,18 @@
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Only runs where the runner pays with dining dollars.",
+            "in": "query",
+            "name": "dining_dollars",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Only runs where the runner pays with dining dollars.",
+              "title": "Dining Dollars",
+              "type": "boolean"
             }
           }
         ],

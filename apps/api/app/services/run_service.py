@@ -104,6 +104,7 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
         fee_cents=run.fee_cents,
         spots_max=run.spots_max,
         prepay_required=run.prepay_required,
+        pays_with_dining_dollars=run.pays_with_dining_dollars,
         status=run.status,
         conversation_id=run.conversation_id if (is_runner or my_order is not None) else None,
         accepted_count=len(accepted) + len(received),
@@ -142,6 +143,7 @@ class RunService:
             fee_cents=body.fee_cents,
             spots_max=body.spots_max,
             prepay_required=body.prepay_required,
+            pays_with_dining_dollars=body.pays_with_dining_dollars,
         )
         self._repo.add(run)
         await self._session.commit()

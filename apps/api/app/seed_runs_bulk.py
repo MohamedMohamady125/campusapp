@@ -266,6 +266,9 @@ async def _seed(session: AsyncSession) -> None:
             fee_cents=rng.choice([0, 100, 100, 150, 200, 200, 250, 300, 500]),
             spots_max=rng.randint(1, 6),
             prepay_required=rng.random() < 0.3,
+            # ~1 in 3 runners buy on their own dining dollars (non-transferable;
+            # requesters still Venmo them back) — surfaces the badge + filter.
+            pays_with_dining_dollars=rng.random() < 0.35,
             status=status,
             completed_at=completed_at,
         )

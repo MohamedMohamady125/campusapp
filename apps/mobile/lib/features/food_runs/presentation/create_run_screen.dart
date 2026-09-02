@@ -30,6 +30,7 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
   int _leavingMinutes = 15;
   int _spotsMax = 3;
   bool _prepay = false;
+  bool _diningDollars = false;
   bool _submitting = false;
   List<FoodSpotResponse> _spots = [];
   String? _savedVenmoHandle;
@@ -101,6 +102,7 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
         feeCents: _feeCents()!,
         spotsMax: _spotsMax,
         prepayRequired: _prepay,
+        paysWithDiningDollars: _diningDollars,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
       ref.read(runsFeedControllerProvider.notifier).refresh().ignore();
@@ -280,6 +282,20 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                   title: const Text('Require prepay'),
                   subtitle: const Text(
                     'People Venmo you before you order',
+                  ),
+                ),
+                SwitchListTile(
+                  value: _diningDollars,
+                  onChanged: (v) => setState(() => _diningDollars = v),
+                  contentPadding: EdgeInsets.zero,
+                  secondary: Icon(
+                    Icons.credit_card_outlined,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  title: const Text('Paying with dining dollars'),
+                  subtitle: const Text(
+                    "You'll buy on your meal plan — "
+                    'people still Venmo you back',
                   ),
                 ),
                 if (_needsVenmo) ...[

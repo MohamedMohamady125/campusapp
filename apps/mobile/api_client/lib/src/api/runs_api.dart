@@ -971,6 +971,7 @@ class RunsApi {
   /// Parameters:
   /// * [cursor] 
   /// * [limit] 
+  /// * [diningDollars] - Only runs where the runner pays with dining dollars.
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -983,6 +984,7 @@ class RunsApi {
   Future<Response<RunPageResponse>> runFeedApiV1RunsGet({ 
     String? cursor,
     int? limit = 20,
+    bool? diningDollars = false,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -1012,6 +1014,7 @@ class RunsApi {
     final _queryParameters = <String, dynamic>{
       r'cursor': encodeQueryParameter(_serializers, cursor, const FullType(String)),
       if (limit != null) r'limit': encodeQueryParameter(_serializers, limit, const FullType(int)),
+      if (diningDollars != null) r'dining_dollars': encodeQueryParameter(_serializers, diningDollars, const FullType(bool)),
     };
 
     final _response = await _dio.request<Object>(

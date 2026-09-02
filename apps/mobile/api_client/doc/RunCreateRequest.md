@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **foodSpotId** | **String** |  | 
 **leavingAt** | [**DateTime**](DateTime.md) |  | 
 **note** | **String** |  | [optional] 
+**paysWithDiningDollars** | **bool** |  | [optional] [default to false]
 **prepayRequired** | **bool** |  | [optional] [default to false]
 **spotsMax** | **int** |  | [optional] [default to 3]
 
