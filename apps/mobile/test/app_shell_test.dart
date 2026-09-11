@@ -63,8 +63,8 @@ void main() {
       expect(find.text(label), findsWidgets);
     }
     // Food runs is the initial branch (hero tab, runs-first launch).
-    expect(find.text('Food runs'), findsOneWidget);
-    expect(find.text('No runs right now'), findsOneWidget);
+    expect(find.text('Food Runs'), findsOneWidget);
+    expect(find.text('No runs open right now'), findsOneWidget);
   });
 
   testWidgets('tab taps switch branches', (tester) async {

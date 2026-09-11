@@ -71,7 +71,7 @@ void main() {
 
     expect(find.byType(NavigationBar), findsOneWidget);
     // Runs-first launch: the food-runs feed is the landing screen.
-    expect(find.text('Food runs'), findsOneWidget);
+    expect(find.text('Food Runs'), findsOneWidget);
   });
 
   testWidgets('sign out returns to login', (tester) async {

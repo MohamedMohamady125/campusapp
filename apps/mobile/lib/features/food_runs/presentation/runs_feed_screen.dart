@@ -7,6 +7,7 @@ import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
@@ -15,8 +16,14 @@ import 'package:campusconnect/features/notifications/presentation/notification_b
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Food runs — the hero home screen. Live feed of runs heading out now,
-/// plus a "My runs" segment for runs you're on (either side of the bag).
+/// Feed view filter. `all` keeps server order; `topRated`/`closingSoon` are
+/// client-side sorts over already-loaded runs (real data, no new endpoint);
+/// `mine` switches to the user's own runs.
+enum _RunFilter { all, topRated, closingSoon, mine }
+
+/// Food runs — the hero home screen. A blue hero card for the run you should
+/// grab right now, then the rest as compact rows. "My runs" folds into the
+/// same filter row.
 class RunsFeedScreen extends ConsumerStatefulWidget {
   const RunsFeedScreen({super.key});
 
@@ -26,7 +33,9 @@ class RunsFeedScreen extends ConsumerStatefulWidget {
 
 class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   final _scroll = ScrollController();
-  bool _showMine = false;
+  _RunFilter _filter = _RunFilter.all;
+
+  bool get _showMine => _filter == _RunFilter.mine;
 
   @override
   void initState() {
@@ -50,25 +59,47 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
     return _showMine ? controller.refreshMyRuns() : controller.refresh();
   }
 
-  void _setSegment({required bool mine}) {
-    setState(() => _showMine = mine);
-    if (mine) {
+  void _setFilter(_RunFilter filter) {
+    setState(() => _filter = filter);
+    if (filter == _RunFilter.mine) {
       ref.read(runsFeedControllerProvider.notifier).refreshMyRuns().ignore();
+    }
+  }
+
+  /// Live runs re-ordered for the active filter. Sorts are pure views over the
+  /// loaded page — every key is a field the API already returns.
+  List<RunResponse> _sorted(List<RunResponse> items) {
+    switch (_filter) {
+      case _RunFilter.topRated:
+        final list = [...items]
+          ..sort(
+            (a, b) =>
+                b.runner.reputationScore.compareTo(a.runner.reputationScore),
+          );
+        return list;
+      case _RunFilter.closingSoon:
+        final list = [...items]
+          ..sort((a, b) => a.leavingAt.compareTo(b.leavingAt));
+        return list;
+      case _RunFilter.all:
+      case _RunFilter.mine:
+        return items;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(runsFeedControllerProvider);
-    final tokens = context.tokens;
-    final colors = context.colors;
+    final liveCount = state.items.length;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/runs/create'),
-        tooltip: 'Start a run',
-        icon: const Icon(Icons.directions_run),
-        label: const Text('Start a run'),
+        tooltip: 'Post a run',
+        backgroundColor: AppColors.ink,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: Text('Post a run', style: AppTextStyles.button),
       ),
       body: ContentWidth(
         child: RefreshIndicator(
@@ -80,87 +111,10 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
               SliverToBoxAdapter(
                 child: SafeArea(
                   bottom: false,
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      tokens.space4,
-                      tokens.space4,
-                      tokens.space4,
-                      0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Food runs',
-                                style: AppTextStyles.heading,
-                              ),
-                            ),
-                            const NotificationBell(),
-                          ],
-                        ),
-                        SizedBox(height: tokens.space1),
-                        // Ambient trust line (whole.md §5.1) — once per
-                        // surface, not once per card.
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.shield_outlined,
-                              size: 12,
-                              color: colors.onSurfaceVariant,
-                            ),
-                            SizedBox(width: tokens.space1),
-                            Text(
-                              'Every runner is a verified student',
-                              style: context.text.bodySmall?.copyWith(
-                                fontSize: 11,
-                                color: colors.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: tokens.space3),
-                        SegmentedButton<bool>(
-                          segments: const [
-                            ButtonSegment(
-                              value: false,
-                              label: Text('Live runs'),
-                              icon: Icon(Icons.bolt_outlined),
-                            ),
-                            ButtonSegment(
-                              value: true,
-                              label: Text('My runs'),
-                              icon: Icon(Icons.receipt_long_outlined),
-                            ),
-                          ],
-                          selected: {_showMine},
-                          showSelectedIcon: false,
-                          onSelectionChanged: (selection) =>
-                              _setSegment(mine: selection.first),
-                        ),
-                        if (!_showMine) ...[
-                          SizedBox(height: tokens.space3),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: FilterChip(
-                              avatar: const Icon(
-                                Icons.credit_card_outlined,
-                                size: 18,
-                              ),
-                              label: const Text('Dining dollars'),
-                              selected: state.diningDollarsOnly,
-                              onSelected: (value) => ref
-                                  .read(runsFeedControllerProvider.notifier)
-                                  .setDiningDollarsOnly(value: value)
-                                  .ignore(),
-                            ),
-                          ),
-                        ],
-                        SizedBox(height: tokens.space3),
-                      ],
-                    ),
+                  child: _Header(
+                    liveCount: liveCount,
+                    filter: _filter,
+                    onFilter: _setFilter,
                   ),
                 ),
               ),
@@ -201,26 +155,54 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
           hasScrollBody: false,
           child: EmptyState(
             icon: Icons.fastfood_outlined,
-            title: 'No runs right now',
+            title: 'No runs open right now',
             body:
-                'Heading somewhere? Grab orders on your way '
-                'and make a few bucks.',
-            actionLabel: 'Post one',
+                'The lunch rush is quiet. Heading somewhere on campus? '
+                'Post a run and orders come to you.',
+            actionLabel: 'Post a run',
             onAction: () => context.go('/runs/create'),
           ),
         ),
       ];
     }
+
+    final sorted = _sorted(state.items);
+    final hero = sorted.first;
+    final rest = sorted.skip(1).toList();
+
     return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            tokens.space4,
+            tokens.space2,
+            tokens.space4,
+            tokens.space4,
+          ),
+          child: FadeSlideIn(child: _HeroRunCard(run: hero)),
+        ),
+      ),
+      if (rest.isNotEmpty)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              tokens.space4,
+              0,
+              tokens.space4,
+              tokens.space3,
+            ),
+            child: Text('OPEN NOW · ON CAMPUS', style: AppTextStyles.labelWide),
+          ),
+        ),
       SliverPadding(
-        // 96dp bottom padding so the FAB never covers a card.
+        // 96dp bottom padding so the FAB never covers a row.
         padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
         sliver: SliverList.separated(
-          itemCount: state.items.length,
-          separatorBuilder: (_, _) => SizedBox(height: tokens.space3),
+          itemCount: rest.length,
+          separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
           itemBuilder: (context, i) => FadeSlideIn(
-            index: i,
-            child: RunCard(run: state.items[i]),
+            index: i + 1,
+            child: _RunRow(run: rest[i]),
           ),
         ),
       ),
@@ -251,7 +233,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
             icon: Icons.directions_run,
             title: 'No runs yet',
             body: 'Runs you post and orders you join will show up here.',
-            actionLabel: 'Start a run',
+            actionLabel: 'Post a run',
             onAction: () => context.go('/runs/create'),
           ),
         ),
@@ -262,10 +244,10 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
         padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
         sliver: SliverList.separated(
           itemCount: state.myRuns.length,
-          separatorBuilder: (_, _) => SizedBox(height: tokens.space3),
+          separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
           itemBuilder: (context, i) => FadeSlideIn(
             index: i,
-            child: RunCard(run: state.myRuns[i], showStatus: true),
+            child: _RunRow(run: state.myRuns[i], showStatus: true),
           ),
         ),
       ),
@@ -273,141 +255,104 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   }
 }
 
-/// One run in the feed: destination big, runner trust row, countdown +
-/// fee + spots chips, delivery line. Hairline border, no elevation.
-class RunCard extends StatelessWidget {
-  const RunCard({required this.run, this.showStatus = false, super.key});
+/// Screen header: date eyebrow, title + live pill + bell, filter chips.
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.liveCount,
+    required this.filter,
+    required this.onFilter,
+  });
 
-  final RunResponse run;
-  final bool showStatus;
+  final int liveCount;
+  final _RunFilter filter;
+  final ValueChanged<_RunFilter> onFilter;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final colors = context.colors;
-    final runner = run.runner;
-    final statusVisible = showStatus && run.status != RunStatus.open;
-
-    return Pressable(
-      onTap: () => context.go('/runs/run/${run.id}'),
-      child: Container(
-        padding: EdgeInsets.all(tokens.space4),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: tokens.brMd,
-          border: Border.all(color: colors.outlineVariant),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            tokens.space4,
+            tokens.space4,
+            tokens.space4,
+            0,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_dateEyebrow(), style: AppTextStyles.labelWide),
+              SizedBox(height: tokens.space1),
+              Row(
+                children: [
+                  Text('Food Runs', style: AppTextStyles.displayMedium),
+                  SizedBox(width: tokens.space3),
+                  if (liveCount > 0) _LivePill(count: liveCount),
+                  const Spacer(),
+                  const NotificationBell(),
+                ],
+              ),
+            ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    run.foodSpot.name,
-                    style: AppTextStyles.titleLarge,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(width: tokens.space2),
-                if (statusVisible)
-                  _StatusChip(status: run.status)
-                else
-                  _LeavingChip(leavingAt: run.leavingAt),
-              ],
-            ),
-            SizedBox(height: tokens.space3),
-            Row(
-              children: [
-                VerifiedAvatar(name: runner.displayName, size: AvatarSize.sm),
-                SizedBox(width: tokens.space2),
-                Flexible(
-                  child: Text(
-                    runner.displayName,
-                    style: context.text.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(width: tokens.space2),
-                ReputationChip(
-                  rating: runner.ratingCount > 0
-                      ? runner.reputationScore.toDouble()
-                      : null,
-                  ratingCount: runner.ratingCount,
-                  variant: ReputationVariant.compact,
-                  showCount: false,
-                ),
-              ],
-            ),
-            SizedBox(height: tokens.space3),
-            Wrap(
-              spacing: tokens.space2,
-              runSpacing: tokens.space1,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                _MetaChip(
-                  icon: Icons.payments_outlined,
-                  label: runFeeLabel(run.feeCents),
-                  emphasized: run.feeCents == 0,
-                ),
-                _MetaChip(
-                  icon: Icons.group_outlined,
-                  label: '${run.acceptedCount}/${run.spotsMax} spots',
-                ),
-                if (run.prepayRequired)
-                  const _MetaChip(
-                    icon: Icons.lock_clock_outlined,
-                    label: 'Prepay',
-                  ),
-                if (run.paysWithDiningDollars)
-                  const _MetaChip(
-                    icon: Icons.credit_card_outlined,
-                    label: 'Dining dollars',
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
+        SizedBox(height: tokens.space3),
+        _FeedFilters(selected: filter, onSelected: onFilter),
+        SizedBox(height: tokens.space1),
+      ],
     );
+  }
+
+  static String _dateEyebrow() {
+    const days = [
+      'MONDAY',
+      'TUESDAY',
+      'WEDNESDAY',
+      'THURSDAY',
+      'FRIDAY',
+      'SATURDAY',
+      'SUNDAY',
+    ];
+    final now = DateTime.now();
+    return '${days[now.weekday - 1]} · ${clockTime(now)}';
   }
 }
 
-class _LeavingChip extends StatelessWidget {
-  const _LeavingChip({required this.leavingAt});
+/// Green "N live" pill with a static dot (motion is reserved for feedback).
+class _LivePill extends StatelessWidget {
+  const _LivePill({required this.count});
 
-  final DateTime leavingAt;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final urgent =
-        leavingAt.toUtc().difference(DateTime.now().toUtc()) <
-        const Duration(minutes: 10);
-    final color = urgent ? tokens.warning : tokens.success;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: tokens.space2,
         vertical: tokens.space1,
       ),
       decoration: ShapeDecoration(
-        color: color.withValues(alpha: .12),
+        color: tokens.success.withValues(alpha: .12),
         shape: const StadiumBorder(),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.schedule, size: 12, color: color),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: tokens.success,
+              shape: BoxShape.circle,
+            ),
+          ),
           SizedBox(width: tokens.space1),
           Text(
-            leavingLabel(leavingAt),
+            '$count live',
             style: context.text.labelSmall?.copyWith(
-              color: color,
+              color: tokens.success,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -417,79 +362,343 @@ class _LeavingChip extends StatelessWidget {
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
+/// Horizontal filter row — doubles as the sort selector and the My-runs switch.
+class _FeedFilters extends StatelessWidget {
+  const _FeedFilters({required this.selected, required this.onSelected});
 
-  final RunStatus status;
+  final _RunFilter selected;
+  final ValueChanged<_RunFilter> onSelected;
 
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final color = runStatusColor(context, status);
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: tokens.space2,
-        vertical: tokens.space1,
-      ),
-      decoration: ShapeDecoration(
-        color: color.withValues(alpha: .12),
-        shape: const StadiumBorder(),
-      ),
-      child: Text(
-        runStatusLabel(status),
-        style: context.text.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({
-    required this.icon,
-    required this.label,
-    this.emphasized = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool emphasized;
+  static const _options = <(_RunFilter, String)>[
+    (_RunFilter.all, 'All runs'),
+    (_RunFilter.closingSoon, 'Closing soon'),
+    (_RunFilter.topRated, 'Top rated'),
+    (_RunFilter.mine, 'My runs'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
-    final color = emphasized ? tokens.success : colors.onSurfaceVariant;
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: tokens.space2,
-        vertical: tokens.space1,
-      ),
-      decoration: ShapeDecoration(
-        color: colors.surfaceContainerHighest,
-        shape: const StadiumBorder(),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    return SizedBox(
+      height: 48,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: tokens.space4),
         children: [
-          Icon(icon, size: 12, color: color),
-          SizedBox(width: tokens.space1),
-          Text(
-            label,
-            style: context.text.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
+          for (final (value, label) in _options)
+            Padding(
+              padding: EdgeInsets.only(right: tokens.space2),
+              child: FilterChip(
+                label: Text(label),
+                selected: selected == value,
+                showCheckmark: false,
+                shape: const StadiumBorder(),
+                backgroundColor: colors.surface,
+                selectedColor: colors.primaryContainer,
+                side: selected == value
+                    ? const BorderSide(color: AppColors.primaryBorder)
+                    : BorderSide(color: colors.outlineVariant),
+                labelStyle: context.text.labelMedium?.copyWith(
+                  fontSize: 12,
+                  fontWeight: selected == value
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  color: selected == value
+                      ? colors.primary
+                      : colors.onSurfaceVariant,
+                ),
+                onSelected: (_) => onSelected(value),
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 }
 
-/// Skeleton list matching the run card geometry (spec §13.1).
+/// The one run to grab now — full-bleed brand blue, glow shadow, white ink.
+class _HeroRunCard extends StatelessWidget {
+  const _HeroRunCard({required this.run});
+
+  final RunResponse run;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final runner = run.runner;
+    final rated = runner.ratingCount > 0;
+    final ratingText = ReputationChip.formatRating(
+      runner.reputationScore.toDouble(),
+    );
+
+    return Pressable(
+      onTap: () => context.go('/runs/run/${run.id}'),
+      child: Container(
+        padding: EdgeInsets.all(tokens.space5),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: tokens.brLg,
+          boxShadow: AppShadows.primaryGlow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    'CLOSING IN',
+                    style: AppTextStyles.labelWide.copyWith(
+                      color: Colors.white.withValues(alpha: .7),
+                    ),
+                  ),
+                ),
+                Text(
+                  _closingLabel(run.leavingAt),
+                  style: AppTextStyles.titleLarge.copyWith(color: Colors.white),
+                ),
+              ],
+            ),
+            SizedBox(height: tokens.space3),
+            Text(
+              run.foodSpot.name,
+              style: AppTextStyles.heading.copyWith(color: Colors.white),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: tokens.space4),
+            Row(
+              children: [
+                VerifiedAvatar(
+                  name: runner.displayName,
+                  size: AvatarSize.sm,
+                  showEmblem: false,
+                ),
+                SizedBox(width: tokens.space2),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        runner.displayName,
+                        style: context.text.bodyMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        rated
+                            ? '★ $ratingText · ${runner.ratingCount} ratings'
+                            : 'New runner',
+                        style: context.text.labelSmall?.copyWith(
+                          color: Colors.white.withValues(alpha: .75),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'FEE',
+                      style: AppTextStyles.labelTiny.copyWith(
+                        color: Colors.white.withValues(alpha: .6),
+                      ),
+                    ),
+                    Text(
+                      run.feeCents == 0 ? 'Free' : runFeeAmount(run.feeCents),
+                      style: AppTextStyles.statSmall.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: tokens.space4),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => context.go('/runs/run/${run.id}'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.primary,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: tokens.brSm,
+                      ),
+                    ),
+                    child: Text(
+                      'Attach my order',
+                      style: AppTextStyles.button.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: tokens.space2),
+                _HeroIconButton(
+                  icon: Icons.chat_bubble_outline,
+                  onTap: () => context.go('/runs/run/${run.id}'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroIconButton extends StatelessWidget {
+  const _HeroIconButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Material(
+      color: Colors.white.withValues(alpha: .16),
+      shape: RoundedRectangleBorder(borderRadius: tokens.brSm),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: tokens.brSm,
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+      ),
+    );
+  }
+}
+
+/// One run as a compact row: urgency accent bar, destination + runner trust
+/// line, fee + spots on the right. Hairline border, no elevation.
+class _RunRow extends StatelessWidget {
+  const _RunRow({required this.run, this.showStatus = false});
+
+  final RunResponse run;
+  final bool showStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final runner = run.runner;
+    final rated = runner.ratingCount > 0;
+    final ratingText = ReputationChip.formatRating(
+      runner.reputationScore.toDouble(),
+    );
+    final trustLine = rated
+        ? '${runner.displayName} · ★ $ratingText (${runner.ratingCount})'
+        : '${runner.displayName} · New runner';
+    final statusVisible = showStatus && run.status != RunStatus.open;
+    final accent = statusVisible
+        ? runStatusColor(context, run.status)
+        : _urgencyColor(context, run.leavingAt);
+
+    return Pressable(
+      onTap: () => context.go('/runs/run/${run.id}'),
+      child: Container(
+        padding: EdgeInsets.all(tokens.space3),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: tokens.brMd,
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 40,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            SizedBox(width: tokens.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    run.foodSpot.name,
+                    style: AppTextStyles.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: tokens.space1),
+                  Text(
+                    trustLine,
+                    style: context.text.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: tokens.space2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  run.feeCents == 0 ? 'Free' : runFeeAmount(run.feeCents),
+                  style: AppTextStyles.titleSmall.copyWith(
+                    color: run.feeCents == 0
+                        ? tokens.success
+                        : colors.onSurface,
+                  ),
+                ),
+                SizedBox(height: tokens.space1),
+                Text(
+                  statusVisible ? runStatusLabel(run.status) : _spotsLabel(run),
+                  style: context.text.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _closingLabel(DateTime leavingAt) {
+  final mins = leavingAt.toLocal().difference(DateTime.now()).inMinutes;
+  if (mins <= 0) return 'now';
+  if (mins < 60) return '$mins min';
+  return clockTime(leavingAt.toLocal());
+}
+
+String _spotsLabel(RunResponse run) {
+  final left = run.spotsMax - run.acceptedCount;
+  if (run.acceptedCount == 0) return '${run.spotsMax} spots open';
+  if (left <= 0) return 'Full';
+  return '${run.acceptedCount} joined · $left left';
+}
+
+Color _urgencyColor(BuildContext context, DateTime leavingAt) {
+  final tokens = context.tokens;
+  final urgent =
+      leavingAt.toUtc().difference(DateTime.now().toUtc()) <
+      const Duration(minutes: 10);
+  return urgent ? tokens.warning : tokens.success;
+}
+
+/// Skeleton list matching the new hero + row geometry.
 class _SkeletonList extends StatelessWidget {
   const _SkeletonList();
 
@@ -498,33 +707,51 @@ class _SkeletonList extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
     return SliverPadding(
-      padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
-      sliver: SliverList.separated(
-        itemCount: 4,
-        separatorBuilder: (_, _) => SizedBox(height: tokens.space3),
-        itemBuilder: (_, _) => Container(
-          padding: EdgeInsets.all(tokens.space4),
-          decoration: BoxDecoration(
-            borderRadius: tokens.brMd,
-            border: Border.all(color: colors.outlineVariant),
+      padding: EdgeInsets.fromLTRB(
+        tokens.space4,
+        tokens.space2,
+        tokens.space4,
+        96,
+      ),
+      sliver: SliverList.list(
+        children: [
+          // Hero placeholder.
+          Container(
+            height: 210,
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHighest,
+              borderRadius: tokens.brLg,
+            ),
           ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 180, height: 22),
-              SizedBox(height: 12),
-              Row(
+          SizedBox(height: tokens.space4),
+          for (var i = 0; i < 4; i++) ...[
+            Container(
+              padding: EdgeInsets.all(tokens.space3),
+              decoration: BoxDecoration(
+                borderRadius: tokens.brMd,
+                border: Border.all(color: colors.outlineVariant),
+              ),
+              child: const Row(
                 children: [
-                  SkeletonBox(width: 32, height: 32, shape: BoxShape.circle),
-                  SizedBox(width: 8),
-                  SkeletonBox(width: 120, height: 14),
+                  SkeletonBox(width: 4, height: 40),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 140, height: 16),
+                        SizedBox(height: 8),
+                        SkeletonBox(width: 180, height: 12),
+                      ],
+                    ),
+                  ),
+                  SkeletonBox(width: 40, height: 16),
                 ],
               ),
-              SizedBox(height: 12),
-              SkeletonBox(width: 220, height: 14),
-            ],
-          ),
-        ),
+            ),
+            SizedBox(height: tokens.space2),
+          ],
+        ],
       ),
     );
   }
