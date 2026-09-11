@@ -8,6 +8,7 @@ import 'package:campusconnect/design_system/components/skeletons/skeletons.dart'
 import 'package:campusconnect/design_system/components/swipe_action.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
@@ -17,9 +18,12 @@ import 'package:campusconnect/features/food_runs/presentation/rate_run_sheet.dar
 import 'package:campusconnect/features/food_runs/presentation/run_detail_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runner_location_broadcaster.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:campusconnect/features/food_runs/presentation/runner_route_card.dart';
+import 'package:flutter/foundation.dart' show Uint8List;
+import 'package:flutter/services.dart'
+    show Clipboard, ClipboardData, HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// Run detail — one screen, three viewers (visitor / requester / runner),
 /// driven purely by the response shape. Kept live by the 5s poll.
@@ -77,23 +81,16 @@ class _RunDetailBody extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await action();
+      // A crisp confirmation tick on every committed run action — the
+      // "satisfying button" feel (honours the OS haptic setting).
+      unawaited(HapticFeedback.selectionClick());
       if (success != null) {
         messenger.showSnackBar(SnackBar(content: Text(success)));
       }
     } on Object catch (e) {
+      unawaited(HapticFeedback.heavyImpact());
       messenger.showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
     }
-  }
-
-  void _openGroupChat(BuildContext context) {
-    final conversationId = run.conversationId;
-    if (conversationId == null) return;
-    unawaited(
-      context.push(
-        '/runs/run/${run.id}/chat',
-        extra: (conversationId, '${run.foodSpot.name} run'),
-      ),
-    );
   }
 
   @override
@@ -164,93 +161,18 @@ class _RunDetailBody extends ConsumerWidget {
     BuildContext context,
     RunDetailController controller,
   ) {
-    final text = TextEditingController();
-    final dropoff = TextEditingController();
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) {
-        final tokens = sheetContext.tokens;
-        return Padding(
-          padding: EdgeInsets.only(
-            left: tokens.space4,
-            right: tokens.space4,
-            top: tokens.space4,
-            bottom:
-                MediaQuery.viewInsetsOf(sheetContext).bottom + tokens.space6,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text("What's your order?", style: AppTextStyles.subheading),
-              SizedBox(height: tokens.space3),
-              TextField(
-                controller: text,
-                autofocus: true,
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText: 'e.g. Medium iced latte, oat milk, no sugar',
-                ),
-              ),
-              SizedBox(height: tokens.space4),
-              Text('Where should they drop it?', style: AppTextStyles.label),
-              SizedBox(height: tokens.space2),
-              TextField(
-                controller: dropoff,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText: 'e.g. Juniper Hall lobby, room 214',
-                ),
-              ),
-              SizedBox(height: tokens.space4),
-              Text(
-                run.prepayRequired
-                    ? '${runFeeLabel(run.feeCents)} · pay before '
-                          'pickup (runner requires prepay).'
-                    : '${runFeeLabel(run.feeCents)} · pay the runner '
-                          'on delivery, off-app.',
-                style: sheetContext.text.bodySmall?.copyWith(
-                  color: sheetContext.colors.onSurfaceVariant,
-                ),
-              ),
-              SizedBox(height: tokens.space4),
-              FilledButton(
-                onPressed: () {
-                  final order = text.text.trim();
-                  final spot = dropoff.text.trim();
-                  if (order.isEmpty) {
-                    _snack(sheetContext, 'Add your order first.');
-                    return;
-                  }
-                  if (spot.length < 2) {
-                    _snack(sheetContext, 'Add where to drop it off.');
-                    return;
-                  }
-                  Navigator.of(sheetContext).pop();
-                  _act(
-                    context,
-                    () => controller.requestSpot(order, spot),
-                    success: "Request sent — you'll hear back soon.",
-                  ).ignore();
-                },
-                child: const Text('Send request'),
-              ),
-            ],
-          ),
-        );
-      },
-    ).whenComplete(() {
-      text.dispose();
-      dropoff.dispose();
-    });
-  }
-
-  void _snack(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+      builder: (sheetContext) => _RequestSheet(
+        run: run,
+        onSubmit: (order, dropoffId) => _act(
+          context,
+          () => controller.requestSpot(order, dropoffId),
+          success: "Request sent — you'll hear back soon.",
+        ),
+      ),
+    );
   }
 
   // ── Requester ──────────────────────────────────────────────────────────
@@ -274,14 +196,8 @@ class _RunDetailBody extends ConsumerWidget {
       if (accepted && (run.feeCents > 0 || run.prepayRequired)) ...[
         SizedBox(height: tokens.space3),
         _PaymentCard(run: run),
-      ],
-      if (accepted && run.conversationId != null) ...[
         SizedBox(height: tokens.space3),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.forum_outlined),
-          label: const Text('Open run group chat'),
-          onPressed: () => _openGroupChat(context),
-        ),
+        _PaymentProofCard(order: order, controller: controller),
       ],
       if (order.status == RunOrderStatus.delivered) ...[
         SizedBox(height: tokens.space3),
@@ -361,13 +277,7 @@ class _RunDetailBody extends ConsumerWidget {
       if (enRoute) ...[
         RunnerLocationBroadcaster(runId: run.id),
         SizedBox(height: tokens.space3),
-      ],
-      if (run.conversationId != null) ...[
-        OutlinedButton.icon(
-          icon: const Icon(Icons.forum_outlined),
-          label: const Text('Open run group chat'),
-          onPressed: () => _openGroupChat(context),
-        ),
+        RunnerRouteCard(run: run),
         SizedBox(height: tokens.space3),
       ],
       Padding(
@@ -476,6 +386,8 @@ class _RunHeaderCard extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
     final runner = run.runner;
+    final terminal =
+        run.status == RunStatus.cancelled || run.status == RunStatus.expired;
     return Container(
       padding: EdgeInsets.all(tokens.space4),
       decoration: BoxDecoration(
@@ -492,9 +404,13 @@ class _RunHeaderCard extends StatelessWidget {
               Expanded(
                 child: Text(run.foodSpot.name, style: AppTextStyles.heading),
               ),
-              _DetailStatusChip(run: run),
+              if (terminal) _DetailStatusChip(run: run),
             ],
           ),
+          if (!terminal) ...[
+            SizedBox(height: tokens.space5),
+            _LifecycleRail(status: run.status),
+          ],
           SizedBox(height: tokens.space4),
           Row(
             children: [
@@ -537,13 +453,6 @@ class _RunHeaderCard extends StatelessWidget {
                 ? '${runFeeLabel(run.feeCents)} · prepay required'
                 : runFeeLabel(run.feeCents),
           ),
-          if (run.paysWithDiningDollars) ...[
-            SizedBox(height: tokens.space2),
-            const _InfoRow(
-              icon: Icons.credit_card_outlined,
-              label: 'Runner pays with dining dollars — Venmo them back',
-            ),
-          ],
           SizedBox(height: tokens.space2),
           _InfoRow(
             icon: Icons.group_outlined,
@@ -600,6 +509,142 @@ class _DetailStatusChip extends StatelessWidget {
   }
 }
 
+/// Horizontal run-lifecycle rail: OPEN → LOCKED → AT STORE → DELIVERING → DONE.
+/// Reached steps fill brand blue, the current step glows, future steps are
+/// muted hairline dots — the run's story at a glance (design brief §8).
+class _LifecycleRail extends StatelessWidget {
+  const _LifecycleRail({required this.status});
+
+  final RunStatus status;
+
+  static const _steps = <(RunStatus, String)>[
+    (RunStatus.open, 'OPEN'),
+    (RunStatus.locked, 'LOCKED'),
+    (RunStatus.atStore, 'AT STORE'),
+    (RunStatus.delivering, 'DELIVERING'),
+    (RunStatus.done, 'DONE'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final matched = _steps.indexWhere((s) => s.$1 == status);
+    final current = matched < 0 ? _steps.length - 1 : matched;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < _steps.length; i++)
+          Expanded(
+            child: _LifecycleNode(
+              label: _steps[i].$2,
+              reached: i <= current,
+              active: i == current,
+              leftLineActive: i <= current,
+              rightLineActive: i < current,
+              first: i == 0,
+              last: i == _steps.length - 1,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _LifecycleNode extends StatelessWidget {
+  const _LifecycleNode({
+    required this.label,
+    required this.reached,
+    required this.active,
+    required this.leftLineActive,
+    required this.rightLineActive,
+    required this.first,
+    required this.last,
+  });
+
+  final String label;
+  final bool reached;
+  final bool active;
+  final bool leftLineActive;
+  final bool rightLineActive;
+  final bool first;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final muted = colors.outlineVariant;
+    return Column(
+      children: [
+        SizedBox(
+          height: 18,
+          child: Row(
+            children: [
+              Expanded(
+                child: first
+                    ? const SizedBox.shrink()
+                    : Container(
+                        height: 2,
+                        color: leftLineActive ? AppColors.primary : muted,
+                      ),
+              ),
+              _Dot(reached: reached, active: active),
+              Expanded(
+                child: last
+                    ? const SizedBox.shrink()
+                    : Container(
+                        height: 2,
+                        color: rightLineActive ? AppColors.primary : muted,
+                      ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: tokens.space1),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: AppTextStyles.label.copyWith(
+              fontSize: 9,
+              letterSpacing: 0.4,
+              color: reached ? AppColors.primary : colors.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  const _Dot({required this.reached, required this.active});
+
+  final bool reached;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final size = active ? 16.0 : 12.0;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: reached ? AppColors.primary : colors.surface,
+        border: Border.all(
+          color: reached ? AppColors.primary : colors.outlineVariant,
+          width: 2,
+        ),
+        boxShadow: active ? AppShadows.primaryGlow : null,
+      ),
+      child: reached && !active
+          ? const Icon(Icons.check, size: 8, color: Colors.white)
+          : null,
+    );
+  }
+}
+
 class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.icon, required this.label});
 
@@ -641,7 +686,7 @@ class _MyOrderCard extends StatelessWidget {
     };
     final copy = switch (order.status) {
       RunOrderStatus.requested => 'Waiting on the runner to accept.',
-      RunOrderStatus.accepted => "You're in! Watch the group chat.",
+      RunOrderStatus.accepted => "You're in! Send payment below.",
       RunOrderStatus.delivered => 'Dropped off — confirm below.',
       RunOrderStatus.received => 'All done. Enjoy!',
       RunOrderStatus.declined => "The runner couldn't take this one.",
@@ -727,6 +772,8 @@ class _PaymentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('SETTLE UP OUTSIDE THE APP', style: AppTextStyles.label),
+          SizedBox(height: tokens.space2),
           Row(
             children: [
               Icon(
@@ -749,7 +796,7 @@ class _PaymentCard extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(top: tokens.space2),
               child: Text(
-                'Pay the runner off-app — ask them how in the group chat.',
+                'Pay the runner off-app — they will share their handle here.',
                 style: context.text.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
@@ -769,6 +816,23 @@ class _PaymentCard extends StatelessWidget {
               ),
             ),
           ],
+          SizedBox(height: tokens.space3),
+          Row(
+            children: [
+              Icon(Icons.lock_outline, size: 14, color: tokens.verified),
+              SizedBox(width: tokens.space2),
+              Expanded(
+                child: Text(
+                  'CampusConnect never touches your money — pay the runner '
+                  'directly, and attach a screenshot so both sides are on '
+                  'the record.',
+                  style: context.text.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -940,6 +1004,10 @@ class _OrderCard extends StatelessWidget {
             icon: Icons.place_outlined,
             label: 'Drop at ${order.dropoff}',
           ),
+          if (order.paymentSubmittedAt != null) ...[
+            SizedBox(height: tokens.space3),
+            _PaymentProofReview(order: order),
+          ],
           SizedBox(height: tokens.space3),
           switch (order.status) {
             RunOrderStatus.requested => Row(
@@ -1017,6 +1085,362 @@ class _OrderCard extends StatelessWidget {
       );
     }
     return card;
+  }
+}
+
+/// Runner-side view of a submitted payment proof: the screenshot (tap to
+/// enlarge) + any note the requester attached.
+class _PaymentProofReview extends StatelessWidget {
+  const _PaymentProofReview({required this.order});
+
+  final RunOrderResponse order;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final url = order.paymentProofUrl;
+    final note = order.paymentNote;
+    return Container(
+      padding: EdgeInsets.all(tokens.space3),
+      decoration: BoxDecoration(
+        color: tokens.success.withValues(alpha: .12),
+        borderRadius: tokens.brXs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.receipt_long_outlined,
+                size: 16,
+                color: tokens.success,
+              ),
+              SizedBox(width: tokens.space2),
+              Text('PAYMENT PROOF', style: AppTextStyles.label),
+            ],
+          ),
+          if (url != null && url.isNotEmpty) ...[
+            SizedBox(height: tokens.space2),
+            GestureDetector(
+              onTap: () => showDialog<void>(
+                context: context,
+                builder: (_) => Dialog(
+                  child: InteractiveViewer(
+                    child: Image.network(url, fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: tokens.brXs,
+                child: Image.network(
+                  url,
+                  height: 140,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Padding(
+                    padding: EdgeInsets.symmetric(vertical: tokens.space2),
+                    child: Text(
+                      'Screenshot attached (image pending).',
+                      style: context.text.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          if (note != null && note.isNotEmpty) ...[
+            SizedBox(height: tokens.space2),
+            Text('“$note”', style: context.text.bodyMedium),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Request sheet: order text + a drop-off *picker* (admin-curated catalog,
+/// no free-text addresses). Consumer so it can read the dropoff catalog and
+/// keep its own selection state.
+class _RequestSheet extends ConsumerStatefulWidget {
+  const _RequestSheet({required this.run, required this.onSubmit});
+
+  final RunResponse run;
+  final Future<void> Function(String orderText, String dropoffId) onSubmit;
+
+  @override
+  ConsumerState<_RequestSheet> createState() => _RequestSheetState();
+}
+
+class _RequestSheetState extends ConsumerState<_RequestSheet> {
+  final _text = TextEditingController();
+  String? _dropoffId;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  void _snack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final run = widget.run;
+    final catalog = ref.watch(dropoffCatalogProvider);
+    return Padding(
+      padding: EdgeInsets.only(
+        left: tokens.space4,
+        right: tokens.space4,
+        top: tokens.space4,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + tokens.space6,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text("What's your order?", style: AppTextStyles.subheading),
+          SizedBox(height: tokens.space3),
+          TextField(
+            controller: _text,
+            autofocus: true,
+            maxLines: 3,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'e.g. Medium iced latte, oat milk, no sugar',
+            ),
+          ),
+          SizedBox(height: tokens.space4),
+          Text('Where should they drop it?', style: AppTextStyles.label),
+          SizedBox(height: tokens.space2),
+          catalog.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (_, _) => Text(
+              "Couldn't load drop-off spots — try again.",
+              style: context.text.bodySmall?.copyWith(
+                color: context.colors.error,
+              ),
+            ),
+            data: (spots) => DropdownButtonFormField<String>(
+              initialValue: _dropoffId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.place_outlined),
+                hintText: 'Pick a drop-off spot',
+              ),
+              items: [
+                for (final s in spots)
+                  DropdownMenuItem(value: s.id, child: Text(s.name)),
+              ],
+              onChanged: (v) => setState(() => _dropoffId = v),
+            ),
+          ),
+          SizedBox(height: tokens.space4),
+          Text(
+            run.prepayRequired
+                ? '${runFeeLabel(run.feeCents)} · pay before '
+                      'pickup (runner requires prepay).'
+                : '${runFeeLabel(run.feeCents)} · pay the runner '
+                      'on delivery, off-app.',
+            style: context.text.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: tokens.space4),
+          FilledButton(
+            onPressed: () {
+              final order = _text.text.trim();
+              if (order.isEmpty) {
+                _snack('Add your order first.');
+                return;
+              }
+              if (_dropoffId == null) {
+                _snack('Pick a drop-off spot.');
+                return;
+              }
+              Navigator.of(context).pop();
+              unawaited(HapticFeedback.selectionClick());
+              widget.onSubmit(order, _dropoffId!).ignore();
+            },
+            child: const Text('Send request'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Requester's payment-proof card: send a transaction screenshot + note so
+/// the runner can confirm off-app payment. Least-friction — one tap picks
+/// the screenshot, an optional note, one tap submits. Once submitted it
+/// flips to a confirmation and the runner sees it on their order card.
+class _PaymentProofCard extends ConsumerStatefulWidget {
+  const _PaymentProofCard({required this.order, required this.controller});
+
+  final RunOrderResponse order;
+  final RunDetailController controller;
+
+  @override
+  ConsumerState<_PaymentProofCard> createState() => _PaymentProofCardState();
+}
+
+class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
+  final _note = TextEditingController();
+  final _picker = ImagePicker();
+  XFile? _picked;
+  Uint8List? _bytes;
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  String _contentType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  Future<void> _pick() async {
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 2000,
+      imageQuality: 85,
+    );
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _picked = file;
+      _bytes = bytes;
+    });
+  }
+
+  Future<void> _submit() async {
+    final bytes = _bytes;
+    final file = _picked;
+    if (bytes == null || file == null) return;
+    setState(() => _submitting = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await widget.controller.submitPaymentProof(
+        widget.order.id,
+        bytes: bytes,
+        contentType: _contentType(file.path),
+        note: _note.text.trim().isEmpty ? null : _note.text.trim(),
+      );
+      unawaited(HapticFeedback.mediumImpact());
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Payment proof sent to the runner.')),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final submitted = widget.order.paymentSubmittedAt != null;
+
+    if (submitted) {
+      return Container(
+        padding: EdgeInsets.all(tokens.space4),
+        decoration: BoxDecoration(
+          color: tokens.success.withValues(alpha: .12),
+          borderRadius: tokens.brSm,
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.verified_outlined, size: 20, color: tokens.success),
+            SizedBox(width: tokens.space3),
+            Expanded(
+              child: Text(
+                'Payment proof sent — the runner can confirm it.',
+                style: context.text.bodyMedium,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.all(tokens.space4),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: tokens.brSm,
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('SEND PAYMENT PROOF', style: AppTextStyles.label),
+          SizedBox(height: tokens.space2),
+          Text(
+            'Paid off-app? Attach a screenshot so the runner can confirm.',
+            style: context.text.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: tokens.space3),
+          if (_bytes != null)
+            ClipRRect(
+              borderRadius: tokens.brXs,
+              child: Image.memory(
+                _bytes!,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+          if (_bytes != null) SizedBox(height: tokens.space2),
+          OutlinedButton.icon(
+            onPressed: _submitting ? null : _pick,
+            icon: const Icon(Icons.image_outlined),
+            label: Text(
+              _bytes == null ? 'Add screenshot' : 'Change screenshot',
+            ),
+          ),
+          SizedBox(height: tokens.space3),
+          TextField(
+            controller: _note,
+            maxLines: 2,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'Add a note (optional)',
+            ),
+          ),
+          SizedBox(height: tokens.space3),
+          FilledButton.icon(
+            onPressed: (_bytes == null || _submitting) ? null : _submit,
+            icon: _submitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.send_outlined),
+            label: const Text('Send to runner'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

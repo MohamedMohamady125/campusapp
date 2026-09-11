@@ -134,12 +134,26 @@ class _LiveMapCardState extends State<LiveMapCard> {
                 ),
                 SizedBox(width: tokens.space2),
                 Expanded(
-                  child: Text(
-                    '${widget.run.runner.displayName} is on the way to '
-                    '${widget.run.foodSpot.name}',
-                    style: context.text.bodySmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ON THE WAY TO YOU',
+                        style: context.text.labelSmall?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      SizedBox(height: tokens.space1),
+                      Text(
+                        '${widget.run.runner.displayName} is on the way to '
+                        '${widget.run.foodSpot.name}',
+                        style: context.text.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
               ],
