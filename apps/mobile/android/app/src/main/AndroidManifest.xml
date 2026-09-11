@@ -1,9 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Release builds need this explicitly; Flutter only injects it for debug/profile. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Live runner tracking: read the runner's GPS while a run is en route. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
-        android:label="campusconnect"
+        android:label="CampusConnect"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
