@@ -1,9 +1,21 @@
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// One-tap quality signals; selecting them composes the rating comment so the
+/// happy path needs zero typing (real POST /ratings, no new field).
+const _quickTags = <String>[
+  'On time',
+  'Order correct',
+  'Great comms',
+  'Still hot',
+];
 
 /// Two-way run rating sheet (POST /ratings, context `run`,
 /// context_id = RunOrder id). Double-rates come back as a friendly line.
@@ -12,14 +24,21 @@ Future<void> showRateRunSheet(
   required String ratedUserId,
   required String ratedName,
   required String orderId,
+  String? dropoff,
+  num? currentRating,
+  int ratingCount = 0,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    backgroundColor: Colors.transparent,
     builder: (_) => _RateRunSheet(
       ratedUserId: ratedUserId,
       ratedName: ratedName,
       orderId: orderId,
+      dropoff: dropoff,
+      currentRating: currentRating,
+      ratingCount: ratingCount,
     ),
   );
 }
@@ -29,11 +48,17 @@ class _RateRunSheet extends ConsumerStatefulWidget {
     required this.ratedUserId,
     required this.ratedName,
     required this.orderId,
+    required this.ratingCount,
+    this.dropoff,
+    this.currentRating,
   });
 
   final String ratedUserId;
   final String ratedName;
   final String orderId;
+  final String? dropoff;
+  final num? currentRating;
+  final int ratingCount;
 
   @override
   ConsumerState<_RateRunSheet> createState() => _RateRunSheetState();
@@ -41,13 +66,28 @@ class _RateRunSheet extends ConsumerStatefulWidget {
 
 class _RateRunSheetState extends ConsumerState<_RateRunSheet> {
   final _comment = TextEditingController();
+  final _commentFocus = FocusNode();
+  final _tags = <String>{};
   int _stars = 0;
   bool _submitting = false;
 
   @override
   void dispose() {
     _comment.dispose();
+    _commentFocus.dispose();
     super.dispose();
+  }
+
+  /// Folds selected quick-tags and free text into the single `comment` the API
+  /// accepts, so chips and typing share one real submit path.
+  String? _composedComment() {
+    final free = _comment.text.trim();
+    final tags = _quickTags.where(_tags.contains).toList();
+    final parts = <String>[
+      if (tags.isNotEmpty) tags.join(' · '),
+      if (free.isNotEmpty) free,
+    ];
+    return parts.isEmpty ? null : parts.join(' — ');
   }
 
   Future<void> _submit() async {
@@ -61,7 +101,7 @@ class _RateRunSheetState extends ConsumerState<_RateRunSheet> {
             ratedUserId: widget.ratedUserId,
             orderId: widget.orderId,
             stars: _stars,
-            comment: _comment.text.trim().isEmpty ? null : _comment.text.trim(),
+            comment: _composedComment(),
           );
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -86,65 +126,186 @@ class _RateRunSheetState extends ConsumerState<_RateRunSheet> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return Padding(
-      padding: EdgeInsets.only(
-        left: tokens.space4,
-        right: tokens.space4,
-        top: tokens.space4,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + tokens.space6,
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: ColoredBox(
+        color: context.colors.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _Hero(dropoff: widget.dropoff, ratedName: widget.ratedName),
+            Padding(
+              padding: EdgeInsets.only(
+                left: tokens.space4,
+                right: tokens.space4,
+                top: tokens.space4,
+                bottom: MediaQuery.viewInsetsOf(context).bottom + tokens.space6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var star = 1; star <= 5; star++)
+                        IconButton(
+                          tooltip: '$star star${star == 1 ? '' : 's'}',
+                          iconSize: 40,
+                          onPressed: () => setState(() => _stars = star),
+                          icon: Icon(
+                            star <= _stars ? Icons.star : Icons.star_border,
+                            color: star <= _stars
+                                ? tokens.ratingStar
+                                : context.colors.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: tokens.space3),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: tokens.space2,
+                    runSpacing: tokens.space2,
+                    children: [
+                      for (final tag in _quickTags)
+                        FilterChip(
+                          label: Text(tag),
+                          selected: _tags.contains(tag),
+                          onSelected: (on) => setState(
+                            () => on ? _tags.add(tag) : _tags.remove(tag),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: tokens.space4),
+                  TextField(
+                    controller: _comment,
+                    focusNode: _commentFocus,
+                    maxLines: 2,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Add a note (optional)',
+                      hintText: 'Fast, friendly, fries intact…',
+                    ),
+                  ),
+                  SizedBox(height: tokens.space3),
+                  _ReputationPreview(
+                    ratedName: widget.ratedName,
+                    currentRating: widget.currentRating,
+                    ratingCount: widget.ratingCount,
+                  ),
+                  SizedBox(height: tokens.space4),
+                  FilledButton(
+                    onPressed: _stars == 0 || _submitting ? null : _submit,
+                    child: _submitting
+                        ? SizedBox.square(
+                            dimension: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: context.colors.onPrimary,
+                            ),
+                          )
+                        : const Text('Submit rating'),
+                  ),
+                  SizedBox(height: tokens.space1),
+                  TextButton(
+                    onPressed: _submitting ? null : _commentFocus.requestFocus,
+                    child: const Text('Something went wrong? Tell them'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// Dark ink header framing the delivery this rating is about.
+class _Hero extends StatelessWidget {
+  const _Hero({required this.ratedName, this.dropoff});
+
+  final String? dropoff;
+  final String ratedName;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final title = dropoff == null
+        ? 'How was $ratedName?'
+        : 'Delivered to $dropoff';
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(tokens.space5),
+      color: AppColors.ink,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'How was ${widget.ratedName}?',
-            style: AppTextStyles.subheading,
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: tokens.space4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (var star = 1; star <= 5; star++)
-                IconButton(
-                  tooltip: '$star star${star == 1 ? '' : 's'}',
-                  iconSize: 36,
-                  onPressed: () => setState(() => _stars = star),
-                  icon: Icon(
-                    star <= _stars ? Icons.star : Icons.star_border,
-                    color: star <= _stars
-                        ? tokens.ratingStar
-                        : context.colors.onSurfaceVariant,
-                  ),
-                ),
-            ],
-          ),
-          SizedBox(height: tokens.space3),
-          TextField(
-            controller: _comment,
-            maxLines: 2,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Comment (optional)',
-              hintText: 'Fast, friendly, fries intact…',
+            'RATE YOUR RUN',
+            style: AppTextStyles.labelWide.copyWith(
+              color: Colors.white.withValues(alpha: .6),
             ),
           ),
-          SizedBox(height: tokens.space4),
-          FilledButton(
-            onPressed: _stars == 0 || _submitting ? null : _submit,
-            child: _submitting
-                ? SizedBox.square(
-                    dimension: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: context.colors.onPrimary,
-                    ),
-                  )
-                : const Text('Submit rating'),
+          SizedBox(height: tokens.space2),
+          Text(
+            title,
+            style: AppTextStyles.heading.copyWith(color: Colors.white),
           ),
+          if (dropoff != null) ...[
+            SizedBox(height: tokens.space1),
+            Text(
+              'How did $ratedName do?',
+              style: context.text.bodyMedium?.copyWith(
+                color: Colors.white.withValues(alpha: .7),
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// Shows the rated peer's real reputation so the rater sees the impact.
+class _ReputationPreview extends StatelessWidget {
+  const _ReputationPreview({
+    required this.ratedName,
+    required this.ratingCount,
+    this.currentRating,
+  });
+
+  final String ratedName;
+  final num? currentRating;
+  final int ratingCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = ratingCount == 0 || currentRating == null
+        ? 'New peer — your rating starts their reputation.'
+        : '$ratedName is at '
+              '${ReputationChip.formatRating(currentRating!.toDouble())} ★ '
+              'across $ratingCount ratings. Your rating counts.';
+    return Row(
+      children: [
+        Icon(
+          Icons.trending_up,
+          size: 16,
+          color: context.colors.onSurfaceVariant,
+        ),
+        SizedBox(width: context.tokens.space2),
+        Expanded(
+          child: Text(
+            text,
+            style: context.text.labelSmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
