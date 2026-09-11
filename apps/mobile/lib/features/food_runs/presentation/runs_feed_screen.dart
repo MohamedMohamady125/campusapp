@@ -724,6 +724,9 @@ class _SkeletonList extends StatelessWidget {
             ),
           ),
           SizedBox(height: tokens.space4),
+          // Section eyebrow ("OPEN NOW · ON CAMPUS") placeholder.
+          const SkeletonBox(width: 140, height: 12),
+          SizedBox(height: tokens.space3),
           for (var i = 0; i < 4; i++) ...[
             Container(
               padding: EdgeInsets.all(tokens.space3),
