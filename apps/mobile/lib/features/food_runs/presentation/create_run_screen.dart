@@ -2,10 +2,12 @@ import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
+import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,25 +24,25 @@ class CreateRunScreen extends ConsumerStatefulWidget {
 
 class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _fee = TextEditingController();
   final _note = TextEditingController();
   final _quickHandle = TextEditingController();
 
   FoodSpotResponse? _spot;
-  int _leavingMinutes = 15;
+  // Defaults to the current time; the user picks an exact departure time.
+  DateTime _leavingAt = DateTime.now();
+  // Per-order fee the runner charges, in cents. Steps in $0.25, capped $20.
+  int _feeCentsValue = 200;
   int _spotsMax = 3;
   bool _prepay = false;
-  bool _diningDollars = false;
   bool _submitting = false;
   List<FoodSpotResponse> _spots = [];
   bool _hasPaymentMethod = false;
   PaymentMethodType _quickType = kSelectablePaymentTypes.first;
 
-  static const _quickMinutes = [10, 15, 30, 45];
-
   @override
   void initState() {
     super.initState();
+    _leavingAt = DateTime.now();
     final repo = ref.read(runsRepositoryProvider);
     repo.fetchSpots().then((spots) {
       if (mounted) setState(() => _spots = spots);
@@ -54,24 +56,13 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
 
   @override
   void dispose() {
-    _fee.dispose();
     _note.dispose();
     _quickHandle.dispose();
     super.dispose();
   }
 
-  int? _feeCents() {
-    final raw = _fee.text.trim().replaceFirst(r'$', '');
-    if (raw.isEmpty) return 0;
-    final value = double.tryParse(raw);
-    if (value == null || value < 0) return null;
-    final cents = (value * 100).round();
-    return cents > 2000 ? null : cents;
-  }
-
   bool get _needsPayment {
-    final fee = _feeCents() ?? 0;
-    if (fee == 0 && !_prepay) return false;
+    if (_feeCentsValue == 0 && !_prepay) return false;
     return !_hasPaymentMethod;
   }
 
@@ -100,13 +91,10 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
       }
       final run = await repo.createRun(
         foodSpotId: _spot!.id,
-        leavingAt: DateTime.now().toUtc().add(
-          Duration(minutes: _leavingMinutes),
-        ),
-        feeCents: _feeCents()!,
+        leavingAt: _leavingAt.toUtc(),
+        feeCents: _feeCentsValue,
         spotsMax: _spotsMax,
         prepayRequired: _prepay,
-        paysWithDiningDollars: _diningDollars,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
       ref.read(runsFeedControllerProvider.notifier).refresh().ignore();
@@ -135,36 +123,44 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
     if (picked != null && mounted) setState(() => _spot = picked);
   }
 
-  Future<void> _customLeaving() async {
-    final controller = TextEditingController(text: '$_leavingMinutes');
-    final minutes = await showDialog<int>(
+  /// Bumps the departure to a round offset from *now* (the quick chips).
+  void _quickLeaving(Duration offset) {
+    setState(() => _leavingAt = DateTime.now().add(offset));
+  }
+
+  /// Exact chosen time for the picker card, e.g. `3:45 PM`, `Tomorrow 8:00 AM`.
+  String _leavingDisplay() {
+    final now = DateTime.now();
+    final time = clockTime(_leavingAt);
+    final target = DateTime(_leavingAt.year, _leavingAt.month, _leavingAt.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final days = target.difference(today).inDays;
+    if (days == 0) return time;
+    if (days == 1) return 'Tomorrow $time';
+    return '${_leavingAt.month}/${_leavingAt.day} $time';
+  }
+
+  /// Opens the native clock picker for an exact departure time. A time that has
+  /// already passed today rolls to tomorrow so it's never in the past.
+  Future<void> _pickLeavingTime() async {
+    final picked = await showTimePicker(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Leaving in how many minutes?'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(suffixText: 'min'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(
-              dialogContext,
-            ).pop(int.tryParse(controller.text.trim())),
-            child: const Text('Set'),
-          ),
-        ],
-      ),
+      initialTime: TimeOfDay.fromDateTime(_leavingAt),
+      helpText: 'What time are you leaving?',
     );
-    controller.dispose();
-    if (minutes != null && minutes > 0 && minutes <= 24 * 60 && mounted) {
-      setState(() => _leavingMinutes = minutes);
+    if (picked == null || !mounted) return;
+    final now = DateTime.now();
+    var when = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      picked.hour,
+      picked.minute,
+    );
+    if (when.isBefore(now.subtract(const Duration(minutes: 1)))) {
+      when = when.add(const Duration(days: 1));
     }
+    setState(() => _leavingAt = when);
   }
 
   @override
@@ -224,25 +220,70 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                 ),
                 SizedBox(height: tokens.space6),
 
-                const _SectionLabel(label: 'Leaving in'),
+                const _SectionLabel(label: 'When are you leaving?'),
                 SizedBox(height: tokens.space2),
+                Pressable(
+                  onTap: _pickLeavingTime,
+                  child: Container(
+                    padding: EdgeInsets.all(tokens.space4),
+                    decoration: BoxDecoration(
+                      borderRadius: tokens.brSm,
+                      border: Border.all(color: colors.outlineVariant),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.schedule, color: colors.primary),
+                        SizedBox(width: tokens.space3),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _leavingDisplay(),
+                                style: context.text.titleMedium?.copyWith(
+                                  color: colors.onSurface,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                'Tap to pick an exact time',
+                                style: context.text.bodySmall?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: tokens.space3),
                 Wrap(
                   spacing: tokens.space2,
                   children: [
-                    for (final m in _quickMinutes)
-                      ChoiceChip(
-                        label: Text('${m}m'),
-                        selected: _leavingMinutes == m,
-                        onSelected: (_) => setState(() => _leavingMinutes = m),
-                      ),
-                    ChoiceChip(
-                      label: Text(
-                        _quickMinutes.contains(_leavingMinutes)
-                            ? 'Custom'
-                            : '${_leavingMinutes}m',
-                      ),
-                      selected: !_quickMinutes.contains(_leavingMinutes),
-                      onSelected: (_) => _customLeaving(),
+                    ActionChip(
+                      label: const Text('Now'),
+                      onPressed: () => _quickLeaving(Duration.zero),
+                    ),
+                    ActionChip(
+                      label: const Text('+15 min'),
+                      onPressed: () =>
+                          _quickLeaving(const Duration(minutes: 15)),
+                    ),
+                    ActionChip(
+                      label: const Text('+30 min'),
+                      onPressed: () =>
+                          _quickLeaving(const Duration(minutes: 30)),
+                    ),
+                    ActionChip(
+                      label: const Text('+1 hr'),
+                      onPressed: () => _quickLeaving(const Duration(hours: 1)),
                     ),
                   ],
                 ),
@@ -250,33 +291,38 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
 
                 const _SectionLabel(label: 'The deal'),
                 SizedBox(height: tokens.space3),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _fee,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: const InputDecoration(
-                          labelText: 'Fee per order',
-                          prefixText: r'$ ',
-                          hintText: '0 = free',
-                        ),
-                        validator: (_) =>
-                            _feeCents() == null ? r'Between $0 and $20' : null,
-                        onChanged: (_) => setState(() {}),
-                      ),
-                    ),
-                    SizedBox(width: tokens.space3),
-                    Expanded(
-                      child: _SpotsStepper(
-                        value: _spotsMax,
-                        onChanged: (v) => setState(() => _spotsMax = v),
-                      ),
-                    ),
-                  ],
+                _StepperField(
+                  label: 'Fee per order',
+                  valueLabel: _feeCentsValue == 0
+                      ? 'Free'
+                      : runFeeAmount(_feeCentsValue),
+                  onDecrement: _feeCentsValue > 0
+                      ? () => setState(
+                          () => _feeCentsValue = (_feeCentsValue - 25).clamp(
+                            0,
+                            2000,
+                          ),
+                        )
+                      : null,
+                  onIncrement: _feeCentsValue < 2000
+                      ? () => setState(
+                          () => _feeCentsValue = (_feeCentsValue + 25).clamp(
+                            0,
+                            2000,
+                          ),
+                        )
+                      : null,
+                ),
+                SizedBox(height: tokens.space3),
+                _StepperField(
+                  label: 'Spots',
+                  valueLabel: '$_spotsMax',
+                  onDecrement: _spotsMax > 1
+                      ? () => setState(() => _spotsMax -= 1)
+                      : null,
+                  onIncrement: _spotsMax < 10
+                      ? () => setState(() => _spotsMax += 1)
+                      : null,
                 ),
                 SizedBox(height: tokens.space2),
                 SwitchListTile(
@@ -286,20 +332,6 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                   title: const Text('Require prepay'),
                   subtitle: const Text(
                     'People pay you before you order',
-                  ),
-                ),
-                SwitchListTile(
-                  value: _diningDollars,
-                  onChanged: (v) => setState(() => _diningDollars = v),
-                  contentPadding: EdgeInsets.zero,
-                  secondary: Icon(
-                    Icons.credit_card_outlined,
-                    color: colors.onSurfaceVariant,
-                  ),
-                  title: const Text('Paying with dining dollars'),
-                  subtitle: const Text(
-                    "You'll buy on your meal plan — "
-                    'people still pay you back',
                   ),
                 ),
                 if (_needsPayment) ...[
@@ -328,15 +360,19 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
 
                 FilledButton(
                   onPressed: _submitting ? null : _submit,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.ink,
+                    foregroundColor: Colors.white,
+                  ),
                   child: _submitting
-                      ? SizedBox.square(
+                      ? const SizedBox.square(
                           dimension: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: context.colors.onPrimary,
+                            color: Colors.white,
                           ),
                         )
-                      : const Text('Post run'),
+                      : const Text('Post run · takes orders now'),
                 ),
                 SizedBox(height: tokens.space2),
                 Text(
@@ -369,42 +405,61 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// 1–10 spots stepper — a stepper beats a keyboard for a tiny range.
-class _SpotsStepper extends StatelessWidget {
-  const _SpotsStepper({required this.value, required this.onChanged});
+/// A labelled −/+ stepper row (fee, spots): eyebrow label left, big tabular
+/// value flanked by round steppers right. A stepper beats a keyboard for a
+/// tiny range and reads cleanly in the "Fifty Free" language.
+class _StepperField extends StatelessWidget {
+  const _StepperField({
+    required this.label,
+    required this.valueLabel,
+    required this.onDecrement,
+    required this.onIncrement,
+  });
 
-  final int value;
-  final ValueChanged<int> onChanged;
+  final String label;
+  final String valueLabel;
+  final VoidCallback? onDecrement;
+  final VoidCallback? onIncrement;
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final colors = context.colors;
-    return InputDecorator(
-      decoration: const InputDecoration(labelText: 'Spots'),
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: tokens.space4,
+        vertical: tokens.space3,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: tokens.brSm,
+        border: Border.all(color: colors.outlineVariant),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            tooltip: 'Fewer spots',
-            visualDensity: VisualDensity.compact,
-            onPressed: value > 1 ? () => onChanged(value - 1) : null,
-            icon: const Icon(Icons.remove_circle_outline, size: 20),
+          Expanded(
+            child: Text(label.toUpperCase(), style: AppTextStyles.label),
           ),
-          Text(
-            '$value',
-            style: context.text.titleMedium?.copyWith(
-              color: colors.onSurface,
+          IconButton(
+            tooltip: 'Less',
+            visualDensity: VisualDensity.compact,
+            onPressed: onDecrement,
+            icon: const Icon(Icons.remove_circle_outline, size: 24),
+          ),
+          SizedBox(
+            width: 72,
+            child: Text(
+              valueLabel,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.titleLarge.copyWith(
+                color: colors.onSurface,
+              ),
             ),
           ),
           IconButton(
-            tooltip: 'More spots',
+            tooltip: 'More',
             visualDensity: VisualDensity.compact,
-            onPressed: value < 10 ? () => onChanged(value + 1) : null,
-            icon: Icon(
-              Icons.add_circle_outline,
-              size: 20,
-              color: value < 10 ? colors.onSurface : null,
-            ),
+            onPressed: onIncrement,
+            icon: const Icon(Icons.add_circle_outline, size: 24),
           ),
         ],
       ),
