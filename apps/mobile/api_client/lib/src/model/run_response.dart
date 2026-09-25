@@ -18,7 +18,6 @@ part 'run_response.g.dart';
 ///
 /// Properties:
 /// * [acceptedCount] 
-/// * [conversationId] 
 /// * [createdAt] 
 /// * [feeCents] 
 /// * [foodSpot] 
@@ -27,7 +26,6 @@ part 'run_response.g.dart';
 /// * [myOrder] 
 /// * [note] 
 /// * [orders] 
-/// * [paysWithDiningDollars] 
 /// * [pendingCount] 
 /// * [prepayRequired] 
 /// * [runner] 
@@ -38,9 +36,6 @@ part 'run_response.g.dart';
 abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
   @BuiltValueField(wireName: r'accepted_count')
   int get acceptedCount;
-
-  @BuiltValueField(wireName: r'conversation_id')
-  String? get conversationId;
 
   @BuiltValueField(wireName: r'created_at')
   DateTime get createdAt;
@@ -65,9 +60,6 @@ abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
 
   @BuiltValueField(wireName: r'orders')
   BuiltList<RunOrderResponse>? get orders;
-
-  @BuiltValueField(wireName: r'pays_with_dining_dollars')
-  bool get paysWithDiningDollars;
 
   @BuiltValueField(wireName: r'pending_count')
   int get pendingCount;
@@ -117,11 +109,6 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
       object.acceptedCount,
       specifiedType: const FullType(int),
     );
-    yield r'conversation_id';
-    yield object.conversationId == null ? null : serializers.serialize(
-      object.conversationId,
-      specifiedType: const FullType.nullable(String),
-    );
     yield r'created_at';
     yield serializers.serialize(
       object.createdAt,
@@ -166,11 +153,6 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
         specifiedType: const FullType(BuiltList, [FullType(RunOrderResponse)]),
       );
     }
-    yield r'pays_with_dining_dollars';
-    yield serializers.serialize(
-      object.paysWithDiningDollars,
-      specifiedType: const FullType(bool),
-    );
     yield r'pending_count';
     yield serializers.serialize(
       object.pendingCount,
@@ -233,14 +215,6 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
           ) as int;
           result.acceptedCount = valueDes;
           break;
-        case r'conversation_id':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType.nullable(String),
-          ) as String?;
-          if (valueDes == null) continue;
-          result.conversationId = valueDes;
-          break;
         case r'created_at':
           final valueDes = serializers.deserialize(
             value,
@@ -298,13 +272,6 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
             specifiedType: const FullType(BuiltList, [FullType(RunOrderResponse)]),
           ) as BuiltList<RunOrderResponse>;
           result.orders.replace(valueDes);
-          break;
-        case r'pays_with_dining_dollars':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(bool),
-          ) as bool;
-          result.paysWithDiningDollars = valueDes;
           break;
         case r'pending_count':
           final valueDes = serializers.deserialize(

@@ -12,15 +12,20 @@ Method | HTTP request | Description
 [**acceptOrderApiV1RunsRunIdOrdersOrderIdAcceptPost**](RunsApi.md#acceptorderapiv1runsrunidordersorderidacceptpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/accept | Accept Order
 [**cancelRunApiV1RunsRunIdCancelPost**](RunsApi.md#cancelrunapiv1runsrunidcancelpost) | **POST** /api/v1/runs/{run_id}/cancel | Cancel Run
 [**confirmReceivedApiV1RunsRunIdOrdersOrderIdReceivedPost**](RunsApi.md#confirmreceivedapiv1runsrunidordersorderidreceivedpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/received | Confirm Received
+[**createDropoffApiV1RunsDropoffsPost**](RunsApi.md#createdropoffapiv1runsdropoffspost) | **POST** /api/v1/runs/dropoffs | Create Dropoff
 [**createRunApiV1RunsPost**](RunsApi.md#createrunapiv1runspost) | **POST** /api/v1/runs | Create Run
+[**createSpotApiV1RunsSpotsPost**](RunsApi.md#createspotapiv1runsspotspost) | **POST** /api/v1/runs/spots | Create Spot
 [**declineOrderApiV1RunsRunIdOrdersOrderIdDeclinePost**](RunsApi.md#declineorderapiv1runsrunidordersorderiddeclinepost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/decline | Decline Order
 [**getRunApiV1RunsRunIdGet**](RunsApi.md#getrunapiv1runsrunidget) | **GET** /api/v1/runs/{run_id} | Get Run
+[**listDropoffsApiV1RunsDropoffsGet**](RunsApi.md#listdropoffsapiv1runsdropoffsget) | **GET** /api/v1/runs/dropoffs | List Dropoffs
 [**listSpotsApiV1RunsSpotsGet**](RunsApi.md#listspotsapiv1runsspotsget) | **GET** /api/v1/runs/spots | List Spots
 [**markDeliveredApiV1RunsRunIdOrdersOrderIdDeliveredPost**](RunsApi.md#markdeliveredapiv1runsrunidordersorderiddeliveredpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/delivered | Mark Delivered
 [**markNoShowApiV1RunsRunIdOrdersOrderIdNoShowPost**](RunsApi.md#marknoshowapiv1runsrunidordersorderidnoshowpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/no-show | Mark No Show
 [**myRunsApiV1RunsMineGet**](RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs
+[**paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost**](RunsApi.md#paymentproofuploadurlapiv1runsrunidordersorderidpaymentproofuploadurlpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/payment-proof-upload-url | Payment Proof Upload Url
 [**requestSpotApiV1RunsRunIdOrdersPost**](RunsApi.md#requestspotapiv1runsrunidorderspost) | **POST** /api/v1/runs/{run_id}/orders | Request Spot
 [**runFeedApiV1RunsGet**](RunsApi.md#runfeedapiv1runsget) | **GET** /api/v1/runs | Run Feed
+[**submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost**](RunsApi.md#submitpaymentproofapiv1runsrunidordersorderidpaymentproofpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/payment-proof | Submit Payment Proof
 [**updateLocationApiV1RunsRunIdLocationPost**](RunsApi.md#updatelocationapiv1runsrunidlocationpost) | **POST** /api/v1/runs/{run_id}/location | Update Location
 [**updateStatusApiV1RunsRunIdStatusPost**](RunsApi.md#updatestatusapiv1runsrunidstatuspost) | **POST** /api/v1/runs/{run_id}/status | Update Status
 [**withdrawOrderApiV1RunsRunIdOrdersOrderIdDelete**](RunsApi.md#withdraworderapiv1runsrunidordersorderiddelete) | **DELETE** /api/v1/runs/{run_id}/orders/{order_id} | Withdraw Order
@@ -153,6 +158,49 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **createDropoffApiV1RunsDropoffsPost**
+> DropoffLocationResponse createDropoffApiV1RunsDropoffsPost(dropoffLocationCreateRequest)
+
+Create Dropoff
+
+Admin-only: add a valid drop-off point (dorm hall, landmark).
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getRunsApi();
+final DropoffLocationCreateRequest dropoffLocationCreateRequest = ; // DropoffLocationCreateRequest | 
+
+try {
+    final response = api.createDropoffApiV1RunsDropoffsPost(dropoffLocationCreateRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling RunsApi->createDropoffApiV1RunsDropoffsPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **dropoffLocationCreateRequest** | [**DropoffLocationCreateRequest**](DropoffLocationCreateRequest.md)|  | 
+
+### Return type
+
+[**DropoffLocationResponse**](DropoffLocationResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **createRunApiV1RunsPost**
 > RunResponse createRunApiV1RunsPost(runCreateRequest)
 
@@ -182,6 +230,49 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**RunResponse**](RunResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **createSpotApiV1RunsSpotsPost**
+> FoodSpotResponse createSpotApiV1RunsSpotsPost(foodSpotCreateRequest)
+
+Create Spot
+
+Admin-only: add a campus/off-campus food spot to the catalog.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getRunsApi();
+final FoodSpotCreateRequest foodSpotCreateRequest = ; // FoodSpotCreateRequest | 
+
+try {
+    final response = api.createSpotApiV1RunsSpotsPost(foodSpotCreateRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling RunsApi->createSpotApiV1RunsSpotsPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **foodSpotCreateRequest** | [**FoodSpotCreateRequest**](FoodSpotCreateRequest.md)|  | 
+
+### Return type
+
+[**FoodSpotResponse**](FoodSpotResponse.md)
 
 ### Authorization
 
@@ -266,6 +357,45 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**RunResponse**](RunResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **listDropoffsApiV1RunsDropoffsGet**
+> BuiltList<DropoffLocationResponse> listDropoffsApiV1RunsDropoffsGet()
+
+List Dropoffs
+
+Valid drop-off points requesters choose from when joining a run.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getRunsApi();
+
+try {
+    final response = api.listDropoffsApiV1RunsDropoffsGet();
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling RunsApi->listDropoffsApiV1RunsDropoffsGet: $e\n');
+}
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+[**BuiltList&lt;DropoffLocationResponse&gt;**](DropoffLocationResponse.md)
 
 ### Authorization
 
@@ -438,6 +568,53 @@ This endpoint does not need any parameter.
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost**
+> PaymentProofUploadUrlResponse paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost(runId, orderId, paymentProofUploadUrlRequest)
+
+Payment Proof Upload Url
+
+Requester gets a signed URL to upload their transaction screenshot.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getRunsApi();
+final String runId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String orderId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final PaymentProofUploadUrlRequest paymentProofUploadUrlRequest = ; // PaymentProofUploadUrlRequest | 
+
+try {
+    final response = api.paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost(runId, orderId, paymentProofUploadUrlRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling RunsApi->paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **runId** | **String**|  | 
+ **orderId** | **String**|  | 
+ **paymentProofUploadUrlRequest** | [**PaymentProofUploadUrlRequest**](PaymentProofUploadUrlRequest.md)|  | 
+
+### Return type
+
+[**PaymentProofUploadUrlResponse**](PaymentProofUploadUrlResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **requestSpotApiV1RunsRunIdOrdersPost**
 > RunResponse requestSpotApiV1RunsRunIdOrdersPost(runId, runOrderCreateRequest)
 
@@ -482,7 +659,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **runFeedApiV1RunsGet**
-> RunPageResponse runFeedApiV1RunsGet(cursor, limit, diningDollars)
+> RunPageResponse runFeedApiV1RunsGet(cursor, limit)
 
 Run Feed
 
@@ -493,10 +670,9 @@ import 'package:campus_api/api.dart';
 final api = CampusApi().getRunsApi();
 final String cursor = cursor_example; // String | 
 final int limit = 56; // int | 
-final bool diningDollars = true; // bool | Only runs where the runner pays with dining dollars.
 
 try {
-    final response = api.runFeedApiV1RunsGet(cursor, limit, diningDollars);
+    final response = api.runFeedApiV1RunsGet(cursor, limit);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling RunsApi->runFeedApiV1RunsGet: $e\n');
@@ -509,7 +685,6 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **cursor** | **String**|  | [optional] 
  **limit** | **int**|  | [optional] [default to 20]
- **diningDollars** | **bool**| Only runs where the runner pays with dining dollars. | [optional] [default to false]
 
 ### Return type
 
@@ -522,6 +697,53 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost**
+> RunResponse submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost(runId, orderId, paymentProofSubmitRequest)
+
+Submit Payment Proof
+
+Requester confirms off-app payment; proof surfaces on the runner's card.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getRunsApi();
+final String runId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String orderId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final PaymentProofSubmitRequest paymentProofSubmitRequest = ; // PaymentProofSubmitRequest | 
+
+try {
+    final response = api.submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost(runId, orderId, paymentProofSubmitRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling RunsApi->submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **runId** | **String**|  | 
+ **orderId** | **String**|  | 
+ **paymentProofSubmitRequest** | [**PaymentProofSubmitRequest**](PaymentProofSubmitRequest.md)|  | 
+
+### Return type
+
+[**RunResponse**](RunResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

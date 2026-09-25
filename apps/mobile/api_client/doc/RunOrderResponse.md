@@ -10,8 +10,13 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **createdAt** | [**DateTime**](DateTime.md) |  | 
 **dropoff** | **String** |  | 
+**dropoffLat** | **num** |  | [optional] 
+**dropoffLng** | **num** |  | [optional] 
 **id** | **String** |  | 
 **orderText** | **String** |  | 
+**paymentNote** | **String** |  | [optional] 
+**paymentProofUrl** | **String** |  | [optional] 
+**paymentSubmittedAt** | [**DateTime**](DateTime.md) |  | [optional] 
 **requester** | [**RunUserSummary**](RunUserSummary.md) |  | 
 **runId** | **String** |  | 
 **status** | [**RunOrderStatus**](RunOrderStatus.md) |  | 

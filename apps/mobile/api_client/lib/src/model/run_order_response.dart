@@ -15,9 +15,14 @@ part 'run_order_response.g.dart';
 /// Properties:
 /// * [createdAt] 
 /// * [dropoff] 
+/// * [dropoffLat] 
+/// * [dropoffLng] 
 /// * [id] 
-/// * [orderText]
-/// * [requester]
+/// * [orderText] 
+/// * [paymentNote] 
+/// * [paymentProofUrl] 
+/// * [paymentSubmittedAt] 
+/// * [requester] 
 /// * [runId] 
 /// * [status] 
 @BuiltValue()
@@ -28,11 +33,26 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
   @BuiltValueField(wireName: r'dropoff')
   String get dropoff;
 
+  @BuiltValueField(wireName: r'dropoff_lat')
+  num? get dropoffLat;
+
+  @BuiltValueField(wireName: r'dropoff_lng')
+  num? get dropoffLng;
+
   @BuiltValueField(wireName: r'id')
   String get id;
 
   @BuiltValueField(wireName: r'order_text')
   String get orderText;
+
+  @BuiltValueField(wireName: r'payment_note')
+  String? get paymentNote;
+
+  @BuiltValueField(wireName: r'payment_proof_url')
+  String? get paymentProofUrl;
+
+  @BuiltValueField(wireName: r'payment_submitted_at')
+  DateTime? get paymentSubmittedAt;
 
   @BuiltValueField(wireName: r'requester')
   RunUserSummary get requester;
@@ -77,6 +97,20 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       object.dropoff,
       specifiedType: const FullType(String),
     );
+    if (object.dropoffLat != null) {
+      yield r'dropoff_lat';
+      yield serializers.serialize(
+        object.dropoffLat,
+        specifiedType: const FullType.nullable(num),
+      );
+    }
+    if (object.dropoffLng != null) {
+      yield r'dropoff_lng';
+      yield serializers.serialize(
+        object.dropoffLng,
+        specifiedType: const FullType.nullable(num),
+      );
+    }
     yield r'id';
     yield serializers.serialize(
       object.id,
@@ -87,6 +121,27 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       object.orderText,
       specifiedType: const FullType(String),
     );
+    if (object.paymentNote != null) {
+      yield r'payment_note';
+      yield serializers.serialize(
+        object.paymentNote,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
+    if (object.paymentProofUrl != null) {
+      yield r'payment_proof_url';
+      yield serializers.serialize(
+        object.paymentProofUrl,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
+    if (object.paymentSubmittedAt != null) {
+      yield r'payment_submitted_at';
+      yield serializers.serialize(
+        object.paymentSubmittedAt,
+        specifiedType: const FullType.nullable(DateTime),
+      );
+    }
     yield r'requester';
     yield serializers.serialize(
       object.requester,
@@ -139,6 +194,22 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
           ) as String;
           result.dropoff = valueDes;
           break;
+        case r'dropoff_lat':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(num),
+          ) as num?;
+          if (valueDes == null) continue;
+          result.dropoffLat = valueDes;
+          break;
+        case r'dropoff_lng':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(num),
+          ) as num?;
+          if (valueDes == null) continue;
+          result.dropoffLng = valueDes;
+          break;
         case r'id':
           final valueDes = serializers.deserialize(
             value,
@@ -152,6 +223,30 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
             specifiedType: const FullType(String),
           ) as String;
           result.orderText = valueDes;
+          break;
+        case r'payment_note':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.paymentNote = valueDes;
+          break;
+        case r'payment_proof_url':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.paymentProofUrl = valueDes;
+          break;
+        case r'payment_submitted_at':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
+          result.paymentSubmittedAt = valueDes;
           break;
         case r'requester':
           final valueDes = serializers.deserialize(

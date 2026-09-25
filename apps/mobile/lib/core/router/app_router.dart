@@ -97,19 +97,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => RunDetailScreen(
                       runId: state.pathParameters['id']!,
                     ),
-                    routes: [
-                      GoRoute(
-                        path: 'chat',
-                        builder: (_, state) {
-                          final (conversationId, title) =
-                              state.extra! as (String, String?);
-                          return ThreadScreen(
-                            conversationId: conversationId,
-                            title: title,
-                          );
-                        },
-                      ),
-                    ],
                   ),
                 ],
               ),

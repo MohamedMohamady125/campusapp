@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import PaymentMethodType, UserRole
 
@@ -17,14 +17,20 @@ _HANDLE_CHARS = "@._+-()$/: "
 class PaymentMethod(BaseModel):
     """One off-app payment rail a runner advertises (food-runs spec).
 
-    `handle` is a plain-text tag / phone / email for the third-party app;
-    it is escaped on display and never used to move money in-app.
+    `handle` is a plain-text phone / email / username for the third-party
+    app; it is escaped on display and never used to move money in-app.
+    Optionally the runner attaches their app's QR code image (`qr_key`,
+    uploaded via /users/me/payment-qr-upload-url) so payers can just scan.
     """
 
     model_config = ConfigDict(from_attributes=True)
 
     type: PaymentMethodType
     handle: str = Field(min_length=2, max_length=64)
+    # S3 key of the runner's payment QR code image (optional).
+    qr_key: str | None = Field(default=None, max_length=300)
+    # Read-only: public URL derived from qr_key; never stored.
+    qr_url: str | None = None
 
     @field_validator("handle")
     @classmethod
@@ -33,6 +39,24 @@ class PaymentMethod(BaseModel):
         if not all(c.isalnum() or c in _HANDLE_CHARS for c in cleaned):
             raise ValueError("Handle has unsupported characters.")
         return cleaned
+
+    @field_validator("qr_key")
+    @classmethod
+    def _own_namespace(cls, value: str | None) -> str | None:
+        # Only keys minted by the payment-QR upload endpoint are accepted, so
+        # a handle can never point at someone else's private object.
+        if value is not None and not value.startswith("payment-qr/"):
+            raise ValueError("Invalid QR key.")
+        return value
+
+    @model_validator(mode="after")
+    def _derive_qr_url(self) -> "PaymentMethod":
+        if self.qr_key:
+            # Local import: schemas must not pull integrations at module load.
+            from app.integrations.storage.provider import get_storage_provider
+
+            self.qr_url = get_storage_provider().public_url(self.qr_key)
+        return self
 
 
 class UserMeResponse(BaseModel):
@@ -66,6 +90,18 @@ class UserPublicResponse(BaseModel):
     reputation_score: float
     rating_count: int
     created_at: datetime
+
+
+class PaymentQrUploadUrlRequest(BaseModel):
+    """Runner asks for a signed URL to upload a payment-app QR code image."""
+
+    content_type: str
+
+
+class PaymentQrUploadUrlResponse(BaseModel):
+    upload_url: str
+    fields: dict[str, str]
+    key: str
 
 
 class UserUpdateRequest(BaseModel):

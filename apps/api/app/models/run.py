@@ -47,6 +47,23 @@ class FoodSpot(TimestampedBase):
     lng: Mapped[float | None] = mapped_column(Float)
 
 
+class DropoffLocation(TimestampedBase):
+    """Admin-curated catalog of valid drop-off points (dorm halls, campus
+    landmarks). Requesters pick one from a dropdown when joining a run, so no
+    one can type a random/unsafe address — every drop-off is a known place.
+    """
+
+    __tablename__ = "dropoff_locations"
+
+    name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    description: Mapped[str | None] = mapped_column(String(200))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Admin-recorded coordinates powering the runner's multi-stop navigation
+    # (route optimization from the runner's live position through each drop-off).
+    lat: Mapped[float | None] = mapped_column(Float)
+    lng: Mapped[float | None] = mapped_column(Float)
+
+
 class Run(TimestampedBase):
     __tablename__ = "runs"
     __table_args__ = (Index("ix_runs_status_leaving", "status", "leaving_at"),)
@@ -63,18 +80,8 @@ class Run(TimestampedBase):
     fee_cents: Mapped[int] = mapped_column(Integer, default=0)
     spots_max: Mapped[int] = mapped_column(Integer, default=3)
     prepay_required: Mapped[bool] = mapped_column(Boolean, default=False)
-    # Runner is buying on their own (non-transferable) dining dollars at an
-    # on-campus spot; requesters still settle in Venmo. Descriptive metadata
-    # only — never moves money or changes the state machine.
-    pays_with_dining_dollars: Mapped[bool] = mapped_column(
-        Boolean, default=False, server_default="false"
-    )
     status: Mapped[RunStatus] = mapped_column(
         Enum(RunStatus, name="run_status"), default=RunStatus.open
-    )
-    # Group coordination chat; created on first accepted order.
-    conversation_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="SET NULL")
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Runner's last-known live position (Uber/Lyft-style tracking). Pushed by
@@ -104,12 +111,22 @@ class RunOrder(TimestampedBase):
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     order_text: Mapped[str] = mapped_column(Text)
-    # Where this requester wants their food dropped — their own hall / dorm /
-    # spot. Each order carries its own location; the runner delivers per order.
+    # Where this requester wants their food dropped — a name picked from the
+    # admin DropoffLocation catalog, denormalized here so read paths stay flat.
     dropoff: Mapped[str] = mapped_column(String(120))
+    # Denormalized coordinates of the picked drop-off, feeding the runner's
+    # multi-stop navigation. Null when the chosen location isn't geocoded.
+    dropoff_lat: Mapped[float | None] = mapped_column(Float)
+    dropoff_lng: Mapped[float | None] = mapped_column(Float)
     status: Mapped[RunOrderStatus] = mapped_column(
         Enum(RunOrderStatus, name="run_order_status"), default=RunOrderStatus.requested
     )
+    # Off-app payment proof: after the runner accepts, the requester pays via the
+    # revealed handle and can attach a transaction screenshot + optional note.
+    # The runner sees it on their order card. The app never moves money.
+    payment_proof_key: Mapped[str | None] = mapped_column(String(300))
+    payment_note: Mapped[str | None] = mapped_column(String(300))
+    payment_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     run: Mapped[Run] = relationship(back_populates="orders")
     requester: Mapped[User] = relationship()

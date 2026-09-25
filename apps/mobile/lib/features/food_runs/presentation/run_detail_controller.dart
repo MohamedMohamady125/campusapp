@@ -6,8 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Detail poll cadence: the run screen is the live surface — status walks,
-/// accepts, and the group chat link all appear without a manual refresh.
+/// accepts, and payment proof all appear without a manual refresh.
 const kRunDetailPollInterval = Duration(seconds: 5);
+
+/// The admin-curated drop-off catalog (dorm halls, landmarks). Requesters pick
+/// from this in the request sheet — no free-text addresses.
+final dropoffCatalogProvider = FutureProvider<List<DropoffLocationResponse>>(
+  (ref) => ref.watch(runsRepositoryProvider).fetchDropoffs(),
+);
 
 /// Statuses during which the detail screen keeps polling.
 const Set<RunStatus> _activeStatuses = {
@@ -68,8 +74,24 @@ class RunDetailController
     state = RunDetailState(run: run, loading: false);
   }
 
-  Future<void> requestSpot(String orderText, String dropoff) =>
-      _mutate(() => _repo.requestSpot(arg, orderText, dropoff));
+  Future<void> requestSpot(String orderText, String dropoffLocationId) =>
+      _mutate(() => _repo.requestSpot(arg, orderText, dropoffLocationId));
+
+  /// Requester uploads a transaction screenshot + note as payment proof.
+  Future<void> submitPaymentProof(
+    String orderId, {
+    required Uint8List bytes,
+    required String contentType,
+    String? note,
+  }) => _mutate(
+    () => _repo.submitPaymentProof(
+      runId: arg,
+      orderId: orderId,
+      bytes: bytes,
+      contentType: contentType,
+      note: note,
+    ),
+  );
 
   Future<void> withdraw(String orderId) async {
     await _repo.withdrawOrder(arg, orderId);

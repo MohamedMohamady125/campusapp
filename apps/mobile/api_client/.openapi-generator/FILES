@@ -24,8 +24,11 @@ doc/ConversationResponse.md
 doc/ConversationsApi.md
 doc/CourseResponse.md
 doc/DailyMetricItem.md
+doc/DropoffLocationCreateRequest.md
+doc/DropoffLocationResponse.md
 doc/FlagItem.md
 doc/FoodSpotCategory.md
+doc/FoodSpotCreateRequest.md
 doc/FoodSpotResponse.md
 doc/ForgotPasswordRequest.md
 doc/HTTPValidationError.md
@@ -60,6 +63,11 @@ doc/OfferingCreateRequest.md
 doc/OfferingResponse.md
 doc/PaymentMethod.md
 doc/PaymentMethodType.md
+doc/PaymentProofSubmitRequest.md
+doc/PaymentProofUploadUrlRequest.md
+doc/PaymentProofUploadUrlResponse.md
+doc/PaymentQrUploadUrlRequest.md
+doc/PaymentQrUploadUrlResponse.md
 doc/RankedTutorResponse.md
 doc/RatingContext.md
 doc/RatingCreateRequest.md
@@ -143,8 +151,11 @@ lib/src/model/conversation_response.dart
 lib/src/model/course_response.dart
 lib/src/model/daily_metric_item.dart
 lib/src/model/date.dart
+lib/src/model/dropoff_location_create_request.dart
+lib/src/model/dropoff_location_response.dart
 lib/src/model/flag_item.dart
 lib/src/model/food_spot_category.dart
+lib/src/model/food_spot_create_request.dart
 lib/src/model/food_spot_response.dart
 lib/src/model/forgot_password_request.dart
 lib/src/model/health_response.dart
@@ -176,6 +187,11 @@ lib/src/model/offering_create_request.dart
 lib/src/model/offering_response.dart
 lib/src/model/payment_method.dart
 lib/src/model/payment_method_type.dart
+lib/src/model/payment_proof_submit_request.dart
+lib/src/model/payment_proof_upload_url_request.dart
+lib/src/model/payment_proof_upload_url_response.dart
+lib/src/model/payment_qr_upload_url_request.dart
+lib/src/model/payment_qr_upload_url_response.dart
 lib/src/model/ranked_tutor_response.dart
 lib/src/model/rating_context.dart
 lib/src/model/rating_create_request.dart
@@ -215,5 +231,5 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/run_location_test.dart
-test/run_location_update_request_test.dart
+test/payment_qr_upload_url_request_test.dart
+test/payment_qr_upload_url_response_test.dart

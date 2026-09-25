@@ -9,6 +9,8 @@ import 'package:campus_api/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **handle** | **String** |  | 
+**qrKey** | **String** |  | [optional] 
+**qrUrl** | **String** |  | [optional] 
 **type** | [**PaymentMethodType**](PaymentMethodType.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

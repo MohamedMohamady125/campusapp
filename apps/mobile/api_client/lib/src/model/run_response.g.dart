@@ -10,8 +10,6 @@ class _$RunResponse extends RunResponse {
   @override
   final int acceptedCount;
   @override
-  final String? conversationId;
-  @override
   final DateTime createdAt;
   @override
   final int feeCents;
@@ -27,8 +25,6 @@ class _$RunResponse extends RunResponse {
   final String? note;
   @override
   final BuiltList<RunOrderResponse>? orders;
-  @override
-  final bool paysWithDiningDollars;
   @override
   final int pendingCount;
   @override
@@ -47,7 +43,6 @@ class _$RunResponse extends RunResponse {
 
   _$RunResponse._(
       {required this.acceptedCount,
-      this.conversationId,
       required this.createdAt,
       required this.feeCents,
       required this.foodSpot,
@@ -56,7 +51,6 @@ class _$RunResponse extends RunResponse {
       this.myOrder,
       this.note,
       this.orders,
-      required this.paysWithDiningDollars,
       required this.pendingCount,
       required this.prepayRequired,
       required this.runner,
@@ -76,7 +70,6 @@ class _$RunResponse extends RunResponse {
     if (identical(other, this)) return true;
     return other is RunResponse &&
         acceptedCount == other.acceptedCount &&
-        conversationId == other.conversationId &&
         createdAt == other.createdAt &&
         feeCents == other.feeCents &&
         foodSpot == other.foodSpot &&
@@ -85,7 +78,6 @@ class _$RunResponse extends RunResponse {
         myOrder == other.myOrder &&
         note == other.note &&
         orders == other.orders &&
-        paysWithDiningDollars == other.paysWithDiningDollars &&
         pendingCount == other.pendingCount &&
         prepayRequired == other.prepayRequired &&
         runner == other.runner &&
@@ -98,7 +90,6 @@ class _$RunResponse extends RunResponse {
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, acceptedCount.hashCode);
-    _$hash = $jc(_$hash, conversationId.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
     _$hash = $jc(_$hash, feeCents.hashCode);
     _$hash = $jc(_$hash, foodSpot.hashCode);
@@ -107,7 +98,6 @@ class _$RunResponse extends RunResponse {
     _$hash = $jc(_$hash, myOrder.hashCode);
     _$hash = $jc(_$hash, note.hashCode);
     _$hash = $jc(_$hash, orders.hashCode);
-    _$hash = $jc(_$hash, paysWithDiningDollars.hashCode);
     _$hash = $jc(_$hash, pendingCount.hashCode);
     _$hash = $jc(_$hash, prepayRequired.hashCode);
     _$hash = $jc(_$hash, runner.hashCode);
@@ -122,7 +112,6 @@ class _$RunResponse extends RunResponse {
   String toString() {
     return (newBuiltValueToStringHelper(r'RunResponse')
           ..add('acceptedCount', acceptedCount)
-          ..add('conversationId', conversationId)
           ..add('createdAt', createdAt)
           ..add('feeCents', feeCents)
           ..add('foodSpot', foodSpot)
@@ -131,7 +120,6 @@ class _$RunResponse extends RunResponse {
           ..add('myOrder', myOrder)
           ..add('note', note)
           ..add('orders', orders)
-          ..add('paysWithDiningDollars', paysWithDiningDollars)
           ..add('pendingCount', pendingCount)
           ..add('prepayRequired', prepayRequired)
           ..add('runner', runner)
@@ -149,11 +137,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
   int? get acceptedCount => _$this._acceptedCount;
   set acceptedCount(int? acceptedCount) =>
       _$this._acceptedCount = acceptedCount;
-
-  String? _conversationId;
-  String? get conversationId => _$this._conversationId;
-  set conversationId(String? conversationId) =>
-      _$this._conversationId = conversationId;
 
   DateTime? _createdAt;
   DateTime? get createdAt => _$this._createdAt;
@@ -191,11 +174,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
       _$this._orders ??= ListBuilder<RunOrderResponse>();
   set orders(ListBuilder<RunOrderResponse>? orders) => _$this._orders = orders;
 
-  bool? _paysWithDiningDollars;
-  bool? get paysWithDiningDollars => _$this._paysWithDiningDollars;
-  set paysWithDiningDollars(bool? paysWithDiningDollars) =>
-      _$this._paysWithDiningDollars = paysWithDiningDollars;
-
   int? _pendingCount;
   int? get pendingCount => _$this._pendingCount;
   set pendingCount(int? pendingCount) => _$this._pendingCount = pendingCount;
@@ -232,7 +210,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
     final $v = _$v;
     if ($v != null) {
       _acceptedCount = $v.acceptedCount;
-      _conversationId = $v.conversationId;
       _createdAt = $v.createdAt;
       _feeCents = $v.feeCents;
       _foodSpot = $v.foodSpot.toBuilder();
@@ -241,7 +218,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
       _myOrder = $v.myOrder?.toBuilder();
       _note = $v.note;
       _orders = $v.orders?.toBuilder();
-      _paysWithDiningDollars = $v.paysWithDiningDollars;
       _pendingCount = $v.pendingCount;
       _prepayRequired = $v.prepayRequired;
       _runner = $v.runner.toBuilder();
@@ -273,7 +249,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
           _$RunResponse._(
             acceptedCount: BuiltValueNullFieldError.checkNotNull(
                 acceptedCount, r'RunResponse', 'acceptedCount'),
-            conversationId: conversationId,
             createdAt: BuiltValueNullFieldError.checkNotNull(
                 createdAt, r'RunResponse', 'createdAt'),
             feeCents: BuiltValueNullFieldError.checkNotNull(
@@ -285,8 +260,6 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
             myOrder: _myOrder?.build(),
             note: note,
             orders: _orders?.build(),
-            paysWithDiningDollars: BuiltValueNullFieldError.checkNotNull(
-                paysWithDiningDollars, r'RunResponse', 'paysWithDiningDollars'),
             pendingCount: BuiltValueNullFieldError.checkNotNull(
                 pendingCount, r'RunResponse', 'pendingCount'),
             prepayRequired: BuiltValueNullFieldError.checkNotNull(

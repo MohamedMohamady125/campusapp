@@ -7,7 +7,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import FoodSpot, Run, RunOrder
+from app.models import DropoffLocation, FoodSpot, Run, RunOrder
 from app.models.enums import RunStatus
 
 # Eager-load everything a RunResponse needs — no N+1 on the feed (spec §7.2).
@@ -25,6 +25,9 @@ class RunRepository:
     def add(self, obj: Run | RunOrder) -> None:
         self._session.add(obj)
 
+    def add_spot(self, spot: FoodSpot) -> None:
+        self._session.add(spot)
+
     async def list_spots(self) -> list[FoodSpot]:
         result = await self._session.execute(
             select(FoodSpot).where(FoodSpot.active.is_(True)).order_by(FoodSpot.name)
@@ -33,6 +36,30 @@ class RunRepository:
 
     async def get_spot(self, spot_id: uuid.UUID) -> FoodSpot | None:
         return await self._session.get(FoodSpot, spot_id)
+
+    async def spot_name_exists(self, name: str) -> bool:
+        result = await self._session.execute(select(FoodSpot.id).where(FoodSpot.name == name))
+        return result.first() is not None
+
+    def add_dropoff(self, dropoff: DropoffLocation) -> None:
+        self._session.add(dropoff)
+
+    async def list_dropoffs(self) -> list[DropoffLocation]:
+        result = await self._session.execute(
+            select(DropoffLocation)
+            .where(DropoffLocation.active.is_(True))
+            .order_by(DropoffLocation.name)
+        )
+        return list(result.scalars())
+
+    async def get_dropoff(self, dropoff_id: uuid.UUID) -> DropoffLocation | None:
+        return await self._session.get(DropoffLocation, dropoff_id)
+
+    async def dropoff_name_exists(self, name: str) -> bool:
+        result = await self._session.execute(
+            select(DropoffLocation.id).where(DropoffLocation.name == name)
+        )
+        return result.first() is not None
 
     async def get(self, run_id: uuid.UUID, *, for_update: bool = False) -> Run | None:
         # populate_existing: services re-fetch after commit and the session has
@@ -56,14 +83,8 @@ class RunRepository:
         now: datetime,
         cursor: tuple[datetime, uuid.UUID] | None,
         limit: int,
-        dining_dollars: bool = False,
     ) -> list[Run]:
-        """Open runs still in the future, soonest departure first.
-
-        `dining_dollars=True` narrows to runners buying on their own dining
-        dollars — the discovery surface for students with surplus meal-plan
-        balance. Filtered in SQL (spec §5.3), never post-filtered.
-        """
+        """Open runs still in the future, soonest departure first."""
         stmt = (
             select(Run)
             .where(Run.status == RunStatus.open, Run.leaving_at > now)
@@ -71,8 +92,6 @@ class RunRepository:
             .order_by(Run.leaving_at.asc(), Run.id.asc())
             .limit(limit)
         )
-        if dining_dollars:
-            stmt = stmt.where(Run.pays_with_dining_dollars.is_(True))
         if cursor is not None:
             ts, oid = cursor
             stmt = stmt.where(or_(Run.leaving_at > ts, (Run.leaving_at == ts) & (Run.id > oid)))

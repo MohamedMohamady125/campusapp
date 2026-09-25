@@ -9,7 +9,6 @@ import 'package:campus_api/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **acceptedCount** | **int** |  | 
-**conversationId** | **String** |  | 
 **createdAt** | [**DateTime**](DateTime.md) |  | 
 **feeCents** | **int** |  | 
 **foodSpot** | [**FoodSpotResponse**](FoodSpotResponse.md) |  | 
@@ -18,7 +17,6 @@ Name | Type | Description | Notes
 **myOrder** | [**RunOrderResponse**](RunOrderResponse.md) |  | [optional] 
 **note** | **String** |  | 
 **orders** | [**BuiltList&lt;RunOrderResponse&gt;**](RunOrderResponse.md) |  | [optional] [default to ListBuilder()]
-**paysWithDiningDollars** | **bool** |  | 
 **pendingCount** | **int** |  | 
 **prepayRequired** | **bool** |  | 
 **runner** | [**RunUserSummary**](RunUserSummary.md) |  | 

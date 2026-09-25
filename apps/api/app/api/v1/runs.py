@@ -7,13 +7,21 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
 from app.core.pagination import DEFAULT_PAGE_SIZE, clamp_limit
 from app.db.session import get_session
+from app.integrations.storage.provider import get_storage_provider
 from app.models import User
+from app.models.enums import UserRole
 from app.repositories.run_repo import RunRepository
 from app.schemas.run import (
+    DropoffLocationCreateRequest,
+    DropoffLocationResponse,
+    FoodSpotCreateRequest,
     FoodSpotResponse,
+    PaymentProofSubmitRequest,
+    PaymentProofUploadUrlRequest,
+    PaymentProofUploadUrlResponse,
     RunCreateRequest,
     RunLocationUpdateRequest,
     RunOrderCreateRequest,
@@ -27,7 +35,7 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 
 
 def _service(session: AsyncSession = Depends(get_session)) -> RunService:
-    return RunService(session)
+    return RunService(session, get_storage_provider())
 
 
 def _encode_feed_cursor(ts: datetime, oid: uuid.UUID) -> str:
@@ -55,14 +63,42 @@ async def list_spots(
     return [FoodSpotResponse.model_validate(s) for s in spots]
 
 
+@router.post("/spots", response_model=FoodSpotResponse, status_code=201)
+async def create_spot(
+    body: FoodSpotCreateRequest,
+    _: User = require_role(UserRole.admin),
+    svc: RunService = Depends(_service),
+) -> FoodSpotResponse:
+    """Admin-only: add a campus/off-campus food spot to the catalog."""
+    spot = await svc.create_spot(body=body)
+    return FoodSpotResponse.model_validate(spot)
+
+
+@router.get("/dropoffs", response_model=list[DropoffLocationResponse])
+async def list_dropoffs(
+    _: User = Depends(get_current_user),
+    svc: RunService = Depends(_service),
+) -> list[DropoffLocationResponse]:
+    """Valid drop-off points requesters choose from when joining a run."""
+    locations = await svc.list_dropoffs()
+    return [DropoffLocationResponse.model_validate(loc) for loc in locations]
+
+
+@router.post("/dropoffs", response_model=DropoffLocationResponse, status_code=201)
+async def create_dropoff(
+    body: DropoffLocationCreateRequest,
+    _: User = require_role(UserRole.admin),
+    svc: RunService = Depends(_service),
+) -> DropoffLocationResponse:
+    """Admin-only: add a valid drop-off point (dorm hall, landmark)."""
+    location = await svc.create_dropoff(body=body)
+    return DropoffLocationResponse.model_validate(location)
+
+
 @router.get("", response_model=RunPageResponse)
 async def run_feed(
     cursor: str | None = None,
     limit: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=50),
-    dining_dollars: bool = Query(
-        default=False,
-        description="Only runs where the runner pays with dining dollars.",
-    ),
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> RunPageResponse:
@@ -71,7 +107,6 @@ async def run_feed(
         now=datetime.now(UTC),
         cursor=_decode_feed_cursor(cursor) if cursor else None,
         limit=limit + 1,
-        dining_dollars=dining_dollars,
     )
     has_more = len(runs) > limit
     runs = runs[:limit]
@@ -127,7 +162,7 @@ async def request_spot(
         run_id=run_id,
         user=user,
         order_text=body.order_text,
-        dropoff=body.dropoff,
+        dropoff_location_id=body.dropoff_location_id,
     )
     return run_response(run, viewer_id=user.id)
 
@@ -161,6 +196,41 @@ async def decline_order(
     svc: RunService = Depends(_service),
 ) -> RunResponse:
     run = await svc.decline_order(run_id=run_id, order_id=order_id, actor=user)
+    return run_response(run, viewer_id=user.id)
+
+
+@router.post(
+    "/{run_id}/orders/{order_id}/payment-proof-upload-url",
+    response_model=PaymentProofUploadUrlResponse,
+)
+async def payment_proof_upload_url(
+    run_id: uuid.UUID,
+    order_id: uuid.UUID,
+    body: PaymentProofUploadUrlRequest,
+    user: User = Depends(get_current_user),
+    svc: RunService = Depends(_service),
+) -> PaymentProofUploadUrlResponse:
+    """Requester gets a signed URL to upload their transaction screenshot."""
+    signed = await svc.create_payment_proof_upload(
+        run_id=run_id, order_id=order_id, user=user, content_type=body.content_type
+    )
+    return PaymentProofUploadUrlResponse(
+        upload_url=signed.url, fields=signed.fields, key=signed.key
+    )
+
+
+@router.post("/{run_id}/orders/{order_id}/payment-proof", response_model=RunResponse)
+async def submit_payment_proof(
+    run_id: uuid.UUID,
+    order_id: uuid.UUID,
+    body: PaymentProofSubmitRequest,
+    user: User = Depends(get_current_user),
+    svc: RunService = Depends(_service),
+) -> RunResponse:
+    """Requester confirms off-app payment; proof surfaces on the runner's card."""
+    run = await svc.submit_payment_proof(
+        run_id=run_id, order_id=order_id, user=user, proof_key=body.proof_key, note=body.note
+    )
     return run_response(run, viewer_id=user.id)
 
 

@@ -16,17 +16,33 @@ String runFeeAmount(int cents) => cents % 100 == 0
     ? '\$${cents ~/ 100}'
     : '\$${(cents / 100).toStringAsFixed(2)}';
 
-/// Countdown copy for the leaving chip. Recomputed on every poll so it
-/// stays live-ish without a per-second ticker.
+/// The exact departure time for the leaving chip, e.g. `Leaving 3:45 PM`.
+/// A day prefix is added when the run isn't today (`Leaving tomorrow 8:00 AM`,
+/// `Leaving Fri 9:15 AM`) so the time is never ambiguous.
 String leavingLabel(DateTime leavingAt, {DateTime? now}) {
-  final delta = leavingAt.toUtc().difference((now ?? DateTime.now()).toUtc());
-  if (delta.inMinutes < 1) return 'Leaving now';
-  if (delta.inMinutes < 60) return 'Leaving in ${delta.inMinutes}m';
-  final hours = delta.inHours;
-  final minutes = delta.inMinutes % 60;
-  return minutes == 0
-      ? 'Leaving in ${hours}h'
-      : 'Leaving in ${hours}h ${minutes}m';
+  final local = leavingAt.toLocal();
+  final current = (now ?? DateTime.now()).toLocal();
+  final prefix = _dayPrefix(local, current);
+  final time = clockTime(local);
+  return prefix == null ? 'Leaving $time' : 'Leaving $prefix $time';
+}
+
+/// 12-hour clock label with an AM/PM suffix, e.g. `3:45 PM`, `12:00 AM`.
+String clockTime(DateTime dt) {
+  final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final period = dt.hour < 12 ? 'AM' : 'PM';
+  return '$hour12:$minute $period';
+}
+
+String? _dayPrefix(DateTime dt, DateTime now) {
+  final target = DateTime(dt.year, dt.month, dt.day);
+  final today = DateTime(now.year, now.month, now.day);
+  final days = target.difference(today).inDays;
+  if (days == 0) return null;
+  if (days == 1) return 'tomorrow';
+  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  return weekdays[dt.weekday - 1];
 }
 
 /// Human label per run status.

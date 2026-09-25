@@ -10,8 +10,14 @@ import 'package:dio/dio.dart';
 
 import 'package:built_collection/built_collection.dart';
 import 'package:campus_api/src/api_util.dart';
+import 'package:campus_api/src/model/dropoff_location_create_request.dart';
+import 'package:campus_api/src/model/dropoff_location_response.dart';
+import 'package:campus_api/src/model/food_spot_create_request.dart';
 import 'package:campus_api/src/model/food_spot_response.dart';
 import 'package:campus_api/src/model/http_validation_error.dart';
+import 'package:campus_api/src/model/payment_proof_submit_request.dart';
+import 'package:campus_api/src/model/payment_proof_upload_url_request.dart';
+import 'package:campus_api/src/model/payment_proof_upload_url_response.dart';
 import 'package:campus_api/src/model/run_create_request.dart';
 import 'package:campus_api/src/model/run_location_update_request.dart';
 import 'package:campus_api/src/model/run_order_create_request.dart';
@@ -274,6 +280,107 @@ class RunsApi {
     );
   }
 
+  /// Create Dropoff
+  /// Admin-only: add a valid drop-off point (dorm hall, landmark).
+  ///
+  /// Parameters:
+  /// * [dropoffLocationCreateRequest] 
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [DropoffLocationResponse] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<DropoffLocationResponse>> createDropoffApiV1RunsDropoffsPost({ 
+    required DropoffLocationCreateRequest dropoffLocationCreateRequest,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/api/v1/runs/dropoffs';
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'http',
+            'scheme': 'bearer',
+            'name': 'HTTPBearer',
+          },
+        ],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      const _type = FullType(DropoffLocationCreateRequest);
+      _bodyData = _serializers.serialize(dropoffLocationCreateRequest, specifiedType: _type);
+
+    } catch(error, stackTrace) {
+      throw DioException(
+         requestOptions: _options.compose(
+          _dio.options,
+          _path,
+        ),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    DropoffLocationResponse? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(DropoffLocationResponse),
+      ) as DropoffLocationResponse;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<DropoffLocationResponse>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
   /// Create Run
   /// 
   ///
@@ -364,6 +471,107 @@ class RunsApi {
     }
 
     return Response<RunResponse>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// Create Spot
+  /// Admin-only: add a campus/off-campus food spot to the catalog.
+  ///
+  /// Parameters:
+  /// * [foodSpotCreateRequest] 
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [FoodSpotResponse] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<FoodSpotResponse>> createSpotApiV1RunsSpotsPost({ 
+    required FoodSpotCreateRequest foodSpotCreateRequest,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/api/v1/runs/spots';
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'http',
+            'scheme': 'bearer',
+            'name': 'HTTPBearer',
+          },
+        ],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      const _type = FullType(FoodSpotCreateRequest);
+      _bodyData = _serializers.serialize(foodSpotCreateRequest, specifiedType: _type);
+
+    } catch(error, stackTrace) {
+      throw DioException(
+         requestOptions: _options.compose(
+          _dio.options,
+          _path,
+        ),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    FoodSpotResponse? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(FoodSpotResponse),
+      ) as FoodSpotResponse;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<FoodSpotResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -528,6 +736,85 @@ class RunsApi {
     }
 
     return Response<RunResponse>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// List Dropoffs
+  /// Valid drop-off points requesters choose from when joining a run.
+  ///
+  /// Parameters:
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [BuiltList<DropoffLocationResponse>] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<BuiltList<DropoffLocationResponse>>> listDropoffsApiV1RunsDropoffsGet({ 
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/api/v1/runs/dropoffs';
+    final _options = Options(
+      method: r'GET',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'http',
+            'scheme': 'bearer',
+            'name': 'HTTPBearer',
+          },
+        ],
+        ...?extra,
+      },
+      validateStatus: validateStatus,
+    );
+
+    final _response = await _dio.request<Object>(
+      _path,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    BuiltList<DropoffLocationResponse>? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(BuiltList, [FullType(DropoffLocationResponse)]),
+      ) as BuiltList<DropoffLocationResponse>;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<BuiltList<DropoffLocationResponse>>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -863,6 +1150,111 @@ class RunsApi {
     );
   }
 
+  /// Payment Proof Upload Url
+  /// Requester gets a signed URL to upload their transaction screenshot.
+  ///
+  /// Parameters:
+  /// * [runId] 
+  /// * [orderId] 
+  /// * [paymentProofUploadUrlRequest] 
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [PaymentProofUploadUrlResponse] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<PaymentProofUploadUrlResponse>> paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost({ 
+    required String runId,
+    required String orderId,
+    required PaymentProofUploadUrlRequest paymentProofUploadUrlRequest,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/api/v1/runs/{run_id}/orders/{order_id}/payment-proof-upload-url'.replaceAll('{' r'run_id' '}', encodeQueryParameter(_serializers, runId, const FullType(String)).toString()).replaceAll('{' r'order_id' '}', encodeQueryParameter(_serializers, orderId, const FullType(String)).toString());
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'http',
+            'scheme': 'bearer',
+            'name': 'HTTPBearer',
+          },
+        ],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      const _type = FullType(PaymentProofUploadUrlRequest);
+      _bodyData = _serializers.serialize(paymentProofUploadUrlRequest, specifiedType: _type);
+
+    } catch(error, stackTrace) {
+      throw DioException(
+         requestOptions: _options.compose(
+          _dio.options,
+          _path,
+        ),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    PaymentProofUploadUrlResponse? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(PaymentProofUploadUrlResponse),
+      ) as PaymentProofUploadUrlResponse;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<PaymentProofUploadUrlResponse>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
   /// Request Spot
   /// 
   ///
@@ -972,7 +1364,6 @@ class RunsApi {
   /// Parameters:
   /// * [cursor] 
   /// * [limit] 
-  /// * [diningDollars] - Only runs where the runner pays with dining dollars.
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -985,7 +1376,6 @@ class RunsApi {
   Future<Response<RunPageResponse>> runFeedApiV1RunsGet({ 
     String? cursor,
     int? limit = 20,
-    bool? diningDollars = false,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -1015,7 +1405,6 @@ class RunsApi {
     final _queryParameters = <String, dynamic>{
       r'cursor': encodeQueryParameter(_serializers, cursor, const FullType(String)),
       if (limit != null) r'limit': encodeQueryParameter(_serializers, limit, const FullType(int)),
-      if (diningDollars != null) r'dining_dollars': encodeQueryParameter(_serializers, diningDollars, const FullType(bool)),
     };
 
     final _response = await _dio.request<Object>(
@@ -1047,6 +1436,111 @@ class RunsApi {
     }
 
     return Response<RunPageResponse>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// Submit Payment Proof
+  /// Requester confirms off-app payment; proof surfaces on the runner&#39;s card.
+  ///
+  /// Parameters:
+  /// * [runId] 
+  /// * [orderId] 
+  /// * [paymentProofSubmitRequest] 
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [RunResponse] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<RunResponse>> submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost({ 
+    required String runId,
+    required String orderId,
+    required PaymentProofSubmitRequest paymentProofSubmitRequest,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/api/v1/runs/{run_id}/orders/{order_id}/payment-proof'.replaceAll('{' r'run_id' '}', encodeQueryParameter(_serializers, runId, const FullType(String)).toString()).replaceAll('{' r'order_id' '}', encodeQueryParameter(_serializers, orderId, const FullType(String)).toString());
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'http',
+            'scheme': 'bearer',
+            'name': 'HTTPBearer',
+          },
+        ],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      const _type = FullType(PaymentProofSubmitRequest);
+      _bodyData = _serializers.serialize(paymentProofSubmitRequest, specifiedType: _type);
+
+    } catch(error, stackTrace) {
+      throw DioException(
+         requestOptions: _options.compose(
+          _dio.options,
+          _path,
+        ),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    RunResponse? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(RunResponse),
+      ) as RunResponse;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<RunResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

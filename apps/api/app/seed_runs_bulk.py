@@ -24,10 +24,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import hash_password
 from app.db.session import async_session_factory
 from app.models import (
-    Conversation,
-    ConversationParticipant,
+    DropoffLocation,
     FoodSpot,
-    Message,
     Notification,
     Rating,
     Run,
@@ -35,7 +33,6 @@ from app.models import (
     User,
 )
 from app.models.enums import (
-    ConversationContext,
     RatingContext,
     RunOrderStatus,
     RunStatus,
@@ -86,21 +83,6 @@ _EXTRA_FIRST = [
     "Miles",
     "Nora",
     "Owen",
-]
-
-_DROPOFFS = [
-    "Juniper Hall lobby",
-    "Ironwood Hall front desk",
-    "Acacia Hall study room",
-    "Encanto Apartments courtyard",
-    "Papago Apartments mailroom",
-    "Library front steps",
-    "Student Union entrance",
-    "Lopes Way fountain",
-    "CSET building lobby",
-    "Chaparral Hall elevators",
-    "Prescott Hall lounge",
-    "The Grove picnic tables",
 ]
 
 _NOTES = [
@@ -215,7 +197,12 @@ async def _seed(session: AsyncSession) -> None:
     spots = list(
         (await session.execute(select(FoodSpot).where(FoodSpot.active.is_(True)))).scalars()
     )
-    if not users or not spots:
+    dropoffs = list(
+        (
+            await session.execute(select(DropoffLocation).where(DropoffLocation.active.is_(True)))
+        ).scalars()
+    )
+    if not users or not spots or not dropoffs:
         log.error("seed_runs_bulk.missing_base_seed")
         return
 
@@ -275,9 +262,6 @@ async def _seed(session: AsyncSession) -> None:
             fee_cents=rng.choice([0, 100, 100, 150, 200, 200, 250, 300, 500]),
             spots_max=rng.randint(1, 6),
             prepay_required=rng.random() < 0.3,
-            # ~1 in 3 runners buy on their own dining dollars (non-transferable;
-            # requesters still Venmo them back) — surfaces the badge + filter.
-            pays_with_dining_dollars=rng.random() < 0.35,
             status=status,
             completed_at=completed_at,
         )
@@ -291,52 +275,19 @@ async def _seed(session: AsyncSession) -> None:
         requesters = rng.sample([u for u in users if u.id != runner.id], k=len(statuses))
         orders = []
         for requester, order_status in zip(requesters, statuses, strict=True):
+            location = rng.choice(dropoffs)
             order = RunOrder(
                 run_id=run.id,
                 requester_id=requester.id,
                 order_text=_order_text(_spot_name(run)),
-                dropoff=rng.choice(_DROPOFFS),
+                dropoff=location.name,
+                dropoff_lat=location.lat,
+                dropoff_lng=location.lng,
                 status=order_status,
             )
             session.add(order)
             orders.append(order)
         return orders
-
-    async def _add_chat(run: Run, runner: User, orders: list[RunOrder]) -> None:
-        """Group chat exactly as the service creates it on first accept."""
-        active = [
-            o
-            for o in orders
-            if o.status
-            in (RunOrderStatus.accepted, RunOrderStatus.delivered, RunOrderStatus.received)
-        ]
-        if not active:
-            return
-        convo = Conversation(context_type=ConversationContext.run, context_id=run.id)
-        session.add(convo)
-        await session.flush()
-        run.conversation_id = convo.id
-        session.add(ConversationParticipant(conversation_id=convo.id, user_id=runner.id))
-        for order in active:
-            session.add(
-                ConversationParticipant(conversation_id=convo.id, user_id=order.requester_id)
-            )
-        openers = [
-            f"Heading to {_spot_name(run)} soon, got everyone's orders!",
-            "On my way, anything else before I leave?",
-            f"First stop {active[0].dropoff} in ~15.",
-        ]
-        session.add(
-            Message(conversation_id=convo.id, sender_id=runner.id, body=rng.choice(openers))
-        )
-        for order in active[:2]:
-            session.add(
-                Message(
-                    conversation_id=convo.id,
-                    sender_id=order.requester_id,
-                    body=rng.choice(["Thank you!!", "You're the best", "Venmo sent 🙏", "omw"]),
-                )
-            )
 
     n_open = n_active = n_done = 0
     all_runs: list[tuple[Run, User]] = []  # (run, runner) for notification payloads
@@ -360,7 +311,6 @@ async def _seed(session: AsyncSession) -> None:
             [RunOrderStatus.requested] * n_pending + [RunOrderStatus.accepted] * n_accepted,
         )
         await session.flush()
-        await _add_chat(run, runner, orders)
         all_runs.append((run, runner))
         n_open += 1
 
@@ -378,7 +328,6 @@ async def _seed(session: AsyncSession) -> None:
             statuses[0] = RunOrderStatus.delivered
         orders = await _add_orders(run, runner, statuses)
         await session.flush()
-        await _add_chat(run, runner, orders)
         all_runs.append((run, runner))
         n_active += 1
 
@@ -403,7 +352,6 @@ async def _seed(session: AsyncSession) -> None:
         ]
         orders = await _add_orders(run, runner, statuses)
         await session.flush()
-        await _add_chat(run, runner, orders)
         all_runs.append((run, runner))
         for order in orders:
             if order.status != RunOrderStatus.received:

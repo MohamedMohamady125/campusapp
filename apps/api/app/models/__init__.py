@@ -9,7 +9,7 @@ from app.models.messaging import Conversation, ConversationParticipant, Message
 from app.models.moderation import AuditLog, Rating, Report
 from app.models.monetization import Payment, Subscription
 from app.models.notification import Notification, NotificationPreference
-from app.models.run import FoodSpot, Run, RunOrder
+from app.models.run import DropoffLocation, FoodSpot, Run, RunOrder
 from app.models.user import RefreshToken, User, VerificationCode
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "ConversationParticipant",
     "Course",
     "DailyMetric",
+    "DropoffLocation",
     "Flag",
     "FoodSpot",
     "Listing",

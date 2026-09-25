@@ -20,6 +20,7 @@ from app.models import (
     ChatMembership,
     ChatMessage,
     Course,
+    DropoffLocation,
     Flag,
     FoodSpot,
     Listing,
@@ -210,6 +211,24 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float]] = [
     ),
 ]
 
+# Admin-curated drop-off catalog — requesters pick one from a dropdown so no one
+# types a random address. Names double as the denormalized order.dropoff string;
+# coordinates power the runner's multi-stop navigation. (name, desc, lat, lng)
+_DROPOFF_LOCATIONS: list[tuple[str, str, float, float]] = [
+    ("Juniper Hall lobby", "Main lobby, ground floor.", 33.5112, -112.1258),
+    ("Ironwood Hall front desk", "By the front desk / mail cubbies.", 33.5119, -112.1246),
+    ("Acacia Hall study room", "First-floor study lounge.", 33.5106, -112.1263),
+    ("Encanto Apartments courtyard", "Central courtyard seating.", 33.5088, -112.1231),
+    ("Papago Apartments mailroom", "Ground-floor mailroom.", 33.5081, -112.1224),
+    ("Library front steps", "Main entrance steps.", 33.5101, -112.1272),
+    ("Student Union entrance", "Front doors of the Union.", 33.5096, -112.1287),
+    ("Lopes Way fountain", "By the fountain on Lopes Way.", 33.5098, -112.1278),
+    ("CSET building lobby", "Engineering building lobby.", 33.5089, -112.1294),
+    ("Chaparral Hall elevators", "Ground-floor elevator bank.", 33.5124, -112.1269),
+    ("Prescott Hall lounge", "First-floor common lounge.", 33.5116, -112.1281),
+    ("The Grove picnic tables", "Outdoor picnic tables.", 33.5079, -112.1252),
+]
+
 
 async def _seed(session: AsyncSession) -> None:
     existing = (await session.execute(select(func.count()).select_from(User))).scalar_one()
@@ -326,6 +345,13 @@ async def _seed(session: AsyncSession) -> None:
         )
         spots.append(spot)
         session.add(spot)
+    # Admin-curated drop-off catalog (dropdown source for requesters).
+    for drop_name, drop_desc, drop_lat, drop_lng in _DROPOFF_LOCATIONS:
+        session.add(
+            DropoffLocation(
+                name=drop_name, description=drop_desc, active=True, lat=drop_lat, lng=drop_lng
+            )
+        )
     # Runners need at least one payment method to charge a fee.
     for user in users[:6]:
         handle = f"@{user.display_name.split()[0]}-GCU"
@@ -463,6 +489,7 @@ async def _seed(session: AsyncSession) -> None:
         listings=len(listings),
         chats=len(_CHATS),
         food_spots=len(spots),
+        dropoff_locations=len(_DROPOFF_LOCATIONS),
         runs=3,
     )
 

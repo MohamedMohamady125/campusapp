@@ -1,5 +1,7 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/network/api_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// One page of runs plus the cursor for the next (spec §2.4: every list
@@ -25,14 +27,14 @@ class RunsRepository {
     return res.data!.toList();
   }
 
-  Future<RunsPage> fetchFeed({
-    String? cursor,
-    bool diningDollars = false,
-  }) async {
-    final res = await _runs.runFeedApiV1RunsGet(
-      cursor: cursor,
-      diningDollars: diningDollars,
-    );
+  /// Admin-curated drop-off catalog — requesters pick from this (no free text).
+  Future<List<DropoffLocationResponse>> fetchDropoffs() async {
+    final res = await _runs.listDropoffsApiV1RunsDropoffsGet();
+    return res.data!.toList();
+  }
+
+  Future<RunsPage> fetchFeed({String? cursor}) async {
+    final res = await _runs.runFeedApiV1RunsGet(cursor: cursor);
     final page = res.data!;
     return RunsPage(items: page.items.toList(), nextCursor: page.nextCursor);
   }
@@ -53,7 +55,6 @@ class RunsRepository {
     required int feeCents,
     required int spotsMax,
     required bool prepayRequired,
-    bool paysWithDiningDollars = false,
     String? note,
   }) async {
     final res = await _runs.createRunApiV1RunsPost(
@@ -64,7 +65,6 @@ class RunsRepository {
           ..feeCents = feeCents
           ..spotsMax = spotsMax
           ..prepayRequired = prepayRequired
-          ..paysWithDiningDollars = paysWithDiningDollars
           ..note = note,
       ),
     );
@@ -74,14 +74,14 @@ class RunsRepository {
   Future<RunResponse> requestSpot(
     String runId,
     String orderText,
-    String dropoff,
+    String dropoffLocationId,
   ) async {
     final res = await _runs.requestSpotApiV1RunsRunIdOrdersPost(
       runId: runId,
       runOrderCreateRequest: RunOrderCreateRequest(
         (b) => b
           ..orderText = orderText
-          ..dropoff = dropoff,
+          ..dropoffLocationId = dropoffLocationId,
       ),
     );
     return res.data!;
@@ -134,6 +134,83 @@ class RunsRepository {
           orderId: orderId,
         );
     return res.data!;
+  }
+
+  /// Off-app payment proof (spec §2.5): ask the API for a signed upload, push
+  /// the screenshot bytes straight to object storage, then submit the key +
+  /// optional note so it surfaces on the runner's order card.
+  ///
+  /// The direct-to-storage POST is best-effort: in local/stub deployments the
+  /// bucket host isn't reachable, so we still record the key and note (the
+  /// runner sees the note; the image resolves once real storage is wired).
+  Future<RunResponse> submitPaymentProof({
+    required String runId,
+    required String orderId,
+    required Uint8List bytes,
+    required String contentType,
+    String? note,
+  }) async {
+    final signed = await _runs
+        // Generated client method name is fixed by the OpenAPI path.
+        // ignore: lines_longer_than_80_chars
+        .paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost(
+          runId: runId,
+          orderId: orderId,
+          paymentProofUploadUrlRequest: PaymentProofUploadUrlRequest(
+            (b) => b..contentType = contentType,
+          ),
+        );
+    final upload = signed.data!;
+    await _uploadBytes(upload.uploadUrl, upload.fields.toMap(), bytes);
+    final res = await _runs
+        .submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost(
+          runId: runId,
+          orderId: orderId,
+          paymentProofSubmitRequest: PaymentProofSubmitRequest(
+            (b) => b
+              ..proofKey = upload.key
+              ..note = note,
+          ),
+        );
+    return res.data!;
+  }
+
+  Future<void> _uploadBytes(
+    String uploadUrl,
+    Map<String, String> fields,
+    Uint8List bytes,
+  ) async {
+    try {
+      final form = FormData();
+      fields.forEach((key, value) => form.fields.add(MapEntry(key, value)));
+      form.files.add(
+        MapEntry('file', MultipartFile.fromBytes(bytes, filename: 'upload')),
+      );
+      await Dio().post<void>(uploadUrl, data: form);
+    } on Object catch (e) {
+      // Stub/unreachable bucket in local dev — proceed with the key so the
+      // submission still lands (spec §2.5 stub-tolerant client).
+      debugPrint('storage upload skipped: $e');
+    }
+  }
+
+  /// Uploads a payment-app QR code image and returns its storage key, so it
+  /// can be attached to a [PaymentMethod] via [savePaymentMethods].
+  Future<String> uploadPaymentQr({
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    final signed = await _api
+        .getUsersApi()
+        // Generated client method name is fixed by the OpenAPI path.
+        .paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost(
+          paymentQrUploadUrlRequest: PaymentQrUploadUrlRequest(
+            (b) => b..contentType = contentType,
+          ),
+        );
+    final upload = signed.data!;
+    await _uploadBytes(upload.uploadUrl, upload.fields.toMap(), bytes);
+    return upload.key;
   }
 
   Future<RunResponse> updateStatus(String runId, RunStatus status) async {

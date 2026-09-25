@@ -8,7 +8,7 @@ part of 'run_order_create_request.dart';
 
 class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   @override
-  final String dropoff;
+  final String dropoffLocationId;
   @override
   final String orderText;
 
@@ -16,7 +16,8 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
           [void Function(RunOrderCreateRequestBuilder)? updates]) =>
       (RunOrderCreateRequestBuilder()..update(updates))._build();
 
-  _$RunOrderCreateRequest._({required this.dropoff, required this.orderText})
+  _$RunOrderCreateRequest._(
+      {required this.dropoffLocationId, required this.orderText})
       : super._();
   @override
   RunOrderCreateRequest rebuild(
@@ -31,14 +32,14 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is RunOrderCreateRequest &&
-        dropoff == other.dropoff &&
+        dropoffLocationId == other.dropoffLocationId &&
         orderText == other.orderText;
   }
 
   @override
   int get hashCode {
     var _$hash = 0;
-    _$hash = $jc(_$hash, dropoff.hashCode);
+    _$hash = $jc(_$hash, dropoffLocationId.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -47,7 +48,7 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'RunOrderCreateRequest')
-          ..add('dropoff', dropoff)
+          ..add('dropoffLocationId', dropoffLocationId)
           ..add('orderText', orderText))
         .toString();
   }
@@ -57,9 +58,10 @@ class RunOrderCreateRequestBuilder
     implements Builder<RunOrderCreateRequest, RunOrderCreateRequestBuilder> {
   _$RunOrderCreateRequest? _$v;
 
-  String? _dropoff;
-  String? get dropoff => _$this._dropoff;
-  set dropoff(String? dropoff) => _$this._dropoff = dropoff;
+  String? _dropoffLocationId;
+  String? get dropoffLocationId => _$this._dropoffLocationId;
+  set dropoffLocationId(String? dropoffLocationId) =>
+      _$this._dropoffLocationId = dropoffLocationId;
 
   String? _orderText;
   String? get orderText => _$this._orderText;
@@ -72,7 +74,7 @@ class RunOrderCreateRequestBuilder
   RunOrderCreateRequestBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
-      _dropoff = $v.dropoff;
+      _dropoffLocationId = $v.dropoffLocationId;
       _orderText = $v.orderText;
       _$v = null;
     }
@@ -95,8 +97,8 @@ class RunOrderCreateRequestBuilder
   _$RunOrderCreateRequest _build() {
     final _$result = _$v ??
         _$RunOrderCreateRequest._(
-          dropoff: BuiltValueNullFieldError.checkNotNull(
-              dropoff, r'RunOrderCreateRequest', 'dropoff'),
+          dropoffLocationId: BuiltValueNullFieldError.checkNotNull(
+              dropoffLocationId, r'RunOrderCreateRequest', 'dropoffLocationId'),
           orderText: BuiltValueNullFieldError.checkNotNull(
               orderText, r'RunOrderCreateRequest', 'orderText'),
         );

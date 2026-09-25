@@ -11,6 +11,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**getMeApiV1UsersMeGet**](UsersApi.md#getmeapiv1usersmeget) | **GET** /api/v1/users/me | Get Me
 [**getPublicProfileApiV1UsersUserIdGet**](UsersApi.md#getpublicprofileapiv1usersuseridget) | **GET** /api/v1/users/{user_id} | Get Public Profile
+[**paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost**](UsersApi.md#paymentqruploadurlapiv1usersmepaymentqruploadurlpost) | **POST** /api/v1/users/me/payment-qr-upload-url | Payment Qr Upload Url
 [**updateMeApiV1UsersMePatch**](UsersApi.md#updatemeapiv1usersmepatch) | **PATCH** /api/v1/users/me | Update Me
 
 
@@ -88,6 +89,49 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost**
+> PaymentQrUploadUrlResponse paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost(paymentQrUploadUrlRequest)
+
+Payment Qr Upload Url
+
+Signed-URL direct upload for a payment-app QR code image (food-runs spec: payment is off-app — the QR just lets a requester scan-to-pay).
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getUsersApi();
+final PaymentQrUploadUrlRequest paymentQrUploadUrlRequest = ; // PaymentQrUploadUrlRequest | 
+
+try {
+    final response = api.paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost(paymentQrUploadUrlRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling UsersApi->paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **paymentQrUploadUrlRequest** | [**PaymentQrUploadUrlRequest**](PaymentQrUploadUrlRequest.md)|  | 
+
+### Return type
+
+[**PaymentQrUploadUrlResponse**](PaymentQrUploadUrlResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

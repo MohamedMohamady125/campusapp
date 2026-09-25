@@ -10,12 +10,18 @@ class _$PaymentMethod extends PaymentMethod {
   @override
   final String handle;
   @override
+  final String? qrKey;
+  @override
+  final String? qrUrl;
+  @override
   final PaymentMethodType type;
 
   factory _$PaymentMethod([void Function(PaymentMethodBuilder)? updates]) =>
       (PaymentMethodBuilder()..update(updates))._build();
 
-  _$PaymentMethod._({required this.handle, required this.type}) : super._();
+  _$PaymentMethod._(
+      {required this.handle, this.qrKey, this.qrUrl, required this.type})
+      : super._();
   @override
   PaymentMethod rebuild(void Function(PaymentMethodBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -28,6 +34,8 @@ class _$PaymentMethod extends PaymentMethod {
     if (identical(other, this)) return true;
     return other is PaymentMethod &&
         handle == other.handle &&
+        qrKey == other.qrKey &&
+        qrUrl == other.qrUrl &&
         type == other.type;
   }
 
@@ -35,6 +43,8 @@ class _$PaymentMethod extends PaymentMethod {
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, handle.hashCode);
+    _$hash = $jc(_$hash, qrKey.hashCode);
+    _$hash = $jc(_$hash, qrUrl.hashCode);
     _$hash = $jc(_$hash, type.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -44,6 +54,8 @@ class _$PaymentMethod extends PaymentMethod {
   String toString() {
     return (newBuiltValueToStringHelper(r'PaymentMethod')
           ..add('handle', handle)
+          ..add('qrKey', qrKey)
+          ..add('qrUrl', qrUrl)
           ..add('type', type))
         .toString();
   }
@@ -57,6 +69,14 @@ class PaymentMethodBuilder
   String? get handle => _$this._handle;
   set handle(String? handle) => _$this._handle = handle;
 
+  String? _qrKey;
+  String? get qrKey => _$this._qrKey;
+  set qrKey(String? qrKey) => _$this._qrKey = qrKey;
+
+  String? _qrUrl;
+  String? get qrUrl => _$this._qrUrl;
+  set qrUrl(String? qrUrl) => _$this._qrUrl = qrUrl;
+
   PaymentMethodType? _type;
   PaymentMethodType? get type => _$this._type;
   set type(PaymentMethodType? type) => _$this._type = type;
@@ -69,6 +89,8 @@ class PaymentMethodBuilder
     final $v = _$v;
     if ($v != null) {
       _handle = $v.handle;
+      _qrKey = $v.qrKey;
+      _qrUrl = $v.qrUrl;
       _type = $v.type;
       _$v = null;
     }
@@ -93,6 +115,8 @@ class PaymentMethodBuilder
         _$PaymentMethod._(
           handle: BuiltValueNullFieldError.checkNotNull(
               handle, r'PaymentMethod', 'handle'),
+          qrKey: qrKey,
+          qrUrl: qrUrl,
           type: BuiltValueNullFieldError.checkNotNull(
               type, r'PaymentMethod', 'type'),
         );

@@ -21,6 +21,36 @@ class FoodSpotResponse(BaseModel):
     lng: float | None = None
 
 
+class FoodSpotCreateRequest(BaseModel):
+    """Admin-only: add a campus/off-campus destination to the catalog."""
+
+    name: str = Field(min_length=2, max_length=120)
+    category: FoodSpotCategory = FoodSpotCategory.campus
+    description: str | None = Field(default=None, max_length=200)
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lng: float | None = Field(default=None, ge=-180, le=180)
+
+
+class DropoffLocationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    description: str | None
+    # Coordinates for the runner's multi-stop navigation (null if not geocoded).
+    lat: float | None = None
+    lng: float | None = None
+
+
+class DropoffLocationCreateRequest(BaseModel):
+    """Admin-only: add a valid drop-off point (dorm hall, landmark)."""
+
+    name: str = Field(min_length=2, max_length=120)
+    description: str | None = Field(default=None, max_length=200)
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lng: float | None = Field(default=None, ge=-180, le=180)
+
+
 class RunLocation(BaseModel):
     """The runner's last-known live position, plus when it was reported."""
 
@@ -36,9 +66,6 @@ class RunCreateRequest(BaseModel):
     fee_cents: int = Field(default=0, ge=0, le=2000)
     spots_max: int = Field(default=3, ge=1, le=10)
     prepay_required: bool = False
-    # Runner will buy on their own dining dollars (surplus meal-plan balance);
-    # requesters still reimburse via Venmo. Dining dollars are non-transferable.
-    pays_with_dining_dollars: bool = False
 
 
 class RunUserSummary(BaseModel):
@@ -58,10 +85,20 @@ class RunOrderResponse(BaseModel):
     run_id: uuid.UUID
     requester: RunUserSummary
     order_text: str
-    # Where this requester wants their food — their hall / dorm / spot.
+    # Where this requester wants their food — name of the picked drop-off.
     dropoff: str
+    # Drop-off coordinates for the runner's navigation (null if not geocoded).
+    dropoff_lat: float | None = None
+    dropoff_lng: float | None = None
     status: RunOrderStatus
     created_at: datetime
+    # Off-app payment proof (spec: app never moves money). After the runner
+    # accepts, the requester pays via the revealed handle and can attach a
+    # transaction screenshot + note. Null until submitted; the runner sees it
+    # on the order card, the requester sees it on their own order.
+    payment_proof_url: str | None = None
+    payment_note: str | None = None
+    payment_submitted_at: datetime | None = None
 
 
 class RunResponse(BaseModel):
@@ -73,9 +110,7 @@ class RunResponse(BaseModel):
     fee_cents: int
     spots_max: int
     prepay_required: bool
-    pays_with_dining_dollars: bool
     status: RunStatus
-    conversation_id: uuid.UUID | None
     accepted_count: int
     pending_count: int
     created_at: datetime
@@ -95,8 +130,28 @@ class RunPageResponse(BaseModel):
 
 class RunOrderCreateRequest(BaseModel):
     order_text: str = Field(min_length=1, max_length=500)
-    # Requester's own drop-off — which hall / dorm / spot to bring it to.
-    dropoff: str = Field(min_length=2, max_length=120)
+    # Requester picks a drop-off from the admin-curated catalog (no free text) —
+    # the service resolves this to the location's name stored on the order.
+    dropoff_location_id: uuid.UUID
+
+
+class PaymentProofUploadUrlRequest(BaseModel):
+    """Requester asks for a signed URL to upload the transaction screenshot."""
+
+    content_type: str
+
+
+class PaymentProofUploadUrlResponse(BaseModel):
+    upload_url: str
+    fields: dict[str, str]
+    key: str
+
+
+class PaymentProofSubmitRequest(BaseModel):
+    """Requester confirms they paid: the uploaded screenshot key + optional note."""
+
+    proof_key: str = Field(min_length=1, max_length=300)
+    note: str | None = Field(default=None, max_length=300)
 
 
 class RunStatusUpdateRequest(BaseModel):

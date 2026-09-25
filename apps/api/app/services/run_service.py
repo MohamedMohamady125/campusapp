@@ -21,12 +21,27 @@ from app.core.errors import (
     ConflictError,
     ForbiddenError,
     NotFoundError,
+    ValidationAppError,
 )
-from app.models import Conversation, ConversationParticipant, Run, RunOrder, User
-from app.models.enums import ConversationContext, RunOrderStatus, RunStatus
+from app.integrations.storage.base import (
+    ALLOWED_CONTENT_TYPES,
+    SignedUpload,
+    StorageProvider,
+)
+from app.integrations.storage.provider import get_storage_provider
+from app.models import (
+    DropoffLocation,
+    FoodSpot,
+    Run,
+    RunOrder,
+    User,
+)
+from app.models.enums import RunOrderStatus, RunStatus
 from app.repositories.chat_repo import NotificationRepository
 from app.repositories.run_repo import RunRepository
 from app.schemas.run import (
+    DropoffLocationCreateRequest,
+    FoodSpotCreateRequest,
     FoodSpotResponse,
     RunCreateRequest,
     RunLocation,
@@ -42,9 +57,15 @@ NOTIFICATION_TYPE_RUN_ACCEPTED = "run_request_accepted"
 NOTIFICATION_TYPE_RUN_DECLINED = "run_request_declined"
 NOTIFICATION_TYPE_RUN_STATUS = "run_status"
 NOTIFICATION_TYPE_RUN_COMPLETED = "run_completed"
+NOTIFICATION_TYPE_RUN_PAYMENT = "run_payment_submitted"
 
 # Runner ghost protection: any active run hard-expires this long after leaving.
 RUN_HARD_EXPIRY = timedelta(minutes=90)
+
+# The create form defaults the leaving time to "now"; a few seconds of clock
+# skew / submit latency shouldn't be rejected. Anything older than this is a
+# genuine past time and refused.
+LEAVING_AT_GRACE = timedelta(minutes=2)
 
 _LEGAL_TRANSITIONS: dict[RunStatus, set[RunStatus]] = {
     RunStatus.open: {RunStatus.locked, RunStatus.at_store},
@@ -74,14 +95,24 @@ def _user_summary(user: User, *, include_payment: bool = False) -> RunUserSummar
 
 
 def _order_response(order: RunOrder) -> RunOrderResponse:
+    proof_url = (
+        get_storage_provider().public_url(order.payment_proof_key)
+        if order.payment_proof_key
+        else None
+    )
     return RunOrderResponse(
         id=order.id,
         run_id=order.run_id,
         requester=_user_summary(order.requester),
         order_text=order.order_text,
         dropoff=order.dropoff,
+        dropoff_lat=order.dropoff_lat,
+        dropoff_lng=order.dropoff_lng,
         status=order.status,
         created_at=order.created_at,
+        payment_proof_url=proof_url,
+        payment_note=order.payment_note,
+        payment_submitted_at=order.payment_submitted_at,
     )
 
 
@@ -128,9 +159,7 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
         fee_cents=run.fee_cents,
         spots_max=run.spots_max,
         prepay_required=run.prepay_required,
-        pays_with_dining_dollars=run.pays_with_dining_dollars,
         status=run.status,
-        conversation_id=run.conversation_id if (is_runner or my_order is not None) else None,
         accepted_count=len(accepted) + len(received),
         pending_count=len(pending),
         created_at=run.created_at,
@@ -142,10 +171,11 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
 
 
 class RunService:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, storage: StorageProvider | None = None) -> None:
         self._session = session
         self._repo = RunRepository(session)
         self._notifications = NotificationRepository(session)
+        self._storage = storage or get_storage_provider()
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -153,7 +183,7 @@ class RunService:
         spot = await self._repo.get_spot(body.food_spot_id)
         if spot is None or not spot.active:
             raise NotFoundError("Food spot not found.", code="FOOD_SPOT_NOT_FOUND")
-        if body.leaving_at <= datetime.now(UTC):
+        if body.leaving_at <= datetime.now(UTC) - LEAVING_AT_GRACE:
             raise BusinessRuleError("Leaving time must be in the future.", code="LEAVING_AT_PAST")
         if (body.fee_cents > 0 or body.prepay_required) and not runner.payment_methods:
             raise BusinessRuleError(
@@ -168,11 +198,41 @@ class RunService:
             fee_cents=body.fee_cents,
             spots_max=body.spots_max,
             prepay_required=body.prepay_required,
-            pays_with_dining_dollars=body.pays_with_dining_dollars,
         )
         self._repo.add(run)
         await self._session.commit()
         return await self._get_or_404(run.id)
+
+    async def create_spot(self, *, body: FoodSpotCreateRequest) -> FoodSpot:
+        """Admin-only: register a new food-spot destination in the catalog."""
+        if await self._repo.spot_name_exists(body.name):
+            raise ConflictError("A spot with that name already exists.", code="FOOD_SPOT_EXISTS")
+        spot = FoodSpot(
+            name=body.name,
+            category=body.category,
+            description=body.description,
+            lat=body.lat,
+            lng=body.lng,
+        )
+        self._repo.add_spot(spot)
+        await self._session.commit()
+        await self._session.refresh(spot)
+        return spot
+
+    async def list_dropoffs(self) -> list[DropoffLocation]:
+        return await self._repo.list_dropoffs()
+
+    async def create_dropoff(self, *, body: DropoffLocationCreateRequest) -> DropoffLocation:
+        """Admin-only: register a valid drop-off point requesters can pick from."""
+        if await self._repo.dropoff_name_exists(body.name):
+            raise ConflictError("A drop-off with that name already exists.", code="DROPOFF_EXISTS")
+        dropoff = DropoffLocation(
+            name=body.name, description=body.description, lat=body.lat, lng=body.lng
+        )
+        self._repo.add_dropoff(dropoff)
+        await self._session.commit()
+        await self._session.refresh(dropoff)
+        return dropoff
 
     async def _get_or_404(self, run_id: uuid.UUID, *, for_update: bool = False) -> Run:
         run = await self._repo.get(run_id, for_update=for_update)
@@ -191,7 +251,7 @@ class RunService:
         run_id: uuid.UUID,
         user: User,
         order_text: str,
-        dropoff: str,
+        dropoff_location_id: uuid.UUID,
     ) -> Run:
         run = await self._get_or_404(run_id, for_update=True)
         if run.runner_id == user.id:
@@ -202,11 +262,18 @@ class RunService:
             raise ConflictError("You already have an order on this run.", code="DUPLICATE_ORDER")
         if self._accepted_count(run) >= run.spots_max:
             raise ConflictError("All spots on this run are taken.", code="RUN_FULL")
+        # Resolve the picked catalog location → denormalize its name onto the
+        # order so every read path stays a plain string (no free-text addresses).
+        location = await self._repo.get_dropoff(dropoff_location_id)
+        if location is None or not location.active:
+            raise NotFoundError("Drop-off location not found.", code="DROPOFF_NOT_FOUND")
         order = RunOrder(
             run_id=run.id,
             requester_id=user.id,
             order_text=order_text,
-            dropoff=dropoff,
+            dropoff=location.name,
+            dropoff_lat=location.lat,
+            dropoff_lng=location.lng,
         )
         self._repo.add(order)
         await self._session.flush()
@@ -241,7 +308,6 @@ class RunService:
         if self._accepted_count(run) >= run.spots_max:
             raise ConflictError("All spots on this run are taken.", code="RUN_FULL")
         order.status = RunOrderStatus.accepted
-        await self._join_run_conversation(run, order.requester_id, actor)
         await self._notify(
             order.requester_id,
             NOTIFICATION_TYPE_RUN_ACCEPTED,
@@ -267,6 +333,76 @@ class RunService:
             dedup_key="order_id",
             dedup_value=str(order.id),
             extra={"order_id": str(order.id)},
+        )
+        await self._session.commit()
+        return await self._get_or_404(run_id)
+
+    # -- payment proof -----------------------------------------------------
+
+    _PAYABLE_STATUSES = (
+        RunOrderStatus.accepted,
+        RunOrderStatus.delivered,
+        RunOrderStatus.received,
+    )
+
+    async def create_payment_proof_upload(
+        self, *, run_id: uuid.UUID, order_id: uuid.UUID, user: User, content_type: str
+    ) -> SignedUpload:
+        """Signed-URL direct upload for the requester's transaction screenshot.
+
+        Off-app payment (spec: the app never moves money) — the requester pays
+        via the runner's revealed handle, then attaches proof here. Only the
+        requester on an accepted order may upload.
+        """
+        if content_type not in ALLOWED_CONTENT_TYPES:
+            raise ValidationAppError(
+                "Unsupported image type.",
+                code="UNSUPPORTED_CONTENT_TYPE",
+                details={"allowed": sorted(ALLOWED_CONTENT_TYPES)},
+            )
+        run = await self._get_or_404(run_id)
+        order = self._order_in(run, order_id)
+        if order.requester_id != user.id:
+            raise ForbiddenError("Not your order.", code="NOT_REQUESTER")
+        if order.status not in self._PAYABLE_STATUSES:
+            raise ConflictError(
+                "You can only submit payment after the runner accepts.",
+                code="ORDER_NOT_ACCEPTED",
+            )
+        ext = content_type.split("/")[-1]
+        key = f"run-payments/{order.id}/{uuid.uuid4()}.{ext}"
+        return await self._storage.create_signed_upload(key=key, content_type=content_type)
+
+    async def submit_payment_proof(
+        self,
+        *,
+        run_id: uuid.UUID,
+        order_id: uuid.UUID,
+        user: User,
+        proof_key: str,
+        note: str | None,
+    ) -> Run:
+        """Requester confirms payment: store the screenshot key + note and ping
+        the runner so it surfaces on their order card (least-friction proof)."""
+        run = await self._get_or_404(run_id)
+        order = self._order_in(run, order_id)
+        if order.requester_id != user.id:
+            raise ForbiddenError("Not your order.", code="NOT_REQUESTER")
+        if order.status not in self._PAYABLE_STATUSES:
+            raise ConflictError(
+                "You can only submit payment after the runner accepts.",
+                code="ORDER_NOT_ACCEPTED",
+            )
+        order.payment_proof_key = proof_key
+        order.payment_note = note
+        order.payment_submitted_at = datetime.now(UTC)
+        await self._notify(
+            run.runner_id,
+            NOTIFICATION_TYPE_RUN_PAYMENT,
+            run=run,
+            dedup_key="order_id",
+            dedup_value=str(order.id),
+            extra={"order_id": str(order.id), "requester_name": user.display_name},
         )
         await self._session.commit()
         return await self._get_or_404(run_id)
@@ -414,24 +550,6 @@ class RunService:
         if order is None:
             raise NotFoundError("Order not found.", code="ORDER_NOT_FOUND")
         return order
-
-    async def _join_run_conversation(self, run: Run, requester_id: uuid.UUID, runner: User) -> None:
-        """Create the run group chat on first accept; append participants after.
-
-        Bypasses MessagingService.get_or_create_conversation (2-party helper);
-        Conversation itself is N-participant safe.
-        """
-        if run.conversation_id is None:
-            conversation = Conversation(context_type=ConversationContext.run, context_id=run.id)
-            self._session.add(conversation)
-            await self._session.flush()
-            run.conversation_id = conversation.id
-            self._session.add(
-                ConversationParticipant(conversation_id=conversation.id, user_id=runner.id)
-            )
-        self._session.add(
-            ConversationParticipant(conversation_id=run.conversation_id, user_id=requester_id)
-        )
 
     async def _notify(
         self,

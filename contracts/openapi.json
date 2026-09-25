@@ -511,6 +511,113 @@
         "title": "DailyMetricItem",
         "type": "object"
       },
+      "DropoffLocationCreateRequest": {
+        "description": "Admin-only: add a valid drop-off point (dorm hall, landmark).",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "maximum": 180.0,
+                "minimum": -180.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "DropoffLocationCreateRequest",
+        "type": "object"
+      },
+      "DropoffLocationResponse": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "title": "DropoffLocationResponse",
+        "type": "object"
+      },
       "FlagItem": {
         "properties": {
           "enabled": {
@@ -541,6 +648,64 @@
         ],
         "title": "FoodSpotCategory",
         "type": "string"
+      },
+      "FoodSpotCreateRequest": {
+        "description": "Admin-only: add a campus/off-campus destination to the catalog.",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/FoodSpotCategory",
+            "default": "campus"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "maximum": 180.0,
+                "minimum": -180.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "FoodSpotCreateRequest",
+        "type": "object"
       },
       "FoodSpotResponse": {
         "properties": {
@@ -1308,13 +1473,36 @@
         "type": "object"
       },
       "PaymentMethod": {
-        "description": "One off-app payment rail a runner advertises (food-runs spec).\n\n`handle` is a plain-text tag / phone / email for the third-party app;\nit is escaped on display and never used to move money in-app.",
+        "description": "One off-app payment rail a runner advertises (food-runs spec).\n\n`handle` is a plain-text phone / email / username for the third-party\napp; it is escaped on display and never used to move money in-app.\nOptionally the runner attaches their app's QR code image (`qr_key`,\nuploaded via /users/me/payment-qr-upload-url) so payers can just scan.",
         "properties": {
           "handle": {
             "maxLength": 64,
             "minLength": 2,
             "title": "Handle",
             "type": "string"
+          },
+          "qr_key": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qr Key"
+          },
+          "qr_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qr Url"
           },
           "type": {
             "$ref": "#/components/schemas/PaymentMethodType"
@@ -1338,6 +1526,114 @@
         ],
         "title": "PaymentMethodType",
         "type": "string"
+      },
+      "PaymentProofSubmitRequest": {
+        "description": "Requester confirms they paid: the uploaded screenshot key + optional note.",
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "proof_key": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Proof Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proof_key"
+        ],
+        "title": "PaymentProofSubmitRequest",
+        "type": "object"
+      },
+      "PaymentProofUploadUrlRequest": {
+        "description": "Requester asks for a signed URL to upload the transaction screenshot.",
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_type"
+        ],
+        "title": "PaymentProofUploadUrlRequest",
+        "type": "object"
+      },
+      "PaymentProofUploadUrlResponse": {
+        "properties": {
+          "fields": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "upload_url": {
+            "title": "Upload Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_url",
+          "fields",
+          "key"
+        ],
+        "title": "PaymentProofUploadUrlResponse",
+        "type": "object"
+      },
+      "PaymentQrUploadUrlRequest": {
+        "description": "Runner asks for a signed URL to upload a payment-app QR code image.",
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_type"
+        ],
+        "title": "PaymentQrUploadUrlRequest",
+        "type": "object"
+      },
+      "PaymentQrUploadUrlResponse": {
+        "properties": {
+          "fields": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "upload_url": {
+            "title": "Upload Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_url",
+          "fields",
+          "key"
+        ],
+        "title": "PaymentQrUploadUrlResponse",
+        "type": "object"
       },
       "RankedTutorResponse": {
         "properties": {
@@ -1821,11 +2117,6 @@
             ],
             "title": "Note"
           },
-          "pays_with_dining_dollars": {
-            "default": false,
-            "title": "Pays With Dining Dollars",
-            "type": "boolean"
-          },
           "prepay_required": {
             "default": false,
             "title": "Prepay Required",
@@ -1896,10 +2187,9 @@
       },
       "RunOrderCreateRequest": {
         "properties": {
-          "dropoff": {
-            "maxLength": 120,
-            "minLength": 2,
-            "title": "Dropoff",
+          "dropoff_location_id": {
+            "format": "uuid",
+            "title": "Dropoff Location Id",
             "type": "string"
           },
           "order_text": {
@@ -1911,7 +2201,7 @@
         },
         "required": [
           "order_text",
-          "dropoff"
+          "dropoff_location_id"
         ],
         "title": "RunOrderCreateRequest",
         "type": "object"
@@ -1927,6 +2217,28 @@
             "title": "Dropoff",
             "type": "string"
           },
+          "dropoff_lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dropoff Lat"
+          },
+          "dropoff_lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dropoff Lng"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -1935,6 +2247,40 @@
           "order_text": {
             "title": "Order Text",
             "type": "string"
+          },
+          "payment_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Note"
+          },
+          "payment_proof_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Proof Url"
+          },
+          "payment_submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Submitted At"
           },
           "requester": {
             "$ref": "#/components/schemas/RunUserSummary"
@@ -2008,18 +2354,6 @@
             "title": "Accepted Count",
             "type": "integer"
           },
-          "conversation_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Conversation Id"
-          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -2071,10 +2405,6 @@
             "title": "Orders",
             "type": "array"
           },
-          "pays_with_dining_dollars": {
-            "title": "Pays With Dining Dollars",
-            "type": "boolean"
-          },
           "pending_count": {
             "title": "Pending Count",
             "type": "integer"
@@ -2113,9 +2443,7 @@
           "fee_cents",
           "spots_max",
           "prepay_required",
-          "pays_with_dining_dollars",
           "status",
-          "conversation_id",
           "accepted_count",
           "pending_count",
           "created_at"
@@ -4994,18 +5322,6 @@
               "title": "Limit",
               "type": "integer"
             }
-          },
-          {
-            "description": "Only runs where the runner pays with dining dollars.",
-            "in": "query",
-            "name": "dining_dollars",
-            "required": false,
-            "schema": {
-              "default": false,
-              "description": "Only runs where the runner pays with dining dollars.",
-              "title": "Dining Dollars",
-              "type": "boolean"
-            }
           }
         ],
         "responses": {
@@ -5085,6 +5401,82 @@
         ]
       }
     },
+    "/api/v1/runs/dropoffs": {
+      "get": {
+        "description": "Valid drop-off points requesters choose from when joining a run.",
+        "operationId": "list_dropoffs_api_v1_runs_dropoffs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DropoffLocationResponse"
+                  },
+                  "title": "Response List Dropoffs Api V1 Runs Dropoffs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Dropoffs",
+        "tags": [
+          "runs"
+        ]
+      },
+      "post": {
+        "description": "Admin-only: add a valid drop-off point (dorm hall, landmark).",
+        "operationId": "create_dropoff_api_v1_runs_dropoffs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DropoffLocationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropoffLocationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Dropoff",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
     "/api/v1/runs/mine": {
       "get": {
         "operationId": "my_runs_api_v1_runs_mine_get",
@@ -5136,6 +5528,51 @@
           }
         ],
         "summary": "List Spots",
+        "tags": [
+          "runs"
+        ]
+      },
+      "post": {
+        "description": "Admin-only: add a campus/off-campus food spot to the catalog.",
+        "operationId": "create_spot_api_v1_runs_spots_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodSpotCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodSpotResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Spot",
         "tags": [
           "runs"
         ]
@@ -5636,6 +6073,144 @@
         ]
       }
     },
+    "/api/v1/runs/{run_id}/orders/{order_id}/payment-proof": {
+      "post": {
+        "description": "Requester confirms off-app payment; proof surfaces on the runner's card.",
+        "operationId": "submit_payment_proof_api_v1_runs__run_id__orders__order_id__payment_proof_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentProofSubmitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit Payment Proof",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}/payment-proof-upload-url": {
+      "post": {
+        "description": "Requester gets a signed URL to upload their transaction screenshot.",
+        "operationId": "payment_proof_upload_url_api_v1_runs__run_id__orders__order_id__payment_proof_upload_url_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentProofUploadUrlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentProofUploadUrlResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Payment Proof Upload Url",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
     "/api/v1/runs/{run_id}/orders/{order_id}/received": {
       "post": {
         "operationId": "confirm_received_api_v1_runs__run_id__orders__order_id__received_post",
@@ -6004,6 +6579,53 @@
           }
         ],
         "summary": "Update Me",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/payment-qr-upload-url": {
+      "post": {
+        "description": "Signed-URL direct upload for a payment-app QR code image (food-runs\nspec: payment is off-app \u2014 the QR just lets a requester scan-to-pay).",
+        "operationId": "payment_qr_upload_url_api_v1_users_me_payment_qr_upload_url_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentQrUploadUrlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentQrUploadUrlResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Payment Qr Upload Url",
         "tags": [
           "users"
         ]

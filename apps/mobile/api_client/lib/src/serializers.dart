@@ -33,8 +33,11 @@ import 'package:campus_api/src/model/conversation_page_response.dart';
 import 'package:campus_api/src/model/conversation_response.dart';
 import 'package:campus_api/src/model/course_response.dart';
 import 'package:campus_api/src/model/daily_metric_item.dart';
+import 'package:campus_api/src/model/dropoff_location_create_request.dart';
+import 'package:campus_api/src/model/dropoff_location_response.dart';
 import 'package:campus_api/src/model/flag_item.dart';
 import 'package:campus_api/src/model/food_spot_category.dart';
+import 'package:campus_api/src/model/food_spot_create_request.dart';
 import 'package:campus_api/src/model/food_spot_response.dart';
 import 'package:campus_api/src/model/forgot_password_request.dart';
 import 'package:campus_api/src/model/http_validation_error.dart';
@@ -66,6 +69,11 @@ import 'package:campus_api/src/model/offering_create_request.dart';
 import 'package:campus_api/src/model/offering_response.dart';
 import 'package:campus_api/src/model/payment_method.dart';
 import 'package:campus_api/src/model/payment_method_type.dart';
+import 'package:campus_api/src/model/payment_proof_submit_request.dart';
+import 'package:campus_api/src/model/payment_proof_upload_url_request.dart';
+import 'package:campus_api/src/model/payment_proof_upload_url_response.dart';
+import 'package:campus_api/src/model/payment_qr_upload_url_request.dart';
+import 'package:campus_api/src/model/payment_qr_upload_url_response.dart';
 import 'package:campus_api/src/model/ranked_tutor_response.dart';
 import 'package:campus_api/src/model/rating_context.dart';
 import 'package:campus_api/src/model/rating_create_request.dart';
@@ -126,8 +134,11 @@ part 'serializers.g.dart';
   ConversationResponse,
   CourseResponse,
   DailyMetricItem,
+  DropoffLocationCreateRequest,
+  DropoffLocationResponse,
   FlagItem,
   FoodSpotCategory,
+  FoodSpotCreateRequest,
   FoodSpotResponse,
   ForgotPasswordRequest,
   HTTPValidationError,
@@ -159,6 +170,11 @@ part 'serializers.g.dart';
   OfferingResponse,
   PaymentMethod,
   PaymentMethodType,
+  PaymentProofSubmitRequest,
+  PaymentProofUploadUrlRequest,
+  PaymentProofUploadUrlResponse,
+  PaymentQrUploadUrlRequest,
+  PaymentQrUploadUrlResponse,
   RankedTutorResponse,
   RatingContext,
   RatingCreateRequest,
@@ -198,6 +214,10 @@ part 'serializers.g.dart';
   VerifyRequest,
 ])
 Serializers serializers = (_$serializers.toBuilder()
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(DropoffLocationResponse)]),
+        () => ListBuilder<DropoffLocationResponse>(),
+      )
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(NotificationPreferenceItem)]),
         () => ListBuilder<NotificationPreferenceItem>(),

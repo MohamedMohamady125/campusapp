@@ -26,8 +26,11 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(ConversationResponse.serializer)
       ..add(CourseResponse.serializer)
       ..add(DailyMetricItem.serializer)
+      ..add(DropoffLocationCreateRequest.serializer)
+      ..add(DropoffLocationResponse.serializer)
       ..add(FlagItem.serializer)
       ..add(FoodSpotCategory.serializer)
+      ..add(FoodSpotCreateRequest.serializer)
       ..add(FoodSpotResponse.serializer)
       ..add(ForgotPasswordRequest.serializer)
       ..add(HTTPValidationError.serializer)
@@ -61,6 +64,11 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(OfferingResponse.serializer)
       ..add(PaymentMethod.serializer)
       ..add(PaymentMethodType.serializer)
+      ..add(PaymentProofSubmitRequest.serializer)
+      ..add(PaymentProofUploadUrlRequest.serializer)
+      ..add(PaymentProofUploadUrlResponse.serializer)
+      ..add(PaymentQrUploadUrlRequest.serializer)
+      ..add(PaymentQrUploadUrlResponse.serializer)
       ..add(RankedTutorResponse.serializer)
       ..add(RatingContext.serializer)
       ..add(RatingCreateRequest.serializer)
@@ -173,6 +181,14 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(ValidationError)]),
           () => ListBuilder<ValidationError>())
+      ..addBuilderFactory(
+          const FullType(
+              BuiltMap, const [const FullType(String), const FullType(String)]),
+          () => MapBuilder<String, String>())
+      ..addBuilderFactory(
+          const FullType(
+              BuiltMap, const [const FullType(String), const FullType(String)]),
+          () => MapBuilder<String, String>())
       ..addBuilderFactory(
           const FullType(
               BuiltMap, const [const FullType(String), const FullType(String)]),

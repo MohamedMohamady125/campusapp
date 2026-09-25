@@ -9,15 +9,23 @@ import 'package:built_value/serializer.dart';
 
 part 'payment_method.g.dart';
 
-/// One off-app payment rail a runner advertises (food-runs spec).  `handle` is a plain-text tag / phone / email for the third-party app; it is escaped on display and never used to move money in-app.
+/// One off-app payment rail a runner advertises (food-runs spec).  `handle` is a plain-text phone / email / username for the third-party app; it is escaped on display and never used to move money in-app. Optionally the runner attaches their app's QR code image (`qr_key`, uploaded via /users/me/payment-qr-upload-url) so payers can just scan.
 ///
 /// Properties:
 /// * [handle] 
+/// * [qrKey] 
+/// * [qrUrl] 
 /// * [type] 
 @BuiltValue()
 abstract class PaymentMethod implements Built<PaymentMethod, PaymentMethodBuilder> {
   @BuiltValueField(wireName: r'handle')
   String get handle;
+
+  @BuiltValueField(wireName: r'qr_key')
+  String? get qrKey;
+
+  @BuiltValueField(wireName: r'qr_url')
+  String? get qrUrl;
 
   @BuiltValueField(wireName: r'type')
   PaymentMethodType get type;
@@ -51,6 +59,20 @@ class _$PaymentMethodSerializer implements PrimitiveSerializer<PaymentMethod> {
       object.handle,
       specifiedType: const FullType(String),
     );
+    if (object.qrKey != null) {
+      yield r'qr_key';
+      yield serializers.serialize(
+        object.qrKey,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
+    if (object.qrUrl != null) {
+      yield r'qr_url';
+      yield serializers.serialize(
+        object.qrUrl,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
     yield r'type';
     yield serializers.serialize(
       object.type,
@@ -85,6 +107,22 @@ class _$PaymentMethodSerializer implements PrimitiveSerializer<PaymentMethod> {
             specifiedType: const FullType(String),
           ) as String;
           result.handle = valueDes;
+          break;
+        case r'qr_key':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.qrKey = valueDes;
+          break;
+        case r'qr_url':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.qrUrl = valueDes;
           break;
         case r'type':
           final valueDes = serializers.deserialize(

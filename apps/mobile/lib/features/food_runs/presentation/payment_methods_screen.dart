@@ -5,7 +5,9 @@ import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// Manage the off-app payment rails a runner advertises (food-runs spec).
 /// CampusConnect never moves money — these handles are shown to people the
@@ -141,7 +143,9 @@ class _MethodTile extends StatelessWidget {
     return ListTile(
       leading: Icon(method.type.icon),
       title: Text(method.type.label),
-      subtitle: Text(method.handle),
+      subtitle: Text(
+        method.qrKey == null ? method.handle : '${method.handle} · QR added',
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -210,21 +214,28 @@ class _EmptyMethods extends StatelessWidget {
   }
 }
 
-/// Bottom-sheet editor: pick a rail + enter its handle. Returns the built
-/// [PaymentMethod] on save, or null on cancel.
-class _PaymentMethodEditor extends StatefulWidget {
+/// Bottom-sheet editor: pick a rail + enter its handle (phone, email, or
+/// username) and optionally attach the app's QR code image. Returns the
+/// built [PaymentMethod] on save, or null on cancel.
+class _PaymentMethodEditor extends ConsumerStatefulWidget {
   const _PaymentMethodEditor({required this.existing, required this.usedTypes});
 
   final PaymentMethod? existing;
   final Set<PaymentMethodType> usedTypes;
 
   @override
-  State<_PaymentMethodEditor> createState() => _PaymentMethodEditorState();
+  ConsumerState<_PaymentMethodEditor> createState() =>
+      _PaymentMethodEditorState();
 }
 
-class _PaymentMethodEditorState extends State<_PaymentMethodEditor> {
+class _PaymentMethodEditorState extends ConsumerState<_PaymentMethodEditor> {
   late PaymentMethodType _type;
   late final TextEditingController _handle;
+  final _picker = ImagePicker();
+  String? _qrKey;
+  String? _qrUrl;
+  Uint8List? _qrBytes;
+  bool _uploadingQr = false;
 
   @override
   void initState() {
@@ -236,12 +247,52 @@ class _PaymentMethodEditorState extends State<_PaymentMethodEditor> {
         widget.existing?.type ??
         (available.isEmpty ? kSelectablePaymentTypes.first : available.first);
     _handle = TextEditingController(text: widget.existing?.handle ?? '');
+    _qrKey = widget.existing?.qrKey;
+    _qrUrl = widget.existing?.qrUrl;
   }
 
   @override
   void dispose() {
     _handle.dispose();
     super.dispose();
+  }
+
+  String _contentType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  Future<void> _pickQr() async {
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      imageQuality: 90,
+    );
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+    setState(() => _uploadingQr = true);
+    try {
+      final key = await ref
+          .read(runsRepositoryProvider)
+          .uploadPaymentQr(bytes: bytes, contentType: _contentType(file.path));
+      if (!mounted) return;
+      setState(() {
+        _qrKey = key;
+        _qrUrl = null;
+        _qrBytes = bytes;
+      });
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingQr = false);
+    }
   }
 
   void _save() {
@@ -251,7 +302,8 @@ class _PaymentMethodEditorState extends State<_PaymentMethodEditor> {
       PaymentMethod(
         (b) => b
           ..type = _type
-          ..handle = handle,
+          ..handle = handle
+          ..qrKey = _qrKey,
       ),
     );
   }
@@ -302,16 +354,116 @@ class _PaymentMethodEditorState extends State<_PaymentMethodEditor> {
             controller: _handle,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: 'Handle',
+              labelText: 'Phone, email, or username',
               hintText: _type.handleHint,
             ),
             onSubmitted: (_) => _save(),
           ),
+          SizedBox(height: tokens.space3),
+          _QrPickerRow(
+            qrBytes: _qrBytes,
+            qrUrl: _qrUrl,
+            hasQr: _qrKey != null,
+            uploading: _uploadingQr,
+            onPick: _uploadingQr ? null : _pickQr,
+            onRemove: _qrKey == null || _uploadingQr
+                ? null
+                : () => setState(() {
+                    _qrKey = null;
+                    _qrUrl = null;
+                    _qrBytes = null;
+                  }),
+          ),
           SizedBox(height: tokens.space5),
           FilledButton(
-            onPressed: _save,
+            onPressed: _uploadingQr ? null : _save,
             child: const Text('Save'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Optional QR-code attachment: pick the payment app's QR image so payers
+/// can scan instead of typing the handle. Shows a small preview once set.
+class _QrPickerRow extends StatelessWidget {
+  const _QrPickerRow({
+    required this.qrBytes,
+    required this.qrUrl,
+    required this.hasQr,
+    required this.uploading,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  final Uint8List? qrBytes;
+  final String? qrUrl;
+  final bool hasQr;
+  final bool uploading;
+  final VoidCallback? onPick;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    Widget? preview;
+    if (qrBytes != null) {
+      preview = Image.memory(qrBytes!, fit: BoxFit.cover);
+    } else if (hasQr && qrUrl != null && qrUrl!.isNotEmpty) {
+      preview = Image.network(
+        qrUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) =>
+            const Icon(Icons.qr_code_2, color: Colors.grey),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.all(tokens.space3),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: tokens.brXs,
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          if (preview != null)
+            ClipRRect(
+              borderRadius: tokens.brXs,
+              child: SizedBox(width: 48, height: 48, child: preview),
+            )
+          else
+            Icon(Icons.qr_code_2, size: 32, color: colors.onSurfaceVariant),
+          SizedBox(width: tokens.space3),
+          Expanded(
+            child: Text(
+              hasQr ? 'QR code attached' : "Add your app's QR code (optional)",
+              style: context.text.bodyMedium,
+            ),
+          ),
+          if (uploading)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else if (hasQr) ...[
+            IconButton(
+              tooltip: 'Replace QR',
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.refresh, size: 20),
+              onPressed: onPick,
+            ),
+            IconButton(
+              tooltip: 'Remove QR',
+              visualDensity: VisualDensity.compact,
+              icon: Icon(Icons.close, size: 20, color: colors.error),
+              onPressed: onRemove,
+            ),
+          ] else
+            TextButton(onPressed: onPick, child: const Text('Upload')),
         ],
       ),
     );

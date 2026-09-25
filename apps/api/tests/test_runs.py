@@ -4,11 +4,17 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.db.session import async_session_factory
-from app.models import Conversation, ConversationParticipant, FoodSpot, Notification, Run
-from app.models.enums import FoodSpotCategory
+from app.models import (
+    DropoffLocation,
+    FoodSpot,
+    Notification,
+    Run,
+    User,
+)
+from app.models.enums import FoodSpotCategory, UserRole
 from app.workers.jobs import expire_runs_job
 from tests.helpers import make_user
 
@@ -19,6 +25,18 @@ async def _make_spot(name: str = "Chick-fil-A") -> str:
         session.add(spot)
         await session.commit()
         return str(spot.id)
+
+
+async def _make_dropoff(name: str | None = None) -> str:
+    # Unique default name so a test can create several catalog entries without
+    # tripping the name uniqueness constraint.
+    async with async_session_factory() as session:
+        loc = DropoffLocation(
+            name=name or f"Hall {uuid.uuid4().hex[:8]}", description=None, active=True
+        )
+        session.add(loc)
+        await session.commit()
+        return str(loc.id)
 
 
 def _payload(spot_id: str, **overrides: object) -> dict[str, object]:
@@ -33,9 +51,9 @@ def _payload(spot_id: str, **overrides: object) -> dict[str, object]:
     return body
 
 
-def _order_body(order_text: str = "food", dropoff: str = "Chaparral Hall lobby") -> dict[str, str]:
-    """A requester's order body — order text plus their own drop-off spot."""
-    return {"order_text": order_text, "dropoff": dropoff}
+def _order_body(order_text: str = "food", *, dropoff_id: str) -> dict[str, str]:
+    """A requester's order body — order text plus a picked drop-off location id."""
+    return {"order_text": order_text, "dropoff_location_id": dropoff_id}
 
 
 async def _set_payment(client: httpx.AsyncClient, headers: dict[str, str]) -> None:
@@ -76,7 +94,49 @@ async def test_payment_methods_accept_rail_specific_handles(
 
     me = await client.get("/api/v1/users/me", headers=runner)
     assert me.status_code == 200, me.text
-    assert me.json()["payment_methods"] == methods
+    saved = [{"type": m["type"], "handle": m["handle"]} for m in me.json()["payment_methods"]]
+    assert saved == methods
+
+
+async def test_payment_method_qr_code(client: httpx.AsyncClient) -> None:
+    """A runner can attach a payment-app QR code image to a method."""
+    runner = await make_user(client, "runner@campus.edu")
+
+    signed = await client.post(
+        "/api/v1/users/me/payment-qr-upload-url",
+        json={"content_type": "image/png"},
+        headers=runner,
+    )
+    assert signed.status_code == 200, signed.text
+    key = signed.json()["key"]
+    assert key.startswith("payment-qr/")
+
+    patch = await client.patch(
+        "/api/v1/users/me",
+        json={"payment_methods": [{"type": "venmo", "handle": "@ben", "qr_key": key}]},
+        headers=runner,
+    )
+    assert patch.status_code == 200, patch.text
+    method = patch.json()["payment_methods"][0]
+    assert method["qr_key"] == key
+    assert method["qr_url"]  # derived, non-empty
+
+    # Keys outside the payment-qr namespace are rejected (can't point a
+    # handle at someone else's private object).
+    bad = await client.patch(
+        "/api/v1/users/me",
+        json={"payment_methods": [{"type": "venmo", "handle": "@ben", "qr_key": "avatars/x.png"}]},
+        headers=runner,
+    )
+    assert bad.status_code == 400, bad.text
+
+    # Unsupported content type is refused.
+    bad_type = await client.post(
+        "/api/v1/users/me/payment-qr-upload-url",
+        json={"content_type": "application/pdf"},
+        headers=runner,
+    )
+    assert bad_type.status_code == 400, bad_type.text
 
 
 async def test_create_and_feed(client: httpx.AsyncClient) -> None:
@@ -103,7 +163,7 @@ async def test_create_validations(client: httpx.AsyncClient) -> None:
 
     resp = await client.post(
         "/api/v1/runs",
-        json=_payload(spot_id, leaving_at=(datetime.now(UTC) - timedelta(minutes=1)).isoformat()),
+        json=_payload(spot_id, leaving_at=(datetime.now(UTC) - timedelta(minutes=5)).isoformat()),
         headers=runner,
     )
     assert resp.json()["error"]["code"] == "LEAVING_AT_PAST"
@@ -116,25 +176,64 @@ async def test_create_validations(client: httpx.AsyncClient) -> None:
     assert run["fee_cents"] == 200
 
 
-async def test_dining_dollars_flag_and_filter(client: httpx.AsyncClient) -> None:
-    runner = await make_user(client, "runner@campus.edu")
-    spot_id = await _make_spot()
+async def test_create_spot_is_admin_only(client: httpx.AsyncClient) -> None:
+    student = await make_user(client, "student@campus.edu")
+    admin = await make_user(client, "admin@campus.edu")
+    async with async_session_factory() as session:
+        await session.execute(
+            update(User).where(User.email == "admin@campus.edu").values(role=UserRole.admin)
+        )
+        await session.commit()
 
-    # Defaults to False and round-trips on the response.
-    plain = await _create_run(client, runner, spot_id)
-    assert plain["pays_with_dining_dollars"] is False
-    dining = await _create_run(client, runner, spot_id, pays_with_dining_dollars=True)
-    assert dining["pays_with_dining_dollars"] is True
+    body = {"name": "The Grid Café", "category": "campus", "description": "Union coffee bar"}
 
-    # Unfiltered feed shows both runs.
-    feed = (await client.get("/api/v1/runs", headers=runner)).json()
-    assert {r["id"] for r in feed["items"]} == {plain["id"], dining["id"]}
+    # Students are locked out of creating spots.
+    forbidden = await client.post("/api/v1/runs/spots", json=body, headers=student)
+    assert forbidden.status_code == 403
+    assert forbidden.json()["error"]["code"] == "INSUFFICIENT_ROLE"
 
-    # dining_dollars=true narrows to just the dining-dollar run (filtered in SQL).
-    filtered = (
-        await client.get("/api/v1/runs", params={"dining_dollars": "true"}, headers=runner)
-    ).json()
-    assert [r["id"] for r in filtered["items"]] == [dining["id"]]
+    # Admin creates it, and it shows up in the catalog.
+    created = await client.post("/api/v1/runs/spots", json=body, headers=admin)
+    assert created.status_code == 201, created.text
+    assert created.json()["name"] == "The Grid Café"
+
+    # Duplicate names are rejected.
+    dupe = await client.post("/api/v1/runs/spots", json=body, headers=admin)
+    assert dupe.status_code == 409
+    assert dupe.json()["error"]["code"] == "FOOD_SPOT_EXISTS"
+
+    spots = (await client.get("/api/v1/runs/spots", headers=student)).json()
+    assert "The Grid Café" in {s["name"] for s in spots}
+
+
+async def test_create_dropoff_is_admin_only(client: httpx.AsyncClient) -> None:
+    student = await make_user(client, "student@campus.edu")
+    admin = await make_user(client, "admin@campus.edu")
+    async with async_session_factory() as session:
+        await session.execute(
+            update(User).where(User.email == "admin@campus.edu").values(role=UserRole.admin)
+        )
+        await session.commit()
+
+    body = {"name": "Juniper Hall lobby", "description": "Main lobby"}
+
+    # Students cannot add drop-off locations.
+    forbidden = await client.post("/api/v1/runs/dropoffs", json=body, headers=student)
+    assert forbidden.status_code == 403
+    assert forbidden.json()["error"]["code"] == "INSUFFICIENT_ROLE"
+
+    # Admin creates one, and it appears in the dropdown catalog.
+    created = await client.post("/api/v1/runs/dropoffs", json=body, headers=admin)
+    assert created.status_code == 201, created.text
+    assert created.json()["name"] == "Juniper Hall lobby"
+
+    # Duplicate names are rejected.
+    dupe = await client.post("/api/v1/runs/dropoffs", json=body, headers=admin)
+    assert dupe.status_code == 409
+    assert dupe.json()["error"]["code"] == "DROPOFF_EXISTS"
+
+    locations = (await client.get("/api/v1/runs/dropoffs", headers=student)).json()
+    assert "Juniper Hall lobby" in {loc["name"] for loc in locations}
 
 
 # -- orders -------------------------------------------------------------------
@@ -144,28 +243,41 @@ async def test_order_request_accept_flow(client: httpx.AsyncClient) -> None:
     runner = await make_user(client, "runner@campus.edu")
     req = await make_user(client, "req@campus.edu")
     spot_id = await _make_spot()
+    dropoff_id = await _make_dropoff("Willow Hall room 214")
     run = await _create_run(client, runner, spot_id)
+
+    # A random drop-off id (not in the catalog) is rejected.
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("x", dropoff_id=str(uuid.uuid4())),
+        headers=req,
+    )
+    assert resp.json()["error"]["code"] == "DROPOFF_NOT_FOUND"
 
     # Runner cannot join own run.
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json=_order_body("x"), headers=runner
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("x", dropoff_id=dropoff_id),
+        headers=runner,
     )
     assert resp.json()["error"]["code"] == "SELF_ORDER"
 
     resp = await client.post(
         f"/api/v1/runs/{run['id']}/orders",
-        json=_order_body("Spicy deluxe", dropoff="Willow Hall room 214"),
+        json=_order_body("Spicy deluxe", dropoff_id=dropoff_id),
         headers=req,
     )
     assert resp.status_code == 201
     order = resp.json()["my_order"]
     assert order["status"] == "requested"
-    # Each requester carries their own drop-off (their hall/dorm).
+    # The order's drop-off is the picked catalog location's name.
     assert order["dropoff"] == "Willow Hall room 214"
 
     # Duplicate blocked.
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json=_order_body("again"), headers=req
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("again", dropoff_id=dropoff_id),
+        headers=req,
     )
     assert resp.json()["error"]["code"] == "DUPLICATE_ORDER"
 
@@ -180,16 +292,6 @@ async def test_order_request_accept_flow(client: httpx.AsyncClient) -> None:
     body = resp.json()
     assert body["accepted_count"] == 1
     assert body["orders"][0]["status"] == "accepted"
-    assert body["conversation_id"] is not None
-
-    # Group chat exists with both participants.
-    async with async_session_factory() as session:
-        convo = (await session.execute(select(Conversation))).scalars().one()
-        assert str(convo.context_id) == run["id"]
-        participants = (
-            (await session.execute(select(ConversationParticipant.user_id))).scalars().all()
-        )
-        assert len(participants) == 2
 
 
 async def test_run_full_and_decline_and_withdraw(client: httpx.AsyncClient) -> None:
@@ -201,8 +303,11 @@ async def test_run_full_and_decline_and_withdraw(client: httpx.AsyncClient) -> N
     run = await _create_run(client, runner, spot_id, spots_max=1)
 
     async def order(headers: dict[str, str]) -> dict:
+        dropoff_id = await _make_dropoff()
         resp = await client.post(
-            f"/api/v1/runs/{run['id']}/orders", json=_order_body("food"), headers=headers
+            f"/api/v1/runs/{run['id']}/orders",
+            json=_order_body("food", dropoff_id=dropoff_id),
+            headers=headers,
         )
         return resp.json()
 
@@ -236,8 +341,11 @@ async def test_visitor_sees_counts_only(client: httpx.AsyncClient) -> None:
     spot_id = await _make_spot()
     await _set_payment(client, runner)
     run = await _create_run(client, runner, spot_id, fee_cents=300)
+    dropoff_id = await _make_dropoff()
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json=_order_body("bowl"), headers=req
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("bowl", dropoff_id=dropoff_id),
+        headers=req,
     )
     oid = resp.json()["my_order"]["id"]
     await client.post(f"/api/v1/runs/{run['id']}/orders/{oid}/accept", headers=runner)
@@ -245,24 +353,94 @@ async def test_visitor_sees_counts_only(client: httpx.AsyncClient) -> None:
     view = (await client.get(f"/api/v1/runs/{run['id']}", headers=visitor)).json()
     assert view["orders"] == []
     assert view["my_order"] is None
-    assert view["conversation_id"] is None
     assert view["runner"]["payment_methods"] == []  # payment info hidden from passers-by
     assert view["accepted_count"] == 1
 
     # The accepted requester sees the methods (they're the payment instruction).
     view = (await client.get(f"/api/v1/runs/{run['id']}", headers=req)).json()
-    assert view["runner"]["payment_methods"] == [{"type": "venmo", "handle": "@runner-gcu"}]
+    revealed = [
+        {"type": m["type"], "handle": m["handle"]} for m in view["runner"]["payment_methods"]
+    ]
+    assert revealed == [{"type": "venmo", "handle": "@runner-gcu"}]
 
 
 # -- state machine ------------------------------------------------------------
 
 
+async def test_payment_proof_flow(client: httpx.AsyncClient) -> None:
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    other = await make_user(client, "other@campus.edu")
+    spot_id = await _make_spot()
+    dropoff_id = await _make_dropoff()
+    await _set_payment(client, runner)
+    run = await _create_run(client, runner, spot_id, fee_cents=300)
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("bowl", dropoff_id=dropoff_id),
+        headers=req,
+    )
+    oid = resp.json()["my_order"]["id"]
+    base = f"/api/v1/runs/{run['id']}/orders/{oid}"
+
+    # Cannot submit payment before the runner accepts.
+    early = await client.post(
+        f"{base}/payment-proof-upload-url", json={"content_type": "image/png"}, headers=req
+    )
+    assert early.json()["error"]["code"] == "ORDER_NOT_ACCEPTED"
+
+    await client.post(f"{base}/accept", headers=runner)
+
+    # Only the requester (not a bystander) may request an upload URL.
+    forbidden = await client.post(
+        f"{base}/payment-proof-upload-url", json={"content_type": "image/png"}, headers=other
+    )
+    assert forbidden.status_code == 403
+    assert forbidden.json()["error"]["code"] == "NOT_REQUESTER"
+
+    # Unsupported content types are rejected.
+    bad = await client.post(
+        f"{base}/payment-proof-upload-url", json={"content_type": "application/pdf"}, headers=req
+    )
+    assert bad.json()["error"]["code"] == "UNSUPPORTED_CONTENT_TYPE"
+
+    signed = await client.post(
+        f"{base}/payment-proof-upload-url", json={"content_type": "image/png"}, headers=req
+    )
+    assert signed.status_code == 200, signed.text
+    key = signed.json()["key"]
+    assert key.startswith("run-payments/")
+
+    # Requester submits the proof; it surfaces on the runner's order card.
+    submit = await client.post(
+        f"{base}/payment-proof", json={"proof_key": key, "note": "sent via Venmo"}, headers=req
+    )
+    assert submit.status_code == 200, submit.text
+    my_order = submit.json()["my_order"]
+    assert my_order["payment_note"] == "sent via Venmo"
+    assert my_order["payment_proof_url"] is not None
+    assert my_order["payment_submitted_at"] is not None
+
+    # Runner sees the proof on the order in their view.
+    runner_view = (await client.get(f"/api/v1/runs/{run['id']}", headers=runner)).json()
+    assert runner_view["orders"][0]["payment_proof_url"] is not None
+    assert runner_view["orders"][0]["payment_note"] == "sent via Venmo"
+
+    # The runner was notified.
+    async with async_session_factory() as session:
+        types = (await session.execute(select(Notification.type))).scalars().all()
+    assert "run_payment_submitted" in types
+
+
 async def _accepted_run(
     client: httpx.AsyncClient, runner: dict[str, str], req: dict[str, str], spot_id: str
 ) -> tuple[dict, str]:
+    dropoff_id = await _make_dropoff()
     run = await _create_run(client, runner, spot_id)
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json=_order_body("food"), headers=req
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("food", dropoff_id=dropoff_id),
+        headers=req,
     )
     oid = resp.json()["my_order"]["id"]
     await client.post(f"/api/v1/runs/{run['id']}/orders/{oid}/accept", headers=runner)
@@ -306,8 +484,11 @@ async def test_illegal_transitions_and_at_store_declines(client: httpx.AsyncClie
     late = await make_user(client, "late@campus.edu")
     spot_id = await _make_spot()
     run, _ = await _accepted_run(client, runner, req, spot_id)
+    late_dropoff = await _make_dropoff()
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json=_order_body("late"), headers=late
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("late", dropoff_id=late_dropoff),
+        headers=late,
     )
     assert resp.status_code == 201
 
@@ -325,8 +506,11 @@ async def test_illegal_transitions_and_at_store_declines(client: httpx.AsyncClie
 
     # New orders are closed once at the store.
     other = await make_user(client, "other@campus.edu")
+    other_dropoff = await _make_dropoff()
     resp = await client.post(
-        f"/api/v1/runs/{run['id']}/orders", json=_order_body("x"), headers=other
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("x", dropoff_id=other_dropoff),
+        headers=other,
     )
     assert resp.json()["error"]["code"] == "RUN_NOT_OPEN"
 
@@ -421,8 +605,11 @@ async def test_expire_runs_job_branches(client: httpx.AsyncClient) -> None:
 
     # a) open, no accepted → expired quietly (pending request declined).
     lonely = await _create_run(client, runner, spot_id)
+    lonely_dropoff = await _make_dropoff()
     resp = await client.post(
-        f"/api/v1/runs/{lonely['id']}/orders", json=_order_body("x"), headers=req
+        f"/api/v1/runs/{lonely['id']}/orders",
+        json=_order_body("x", dropoff_id=lonely_dropoff),
+        headers=req,
     )
     assert resp.status_code == 201
     # b) open with an accepted order → auto-locked.
