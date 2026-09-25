@@ -1,13 +1,17 @@
+import 'dart:async' show Timer;
+
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/design_system/components/content_width.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/fade_slide_in.dart';
+import 'package:campusconnect/design_system/components/live_dot.dart';
 import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
+import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
@@ -283,7 +287,12 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_dateEyebrow(), style: AppTextStyles.labelWide),
+              Text(
+                _dateEyebrow(),
+                style: AppTextStyles.labelWide.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
               SizedBox(height: tokens.space1),
               Row(
                 children: [
@@ -304,6 +313,7 @@ class _Header extends StatelessWidget {
     );
   }
 
+  /// Persona: greet by time of day instead of a flat date stamp.
   static String _dateEyebrow() {
     const days = [
       'MONDAY',
@@ -315,11 +325,17 @@ class _Header extends StatelessWidget {
       'SUNDAY',
     ];
     final now = DateTime.now();
-    return '${days[now.weekday - 1]} · ${clockTime(now)}';
+    final greeting = switch (now.hour) {
+      < 5 => 'LATE NIGHT CRAVINGS',
+      < 12 => 'GOOD MORNING',
+      < 17 => 'GOOD AFTERNOON',
+      _ => 'GOOD EVENING',
+    };
+    return '$greeting · ${days[now.weekday - 1]} ${clockTime(now)}';
   }
 }
 
-/// Green "N live" pill with a static dot (motion is reserved for feedback).
+/// Green "N live" pill with a pulsing dot — signals a live, breathing feed.
 class _LivePill extends StatelessWidget {
   const _LivePill({required this.count});
 
@@ -340,14 +356,7 @@ class _LivePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: tokens.success,
-              shape: BoxShape.circle,
-            ),
-          ),
+          LiveDot(color: tokens.success),
           SizedBox(width: tokens.space1),
           Text(
             '$count live',
@@ -418,142 +427,295 @@ class _FeedFilters extends StatelessWidget {
 }
 
 /// The one run to grab now — full-bleed brand blue, glow shadow, white ink.
-class _HeroRunCard extends StatelessWidget {
+/// The countdown ticks live every second (Uber-style urgency) and the spots
+/// bar animates as seats fill.
+class _HeroRunCard extends StatefulWidget {
   const _HeroRunCard({required this.run});
 
   final RunResponse run;
 
   @override
+  State<_HeroRunCard> createState() => _HeroRunCardState();
+}
+
+class _HeroRunCardState extends State<_HeroRunCard> {
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    // Tick the countdown once a second only while it's inside the final
+    // hour — beyond that the label is a clock time and never changes.
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      final mins = widget.run.leavingAt
+          .toLocal()
+          .difference(DateTime.now())
+          .inMinutes;
+      if (mins < 60 && mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final run = widget.run;
     final tokens = context.tokens;
-    final runner = run.runner;
-    final rated = runner.ratingCount > 0;
-    final ratingText = ReputationChip.formatRating(
-      runner.reputationScore.toDouble(),
-    );
 
     return Pressable(
       onTap: () => context.go('/runs/run/${run.id}'),
       child: Container(
-        padding: EdgeInsets.all(tokens.space5),
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          // Branded depth: deep→light blue sweep instead of a flat fill.
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryDark,
+              AppColors.primary,
+              Color(0xFF2A72B4),
+            ],
+          ),
           borderRadius: tokens.brLg,
           boxShadow: AppShadows.primaryGlow,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    'CLOSING IN',
-                    style: AppTextStyles.labelWide.copyWith(
-                      color: Colors.white.withValues(alpha: .7),
-                    ),
-                  ),
-                ),
-                Text(
-                  _closingLabel(run.leavingAt),
-                  style: AppTextStyles.titleLarge.copyWith(color: Colors.white),
-                ),
-              ],
-            ),
-            SizedBox(height: tokens.space3),
-            Text(
-              run.foodSpot.name,
-              style: AppTextStyles.heading.copyWith(color: Colors.white),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: tokens.space4),
-            Row(
-              children: [
-                VerifiedAvatar(
-                  name: runner.displayName,
-                  size: AvatarSize.sm,
-                  showEmblem: false,
-                ),
-                SizedBox(width: tokens.space2),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        runner.displayName,
-                        style: context.text.bodyMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        rated
-                            ? '★ $ratingText · ${runner.ratingCount} ratings'
-                            : 'New runner',
-                        style: context.text.labelSmall?.copyWith(
-                          color: Colors.white.withValues(alpha: .75),
-                        ),
-                      ),
+            // Soft decorative glow orb in the corner — persona, not clutter.
+            Positioned(
+              top: -60,
+              right: -40,
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: .14),
+                      Colors.white.withValues(alpha: 0),
                     ],
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'FEE',
-                      style: AppTextStyles.labelTiny.copyWith(
-                        color: Colors.white.withValues(alpha: .6),
-                      ),
-                    ),
-                    Text(
-                      run.feeCents == 0 ? 'Free' : runFeeAmount(run.feeCents),
-                      style: AppTextStyles.statSmall.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-            SizedBox(height: tokens.space4),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => context.go('/runs/run/${run.id}'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColors.primary,
-                      minimumSize: const Size.fromHeight(48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: tokens.brSm,
-                      ),
-                    ),
-                    child: Text(
-                      'Attach my order',
-                      style: AppTextStyles.button.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: tokens.space2),
-                _HeroIconButton(
-                  icon: Icons.chat_bubble_outline,
-                  onTap: () => context.go('/runs/run/${run.id}'),
-                ),
-              ],
+            Padding(
+              padding: EdgeInsets.all(tokens.space5),
+              child: _heroBody(context),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _heroBody(BuildContext context) {
+    final run = widget.run;
+    final tokens = context.tokens;
+    final runner = run.runner;
+    final rated = runner.ratingCount > 0;
+    final ratingText = ReputationChip.formatRating(
+      runner.reputationScore.toDouble(),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                'CLOSING IN',
+                style: AppTextStyles.labelWide.copyWith(
+                  color: Colors.white.withValues(alpha: .7),
+                ),
+              ),
+            ),
+            Text(
+              _liveClosingLabel(run.leavingAt),
+              style: AppTextStyles.titleLarge.copyWith(
+                color: Colors.white,
+                // Tabular figures — the ticking clock never jitters
+                // horizontally (number-tabular).
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: tokens.space3),
+        Text(
+          run.foodSpot.name,
+          style: AppTextStyles.heading.copyWith(color: Colors.white),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: tokens.space4),
+        Row(
+          children: [
+            VerifiedAvatar(
+              name: runner.displayName,
+              size: AvatarSize.sm,
+              showEmblem: false,
+            ),
+            SizedBox(width: tokens.space2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    runner.displayName,
+                    style: context.text.bodyMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    rated
+                        ? '★ $ratingText · ${runner.ratingCount} ratings'
+                        : 'New runner',
+                    style: context.text.labelSmall?.copyWith(
+                      color: Colors.white.withValues(alpha: .75),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'FEE',
+                  style: AppTextStyles.labelTiny.copyWith(
+                    color: Colors.white.withValues(alpha: .6),
+                  ),
+                ),
+                Text(
+                  run.feeCents == 0 ? 'Free' : runFeeAmount(run.feeCents),
+                  style: AppTextStyles.statSmall.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        SizedBox(height: tokens.space4),
+        _SpotsBar(taken: run.acceptedCount, max: run.spotsMax),
+        SizedBox(height: tokens.space4),
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton(
+                onPressed: () => context.go('/runs/run/${run.id}'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: tokens.brSm,
+                  ),
+                ),
+                child: Text(
+                  'Attach my order',
+                  style: AppTextStyles.button.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: tokens.space2),
+            _HeroIconButton(
+              icon: Icons.chat_bubble_outline,
+              onTap: () => context.go('/runs/run/${run.id}'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Animated seat-fill bar on the hero card — "3 of 5 spots taken" as a
+/// gamified capacity meter that eases to its new width whenever the poll
+/// brings fresh numbers.
+class _SpotsBar extends StatelessWidget {
+  const _SpotsBar({required this.taken, required this.max});
+
+  final int taken;
+  final int max;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final left = max - taken;
+    final frac = max == 0 ? 0.0 : (taken / max).clamp(0.0, 1.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                left <= 0 ? 'RUN IS FULL' : 'SPOTS',
+                style: AppTextStyles.labelTiny.copyWith(
+                  color: Colors.white.withValues(alpha: .6),
+                ),
+              ),
+            ),
+            Text(
+              left <= 0 ? '$taken/$max' : '$left of $max left',
+              style: context.text.labelSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: tokens.space1),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: SizedBox(
+            height: 6,
+            child: Stack(
+              children: [
+                Container(color: Colors.white.withValues(alpha: .22)),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(end: frac),
+                  duration: AppMotion.resolve(context, AppMotion.screen),
+                  curve: AppMotion.emphasized,
+                  builder: (context, value, _) => FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: value,
+                    child: const ColoredBox(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Countdown label for the hero: `mm:ss` ticking inside the final hour,
+/// otherwise a clock time.
+String _liveClosingLabel(DateTime leavingAt) {
+  final diff = leavingAt.toLocal().difference(DateTime.now());
+  if (diff.isNegative) return 'now';
+  if (diff.inMinutes < 60) {
+    final m = diff.inMinutes;
+    final s = diff.inSeconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+  return clockTime(leavingAt.toLocal());
 }
 
 class _HeroIconButton extends StatelessWidget {
@@ -674,13 +836,6 @@ class _RunRow extends StatelessWidget {
       ),
     );
   }
-}
-
-String _closingLabel(DateTime leavingAt) {
-  final mins = leavingAt.toLocal().difference(DateTime.now()).inMinutes;
-  if (mins <= 0) return 'now';
-  if (mins < 60) return '$mins min';
-  return clockTime(leavingAt.toLocal());
 }
 
 String _spotsLabel(RunResponse run) {

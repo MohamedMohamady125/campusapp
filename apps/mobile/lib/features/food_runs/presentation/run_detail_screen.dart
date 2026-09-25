@@ -2,9 +2,11 @@ import 'dart:async' show unawaited;
 
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/design_system/components/confetti_burst.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
+import 'package:campusconnect/design_system/components/slide_to_confirm.dart';
 import 'package:campusconnect/design_system/components/swipe_action.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
@@ -72,8 +74,9 @@ class _RunDetailBody extends ConsumerWidget {
   final bool isRunner;
 
   /// Runs every action through one error surface (spec §6.3 — never a
-  /// silent failure).
-  Future<void> _act(
+  /// silent failure). Returns true on success so callers can chain
+  /// celebration moments.
+  Future<bool> _act(
     BuildContext context,
     Future<void> Function() action, {
     String? success,
@@ -87,9 +90,11 @@ class _RunDetailBody extends ConsumerWidget {
       if (success != null) {
         messenger.showSnackBar(SnackBar(content: Text(success)));
       }
+      return true;
     } on Object catch (e) {
       unawaited(HapticFeedback.heavyImpact());
       messenger.showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
+      return false;
     }
   }
 
@@ -201,14 +206,20 @@ class _RunDetailBody extends ConsumerWidget {
       ],
       if (order.status == RunOrderStatus.delivered) ...[
         SizedBox(height: tokens.space3),
-        FilledButton.icon(
-          icon: const Icon(Icons.check_circle_outline),
-          label: const Text('Confirm received'),
-          onPressed: () => _act(
-            context,
-            () => controller.confirmReceived(order.id),
-            success: 'Enjoy! Order confirmed.',
-          ),
+        // Committed, irreversible confirmation — slide, don't tap (Uber-style
+        // slide-to-confirm; a mis-tap here releases the runner).
+        SlideToConfirm(
+          label: 'Slide to confirm received',
+          icon: Icons.check_rounded,
+          onConfirmed: () async {
+            final ok = await _act(
+              context,
+              () => controller.confirmReceived(order.id),
+              success: 'Enjoy! Order confirmed.',
+            );
+            // Gamified payoff — the transaction is complete (success-feedback).
+            if (ok && context.mounted) showConfettiBurst(context);
+          },
         ),
       ],
       if (order.status == RunOrderStatus.requested) ...[
@@ -270,10 +281,16 @@ class _RunDetailBody extends ConsumerWidget {
         _RunnerStatusStepper(
           run: run,
           unresolved: unresolved,
-          onAdvance: (next) => _act(
-            context,
-            () => controller.updateStatus(next),
-          ),
+          onAdvance: (next) async {
+            final ok = await _act(
+              context,
+              () => controller.updateStatus(next),
+            );
+            // Wrapping up the run is the runner's win — celebrate it.
+            if (ok && next == RunStatus.done && context.mounted) {
+              showConfettiBurst(context);
+            }
+          },
         ),
         SizedBox(height: tokens.space3),
       ],
@@ -845,16 +862,51 @@ class _PaymentCard extends StatelessWidget {
   }
 }
 
-/// One revealed rail: icon + app label + handle, with tap-to-copy.
+/// One revealed rail: icon + app label + handle (phone/email/username), with
+/// tap-to-copy and — if the runner attached one — a scannable QR code.
 class _PaymentMethodRow extends StatelessWidget {
   const _PaymentMethodRow({required this.method});
 
   final PaymentMethod method;
 
+  void _showQr(BuildContext context, String url) {
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Scan to pay with ${method.type.label}',
+                  style: context.text.titleSmall,
+                ),
+                const SizedBox(height: 12),
+                InteractiveViewer(
+                  child: Image.network(
+                    url,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('QR image unavailable.'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
+    final qrUrl = method.qrUrl;
     return Row(
       children: [
         Icon(method.type.icon, size: 20, color: colors.onSurfaceVariant),
@@ -868,6 +920,13 @@ class _PaymentMethodRow extends StatelessWidget {
             ],
           ),
         ),
+        if (qrUrl != null && qrUrl.isNotEmpty)
+          IconButton(
+            tooltip: 'Show QR code',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.qr_code_2, size: 20),
+            onPressed: () => _showQr(context, qrUrl),
+          ),
         IconButton(
           tooltip: 'Copy',
           visualDensity: VisualDensity.compact,
@@ -896,7 +955,7 @@ class _RunnerStatusStepper extends StatelessWidget {
 
   final RunResponse run;
   final bool unresolved;
-  final ValueChanged<RunStatus> onAdvance;
+  final Future<void> Function(RunStatus) onAdvance;
 
   @override
   Widget build(BuildContext context) {
@@ -918,10 +977,12 @@ class _RunnerStatusStepper extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FilledButton.icon(
-          icon: Icon(icon),
-          label: Text(label),
-          onPressed: blocked ? null : () => onAdvance(next),
+        // Status advances are one-way — slide to commit (Uber-style).
+        SlideToConfirm(
+          label: label,
+          icon: icon,
+          enabled: !blocked,
+          onConfirmed: () => onAdvance(next),
         ),
         if (blocked) ...[
           SizedBox(height: tokens.space2),

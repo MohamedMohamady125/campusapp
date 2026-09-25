@@ -16,11 +16,16 @@ abstract final class AppTheme {
   static ThemeData dark() => _build(AppColors.dark, AppTokens.darkTokens);
 
   static ThemeData _build(ColorScheme scheme, AppTokens tokens) {
+    // Light mode sits on a blue-tinted canvas so white cards visibly float —
+    // the app reads branded, not blank-white.
+    final canvas = scheme.brightness == Brightness.light
+        ? AppColors.canvas
+        : scheme.surface;
     final base = ThemeData(
       useMaterial3: true,
       brightness: scheme.brightness,
       colorScheme: scheme,
-      scaffoldBackgroundColor: scheme.surface,
+      scaffoldBackgroundColor: canvas,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
       // iOS-feel motion on every route push, on ALL platforms.
@@ -64,7 +69,7 @@ abstract final class AppTheme {
     return base.copyWith(
       textTheme: t,
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.surface,
+        backgroundColor: canvas,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
