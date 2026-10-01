@@ -134,7 +134,13 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
         and my_order.status
         in (RunOrderStatus.accepted, RunOrderStatus.delivered, RunOrderStatus.received)
     )
-    show_payment = entitled
+    # On prepay runs reveal payment info to pending requesters too — they need
+    # the handle/QR to pay before the runner can accept (chicken-and-egg fix).
+    show_payment = entitled or (
+        run.prepay_required
+        and my_order is not None
+        and my_order.status == RunOrderStatus.requested
+    )
     # Live location: entitled viewer, run en route, and the runner has pinged.
     runner_location: RunLocation | None = None
     if (
@@ -310,6 +316,11 @@ class RunService:
             raise ConflictError("Order is not pending.", code="ORDER_NOT_PENDING")
         if self._accepted_count(run) >= run.spots_max:
             raise ConflictError("All spots on this run are taken.", code="RUN_FULL")
+        if run.prepay_required and not order.payment_submitted_at:
+            raise ConflictError(
+                "Requester must submit payment proof before you can accept on a prepay run.",
+                code="PREPAY_PROOF_REQUIRED",
+            )
         order.status = RunOrderStatus.accepted
         await self._notify(
             order.requester_id,
@@ -326,6 +337,8 @@ class RunService:
         run = await self._get_or_404(run_id)
         self._assert_runner(run, actor)
         order = self._order_in(run, order_id)
+        if order.requester_id == run.runner_id:
+            raise ConflictError("You cannot decline your own order.", code="CANNOT_DECLINE_SELF")
         if order.status != RunOrderStatus.requested:
             raise ConflictError("Order is not pending.", code="ORDER_NOT_PENDING")
         order.status = RunOrderStatus.declined
@@ -438,10 +451,19 @@ class RunService:
                 )
             run.completed_at = datetime.now(UTC)
         if status == RunStatus.at_store:
-            # Heading into the store closes the request window.
+            # Heading into the store closes the request window — notify
+            # auto-declined requesters so they know they didn't make it.
             for order in run.orders:
                 if order.status == RunOrderStatus.requested:
                     order.status = RunOrderStatus.declined
+                    await self._notify(
+                        order.requester_id,
+                        NOTIFICATION_TYPE_RUN_DECLINED,
+                        run=run,
+                        dedup_key="order_id",
+                        dedup_value=str(order.id),
+                        extra={"order_id": str(order.id)},
+                    )
         run.status = status
         notify_type = (
             NOTIFICATION_TYPE_RUN_COMPLETED
@@ -502,6 +524,13 @@ class RunService:
                 )
             elif order.status == RunOrderStatus.requested:
                 order.status = RunOrderStatus.declined
+                await self._notify(
+                    order.requester_id,
+                    NOTIFICATION_TYPE_RUN_STATUS,
+                    run=run,
+                    dedup_key="run_id",
+                    extra={"run_status": "cancelled"},
+                )
         await self._session.commit()
         return await self._get_or_404(run_id)
 
@@ -521,6 +550,8 @@ class RunService:
 
     async def confirm_received(self, *, run_id: uuid.UUID, order_id: uuid.UUID, user: User) -> Run:
         run = await self._get_or_404(run_id)
+        if run.status in (RunStatus.cancelled, RunStatus.expired):
+            raise ConflictError("Run is no longer active.", code="RUN_NOT_ACTIVE")
         order = self._order_in(run, order_id)
         if order.requester_id != user.id:
             raise ForbiddenError("Not your order.", code="NOT_REQUESTER")

@@ -11,6 +11,7 @@ import 'package:campusconnect/design_system/components/swipe_action.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
+import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
@@ -88,7 +89,19 @@ class _RunDetailBody extends ConsumerWidget {
       // "satisfying button" feel (honours the OS haptic setting).
       unawaited(HapticFeedback.selectionClick());
       if (success != null) {
-        messenger.showSnackBar(SnackBar(content: Text(success)));
+        messenger.showSnackBar(SnackBar(
+          content: Row(
+            children: [
+              const Icon(
+                Icons.check_circle_outline,
+                color: Colors.white,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: Text(success)),
+            ],
+          ),
+        ));
       }
       return true;
     } on Object catch (e) {
@@ -534,7 +547,9 @@ class _DetailStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final color = runStatusColor(context, run.status);
-    return Container(
+    return AnimatedContainer(
+      duration: AppMotion.resolve(context, AppMotion.micro),
+      curve: AppMotion.standard,
       padding: EdgeInsets.symmetric(
         horizontal: tokens.space2,
         vertical: tokens.space1,
@@ -543,11 +558,15 @@ class _DetailStatusChip extends StatelessWidget {
         color: color.withValues(alpha: .12),
         shape: const StadiumBorder(),
       ),
-      child: Text(
-        runStatusLabel(run.status),
-        style: context.text.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+      child: AnimatedSwitcher(
+        duration: AppMotion.resolve(context, AppMotion.micro),
+        child: Text(
+          runStatusLabel(run.status),
+          key: ValueKey(run.status),
+          style: context.text.labelSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );
@@ -627,7 +646,9 @@ class _LifecycleNode extends StatelessWidget {
               Expanded(
                 child: first
                     ? const SizedBox.shrink()
-                    : Container(
+                    : AnimatedContainer(
+                        duration: AppMotion.resolve(context, AppMotion.enter),
+                        curve: AppMotion.standard,
                         height: 2,
                         color: leftLineActive ? AppColors.primary : muted,
                       ),
@@ -636,7 +657,9 @@ class _LifecycleNode extends StatelessWidget {
               Expanded(
                 child: last
                     ? const SizedBox.shrink()
-                    : Container(
+                    : AnimatedContainer(
+                        duration: AppMotion.resolve(context, AppMotion.enter),
+                        curve: AppMotion.standard,
                         height: 2,
                         color: rightLineActive ? AppColors.primary : muted,
                       ),
@@ -671,7 +694,9 @@ class _Dot extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final size = active ? 16.0 : 12.0;
-    return Container(
+    return AnimatedContainer(
+      duration: AppMotion.resolve(context, AppMotion.enter),
+      curve: AppMotion.emphasized,
       width: size,
       height: size,
       decoration: BoxDecoration(

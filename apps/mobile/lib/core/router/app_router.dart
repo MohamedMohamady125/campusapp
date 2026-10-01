@@ -1,5 +1,6 @@
 import 'package:campusconnect/core/flags/flags_provider.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/auth/presentation/login_screen.dart';
 import 'package:campusconnect/features/auth/presentation/register_screen.dart';
@@ -21,6 +22,36 @@ import 'package:campusconnect/features/profile/presentation/profile_screen.dart'
 import 'package:campusconnect/features/tutoring/presentation/tutor_search_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+/// Shared fade+slide-up transition for pushed screens (300ms, M3 decelerate).
+/// Respects reduce-motion — falls back to instant swap.
+CustomTransitionPage<void> _slidePage({
+  required Widget child,
+  required GoRouterState state,
+}) =>
+    CustomTransitionPage<void>(
+      key: state.pageKey,
+      child: child,
+      reverseTransitionDuration: AppMotion.micro,
+      transitionsBuilder: (context, animation, _, child) {
+        if (MediaQuery.of(context).disableAnimations) return child;
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: AppMotion.decelerate,
+          reverseCurve: AppMotion.accelerate,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween(
+              begin: const Offset(0, 0.06),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
 
 const _authLocations = {'/login', '/register', '/verify'};
 
@@ -77,7 +108,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Pushed over the shell from any tab's bell (Sprint 6).
       GoRoute(
         path: '/notifications',
-        builder: (_, _) => const NotificationsScreen(),
+        pageBuilder: (_, state) =>
+            _slidePage(state: state, child: const NotificationsScreen()),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _AppShell(shell: shell),
@@ -90,12 +122,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'create',
-                    builder: (_, _) => const CreateRunScreen(),
+                    pageBuilder: (_, state) => _slidePage(
+                      state: state,
+                      child: const CreateRunScreen(),
+                    ),
                   ),
                   GoRoute(
                     path: 'run/:id',
-                    builder: (_, state) => RunDetailScreen(
-                      runId: state.pathParameters['id']!,
+                    pageBuilder: (_, state) => _slidePage(
+                      state: state,
+                      child: RunDetailScreen(
+                        runId: state.pathParameters['id']!,
+                      ),
                     ),
                   ),
                 ],
@@ -110,18 +148,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'sell',
-                    builder: (_, _) => const SellScreen(),
+                    pageBuilder: (_, state) => _slidePage(
+                      state: state,
+                      child: const SellScreen(),
+                    ),
                   ),
                   GoRoute(
                     path: 'listing/:id',
-                    builder: (_, state) => ListingDetailScreen(
-                      listingId: state.pathParameters['id']!,
+                    pageBuilder: (_, state) => _slidePage(
+                      state: state,
+                      child: ListingDetailScreen(
+                        listingId: state.pathParameters['id']!,
+                      ),
                     ),
                     routes: [
                       GoRoute(
                         path: 'edit',
-                        builder: (_, state) => EditListingScreen(
-                          listingId: state.pathParameters['id']!,
+                        pageBuilder: (_, state) => _slidePage(
+                          state: state,
+                          child: EditListingScreen(
+                            listingId: state.pathParameters['id']!,
+                          ),
                         ),
                       ),
                     ],
@@ -146,16 +193,22 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'conversation/:id',
-                    builder: (_, state) => ThreadScreen(
-                      conversationId: state.pathParameters['id']!,
-                      title: state.extra as String?,
+                    pageBuilder: (_, state) => _slidePage(
+                      state: state,
+                      child: ThreadScreen(
+                        conversationId: state.pathParameters['id']!,
+                        title: state.extra as String?,
+                      ),
                     ),
                   ),
                   GoRoute(
                     path: 'room/:id',
-                    builder: (_, state) => ChatRoomScreen(
-                      chatId: state.pathParameters['id']!,
-                      title: state.extra as String?,
+                    pageBuilder: (_, state) => _slidePage(
+                      state: state,
+                      child: ChatRoomScreen(
+                        chatId: state.pathParameters['id']!,
+                        title: state.extra as String?,
+                      ),
                     ),
                   ),
                 ],
@@ -174,7 +227,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: 'payment-methods',
-                    builder: (_, _) => const PaymentMethodsScreen(),
+                    pageBuilder: (_, state) => _slidePage(
+                      state: state,
+                      child: const PaymentMethodsScreen(),
+                    ),
                   ),
                 ],
               ),

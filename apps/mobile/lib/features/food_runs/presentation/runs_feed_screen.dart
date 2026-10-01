@@ -1,4 +1,4 @@
-import 'dart:async' show Timer;
+import 'dart:async' show Timer, unawaited;
 
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/design_system/components/content_width.dart';
@@ -17,6 +17,7 @@ import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:campusconnect/features/notifications/presentation/notification_bell.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -58,9 +59,10 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
     super.dispose();
   }
 
-  Future<void> _refresh() {
+  Future<void> _refresh() async {
     final controller = ref.read(runsFeedControllerProvider.notifier);
-    return _showMine ? controller.refreshMyRuns() : controller.refresh();
+    await (_showMine ? controller.refreshMyRuns() : controller.refresh());
+    unawaited(HapticFeedback.selectionClick());
   }
 
   void _setFilter(_RunFilter filter) {
@@ -729,7 +731,7 @@ class _SpotsBar extends StatelessWidget {
                 Container(color: Colors.white.withValues(alpha: .22)),
                 TweenAnimationBuilder<double>(
                   tween: Tween(end: frac),
-                  duration: AppMotion.resolve(context, AppMotion.screen),
+                  duration: AppMotion.resolve(context, AppMotion.micro),
                   curve: AppMotion.emphasized,
                   builder: (context, value, _) => FractionallySizedBox(
                     alignment: Alignment.centerLeft,
@@ -768,16 +770,24 @@ class _HeroIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return Material(
-      color: Colors.white.withValues(alpha: .16),
-      shape: RoundedRectangleBorder(borderRadius: tokens.brSm),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: tokens.brSm,
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: Icon(icon, color: Colors.white, size: 20),
+    return Semantics(
+      button: true,
+      label: 'View run details',
+      child: Tooltip(
+        message: 'View run details',
+        child: Material(
+          color: Colors.white.withValues(alpha: .16),
+          shape: RoundedRectangleBorder(borderRadius: tokens.brSm),
+          child: InkWell(
+            onTap: onTap,
+            splashColor: Colors.white.withValues(alpha: .3),
+            borderRadius: tokens.brSm,
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: Icon(icon, color: Colors.white, size: 20),
+            ),
+          ),
         ),
       ),
     );
@@ -820,7 +830,9 @@ class _RunRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
+            AnimatedContainer(
+              duration: AppMotion.resolve(context, AppMotion.micro),
+              curve: AppMotion.standard,
               width: 4,
               height: 40,
               decoration: BoxDecoration(
