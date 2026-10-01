@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
+import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -72,6 +73,8 @@ class RunDetailController
   Future<void> _mutate(Future<RunResponse> Function() action) async {
     final run = await action();
     state = RunDetailState(run: run, loading: false);
+    // Every mutation ripples to the feed instantly — no manual refresh.
+    ref.read(runsFeedControllerProvider.notifier).pokeAfterMutation();
   }
 
   Future<void> requestSpot(String orderText, String dropoffLocationId) =>
@@ -96,6 +99,7 @@ class RunDetailController
   Future<void> withdraw(String orderId) async {
     await _repo.withdrawOrder(arg, orderId);
     await refresh();
+    ref.read(runsFeedControllerProvider.notifier).pokeAfterMutation();
   }
 
   Future<void> accept(String orderId) =>

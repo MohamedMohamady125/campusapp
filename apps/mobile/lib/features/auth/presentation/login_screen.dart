@@ -4,6 +4,7 @@ import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
+import 'package:campusconnect/features/auth/data/auth_repository.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,8 +24,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _emailFocus = FocusNode();
   bool _submitting = false;
   bool _obscurePassword = true;
+  // Validation only kicks in after the first submit attempt, so one field
+  // never flashes errors while the user is still typing the other.
+  bool _triedSubmit = false;
+  // null = unknown / not checked yet; false = no account for that email.
+  bool? _emailKnown;
+  String _checkedEmail = '';
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
 
@@ -34,10 +42,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     _fadeCtrl = AnimationController(vsync: this, duration: Durations.medium2);
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     unawaited(_fadeCtrl.forward());
+    _emailFocus.addListener(() {
+      if (!_emailFocus.hasFocus) unawaited(_checkEmailExists());
+    });
+  }
+
+  /// On email blur: ask the API whether an account exists so typos are
+  /// caught before the user types a password and hits "Sign in".
+  Future<void> _checkEmailExists() async {
+    final email = _email.text.trim();
+    if (email.isEmpty || !email.contains('@') || email == _checkedEmail) {
+      return;
+    }
+    _checkedEmail = email;
+    try {
+      final exists = await ref
+          .read(authRepositoryProvider)
+          .emailExists(email);
+      if (!mounted || _email.text.trim() != email) return;
+      setState(() => _emailKnown = exists);
+    } on Object {
+      // Network hiccup — never block login over a convenience check.
+      if (mounted) setState(() => _emailKnown = null);
+    }
   }
 
   @override
   void dispose() {
+    _emailFocus.dispose();
     _fadeCtrl.dispose();
     _email.dispose();
     _password.dispose();
@@ -45,6 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Future<void> _submit() async {
+    setState(() => _triedSubmit = true);
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     try {
@@ -82,7 +115,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Form(
                   key: _formKey,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  // Validate only on submit — never flash "empty" errors
+                  // while the user is still typing the first field.
+                  autovalidateMode: _triedSubmit
+                      ? AutovalidateMode.onUserInteraction
+                      : AutovalidateMode.disabled,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -127,9 +164,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // --- Email field ---
                       TextFormField(
                         controller: _email,
+                        focusNode: _emailFocus,
                         keyboardType: TextInputType.emailAddress,
                         autofillHints: const [AutofillHints.email],
                         textInputAction: TextInputAction.next,
+                        onChanged: (_) {
+                          if (_emailKnown != null) {
+                            setState(() => _emailKnown = null);
+                          }
+                        },
+                        onEditingComplete: () {
+                          FocusScope.of(context).nextFocus();
+                        },
                         decoration: InputDecoration(
                           labelText: 'Campus email',
                           hintText: 'you@campus.edu',
@@ -138,6 +184,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             color: colors.onSurfaceVariant,
                             size: 20,
                           ),
+                          suffixIcon: (_emailKnown ?? false)
+                              ? const Icon(
+                                  Icons.check_circle_outline,
+                                  color: AppColors.primaryDark,
+                                  size: 20,
+                                )
+                              : null,
+                          helperText: _emailKnown == false
+                              ? 'No account found for this email.'
+                              : null,
+                          helperStyle: _emailKnown == false
+                              ? text.bodySmall?.copyWith(
+                                  color: colors.error,
+                                )
+                              : null,
                         ),
                         validator: (v) {
                           final value = v?.trim() ?? '';

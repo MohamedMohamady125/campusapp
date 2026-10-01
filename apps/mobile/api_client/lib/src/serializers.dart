@@ -27,6 +27,8 @@ import 'package:campus_api/src/model/chat_page_response.dart';
 import 'package:campus_api/src/model/chat_response.dart';
 import 'package:campus_api/src/model/chat_role.dart';
 import 'package:campus_api/src/model/chat_visibility.dart';
+import 'package:campus_api/src/model/check_email_request.dart';
+import 'package:campus_api/src/model/check_email_response.dart';
 import 'package:campus_api/src/model/conversation_context.dart';
 import 'package:campus_api/src/model/conversation_create_request.dart';
 import 'package:campus_api/src/model/conversation_page_response.dart';
@@ -42,6 +44,8 @@ import 'package:campus_api/src/model/food_spot_response.dart';
 import 'package:campus_api/src/model/forgot_password_request.dart';
 import 'package:campus_api/src/model/http_validation_error.dart';
 import 'package:campus_api/src/model/health_response.dart';
+import 'package:campus_api/src/model/image_upload_request.dart';
+import 'package:campus_api/src/model/image_upload_response.dart';
 import 'package:campus_api/src/model/image_upload_url_request.dart';
 import 'package:campus_api/src/model/image_upload_url_response.dart';
 import 'package:campus_api/src/model/listing_category.dart';
@@ -128,6 +132,8 @@ part 'serializers.g.dart';
   ChatResponse,
   ChatRole,
   ChatVisibility,
+  CheckEmailRequest,
+  CheckEmailResponse,
   ConversationContext,
   ConversationCreateRequest,
   ConversationPageResponse,
@@ -143,6 +149,8 @@ part 'serializers.g.dart';
   ForgotPasswordRequest,
   HTTPValidationError,
   HealthResponse,
+  ImageUploadRequest,
+  ImageUploadResponse,
   ImageUploadUrlRequest,
   ImageUploadUrlResponse,
   ListingCategory,

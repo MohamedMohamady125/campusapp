@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     refresh_token_ttl_days: int = 30
     campus_email_domain: str = "campus.edu"
 
+    # Public base URL of this API — used to build absolute URLs for images
+    # served from the database (GET /api/v1/images/{id}).
+    public_base_url: str = "http://localhost:8000"
+
     s3_endpoint_url: str = "http://localhost:9000"
     s3_access_key: str = "minioadmin"
     s3_secret_key: str = "minioadmin"

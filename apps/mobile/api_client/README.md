@@ -66,6 +66,7 @@ All URIs are relative to *http://localhost*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 [*AdminApi*](doc/AdminApi.md) | [**adminMetricsApiV1AdminMetricsGet**](doc/AdminApi.md#adminmetricsapiv1adminmetricsget) | **GET** /api/v1/admin/metrics | Admin Metrics
+[*AuthApi*](doc/AuthApi.md) | [**checkEmailApiV1AuthCheckEmailPost**](doc/AuthApi.md#checkemailapiv1authcheckemailpost) | **POST** /api/v1/auth/check-email | Check Email
 [*AuthApi*](doc/AuthApi.md) | [**forgotPasswordApiV1AuthForgotPasswordPost**](doc/AuthApi.md#forgotpasswordapiv1authforgotpasswordpost) | **POST** /api/v1/auth/forgot-password | Forgot Password
 [*AuthApi*](doc/AuthApi.md) | [**loginApiV1AuthLoginPost**](doc/AuthApi.md#loginapiv1authloginpost) | **POST** /api/v1/auth/login | Login
 [*AuthApi*](doc/AuthApi.md) | [**logoutApiV1AuthLogoutPost**](doc/AuthApi.md#logoutapiv1authlogoutpost) | **POST** /api/v1/auth/logout | Logout
@@ -90,6 +91,8 @@ Class | Method | HTTP request | Description
 [*ConversationsApi*](doc/ConversationsApi.md) | [**listMessagesApiV1ConversationsConversationIdMessagesGet**](doc/ConversationsApi.md#listmessagesapiv1conversationsconversationidmessagesget) | **GET** /api/v1/conversations/{conversation_id}/messages | List Messages
 [*ConversationsApi*](doc/ConversationsApi.md) | [**markReadApiV1ConversationsConversationIdReadPost**](doc/ConversationsApi.md#markreadapiv1conversationsconversationidreadpost) | **POST** /api/v1/conversations/{conversation_id}/read | Mark Read
 [*ConversationsApi*](doc/ConversationsApi.md) | [**sendMessageApiV1ConversationsConversationIdMessagesPost**](doc/ConversationsApi.md#sendmessageapiv1conversationsconversationidmessagespost) | **POST** /api/v1/conversations/{conversation_id}/messages | Send Message
+[*ImagesApi*](doc/ImagesApi.md) | [**getImageApiV1ImagesImageIdGet**](doc/ImagesApi.md#getimageapiv1imagesimageidget) | **GET** /api/v1/images/{image_id} | Get Image
+[*ImagesApi*](doc/ImagesApi.md) | [**uploadImageApiV1ImagesPost**](doc/ImagesApi.md#uploadimageapiv1imagespost) | **POST** /api/v1/images | Upload Image
 [*ListingsApi*](doc/ListingsApi.md) | [**createListingApiV1ListingsPost**](doc/ListingsApi.md#createlistingapiv1listingspost) | **POST** /api/v1/listings | Create Listing
 [*ListingsApi*](doc/ListingsApi.md) | [**deleteListingApiV1ListingsListingIdDelete**](doc/ListingsApi.md#deletelistingapiv1listingslistingiddelete) | **DELETE** /api/v1/listings/{listing_id} | Delete Listing
 [*ListingsApi*](doc/ListingsApi.md) | [**getListingApiV1ListingsListingIdGet**](doc/ListingsApi.md#getlistingapiv1listingslistingidget) | **GET** /api/v1/listings/{listing_id} | Get Listing
@@ -156,6 +159,8 @@ Class | Method | HTTP request | Description
  - [ChatResponse](doc/ChatResponse.md)
  - [ChatRole](doc/ChatRole.md)
  - [ChatVisibility](doc/ChatVisibility.md)
+ - [CheckEmailRequest](doc/CheckEmailRequest.md)
+ - [CheckEmailResponse](doc/CheckEmailResponse.md)
  - [ConversationContext](doc/ConversationContext.md)
  - [ConversationCreateRequest](doc/ConversationCreateRequest.md)
  - [ConversationPageResponse](doc/ConversationPageResponse.md)
@@ -171,6 +176,8 @@ Class | Method | HTTP request | Description
  - [ForgotPasswordRequest](doc/ForgotPasswordRequest.md)
  - [HTTPValidationError](doc/HTTPValidationError.md)
  - [HealthResponse](doc/HealthResponse.md)
+ - [ImageUploadRequest](doc/ImageUploadRequest.md)
+ - [ImageUploadResponse](doc/ImageUploadResponse.md)
  - [ImageUploadUrlRequest](doc/ImageUploadUrlRequest.md)
  - [ImageUploadUrlResponse](doc/ImageUploadUrlResponse.md)
  - [ListingCategory](doc/ListingCategory.md)

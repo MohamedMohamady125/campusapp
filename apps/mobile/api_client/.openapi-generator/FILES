@@ -17,6 +17,8 @@ doc/ChatResponse.md
 doc/ChatRole.md
 doc/ChatVisibility.md
 doc/ChatsApi.md
+doc/CheckEmailRequest.md
+doc/CheckEmailResponse.md
 doc/ConversationContext.md
 doc/ConversationCreateRequest.md
 doc/ConversationPageResponse.md
@@ -33,8 +35,11 @@ doc/FoodSpotResponse.md
 doc/ForgotPasswordRequest.md
 doc/HTTPValidationError.md
 doc/HealthResponse.md
+doc/ImageUploadRequest.md
+doc/ImageUploadResponse.md
 doc/ImageUploadUrlRequest.md
 doc/ImageUploadUrlResponse.md
+doc/ImagesApi.md
 doc/ListingCategory.md
 doc/ListingCondition.md
 doc/ListingCreateRequest.md
@@ -116,6 +121,7 @@ lib/src/api/admin_api.dart
 lib/src/api/auth_api.dart
 lib/src/api/chats_api.dart
 lib/src/api/conversations_api.dart
+lib/src/api/images_api.dart
 lib/src/api/listings_api.dart
 lib/src/api/meta_api.dart
 lib/src/api/notifications_api.dart
@@ -144,6 +150,8 @@ lib/src/model/chat_page_response.dart
 lib/src/model/chat_response.dart
 lib/src/model/chat_role.dart
 lib/src/model/chat_visibility.dart
+lib/src/model/check_email_request.dart
+lib/src/model/check_email_response.dart
 lib/src/model/conversation_context.dart
 lib/src/model/conversation_create_request.dart
 lib/src/model/conversation_page_response.dart
@@ -160,6 +168,8 @@ lib/src/model/food_spot_response.dart
 lib/src/model/forgot_password_request.dart
 lib/src/model/health_response.dart
 lib/src/model/http_validation_error.dart
+lib/src/model/image_upload_request.dart
+lib/src/model/image_upload_response.dart
 lib/src/model/image_upload_url_request.dart
 lib/src/model/image_upload_url_response.dart
 lib/src/model/listing_category.dart
@@ -231,5 +241,8 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/payment_qr_upload_url_request_test.dart
-test/payment_qr_upload_url_response_test.dart
+test/check_email_request_test.dart
+test/check_email_response_test.dart
+test/image_upload_request_test.dart
+test/image_upload_response_test.dart
+test/images_api_test.dart

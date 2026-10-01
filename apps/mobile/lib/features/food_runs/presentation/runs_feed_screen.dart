@@ -243,18 +243,59 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
         ),
       ];
     }
+    // Live commitments first, finished runs below — "Mine" is a dashboard
+    // of what needs attention now, not a flat history dump.
+    const activeStatuses = {
+      RunStatus.open,
+      RunStatus.locked,
+      RunStatus.atStore,
+      RunStatus.delivering,
+    };
+    final active = state.myRuns
+        .where((r) => activeStatuses.contains(r.status))
+        .toList();
+    final past = state.myRuns
+        .where((r) => !activeStatuses.contains(r.status))
+        .toList();
+    Widget section(String label) => Padding(
+      padding: EdgeInsets.fromLTRB(
+        tokens.space4,
+        tokens.space2,
+        tokens.space4,
+        tokens.space2,
+      ),
+      child: Text(label, style: AppTextStyles.label),
+    );
     return [
-      SliverPadding(
-        padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
-        sliver: SliverList.separated(
-          itemCount: state.myRuns.length,
-          separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
-          itemBuilder: (context, i) => FadeSlideIn(
-            index: i,
-            child: _RunRow(run: state.myRuns[i], showStatus: true),
+      if (active.isNotEmpty) ...[
+        SliverToBoxAdapter(child: section('ACTIVE')),
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: tokens.space4),
+          sliver: SliverList.separated(
+            itemCount: active.length,
+            separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
+            itemBuilder: (context, i) => FadeSlideIn(
+              index: i,
+              child: _RunRow(run: active[i], showStatus: true),
+            ),
           ),
         ),
-      ),
+      ],
+      if (past.isNotEmpty) ...[
+        SliverToBoxAdapter(child: section('HISTORY')),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
+          sliver: SliverList.separated(
+            itemCount: past.length,
+            separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
+            itemBuilder: (context, i) => FadeSlideIn(
+              index: i,
+              child: _RunRow(run: past[i], showStatus: true),
+            ),
+          ),
+        ),
+      ] else
+        const SliverToBoxAdapter(child: SizedBox(height: 96)),
     ];
   }
 }

@@ -49,6 +49,10 @@ class AuthService:
 
     # --- Registration & verification ---
 
+    async def email_exists(self, *, email: str) -> bool:
+        """Login/registration UX hint — see CheckEmailResponse for rationale."""
+        return await self._repo.get_by_email(email.lower()) is not None
+
     async def register(self, *, email: str, password: str, display_name: str) -> User:
         settings = get_settings()
         domain = email.rsplit("@", 1)[-1].lower()

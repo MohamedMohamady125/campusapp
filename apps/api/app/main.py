@@ -10,6 +10,7 @@ from app.api.v1.chats import router as chats_router
 from app.api.v1.conversations import router as conversations_router
 from app.api.v1.flags import router as flags_router
 from app.api.v1.health import router as health_router
+from app.api.v1.images import router as images_router
 from app.api.v1.listings import router as listings_router
 from app.api.v1.notifications import router as notifications_router
 from app.api.v1.ratings import router as ratings_router
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
     app.include_router(ws_router, prefix="/api/v1")
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(images_router, prefix="/api/v1")
     app.include_router(listings_router, prefix="/api/v1")
     app.include_router(conversations_router, prefix="/api/v1")
     app.include_router(ratings_router, prefix="/api/v1")

@@ -29,6 +29,7 @@ from app.integrations.storage.base import (
     StorageProvider,
 )
 from app.integrations.storage.provider import get_storage_provider
+from app.integrations.storage.resolve import image_public_url
 from app.models import (
     DropoffLocation,
     FoodSpot,
@@ -95,11 +96,7 @@ def _user_summary(user: User, *, include_payment: bool = False) -> RunUserSummar
 
 
 def _order_response(order: RunOrder) -> RunOrderResponse:
-    proof_url = (
-        get_storage_provider().public_url(order.payment_proof_key)
-        if order.payment_proof_key
-        else None
-    )
+    proof_url = image_public_url(order.payment_proof_key) if order.payment_proof_key else None
     return RunOrderResponse(
         id=order.id,
         run_id=order.run_id,
@@ -127,9 +124,11 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
     """
     is_runner = run.runner_id == viewer_id
     my_order = next((o for o in run.orders if o.requester_id == viewer_id), None)
-    accepted = [o for o in run.orders if o.status in _ACTIVE_ORDER_STATUSES]
-    received = [o for o in run.orders if o.status == RunOrderStatus.received]
-    pending = [o for o in run.orders if o.status == RunOrderStatus.requested]
+    # The runner's own order (self-order) never counts toward spots.
+    others = [o for o in run.orders if o.requester_id != run.runner_id]
+    accepted = [o for o in others if o.status in _ACTIVE_ORDER_STATUSES]
+    received = [o for o in others if o.status == RunOrderStatus.received]
+    pending = [o for o in others if o.status == RunOrderStatus.requested]
     entitled = is_runner or (
         my_order is not None
         and my_order.status
@@ -254,13 +253,15 @@ class RunService:
         dropoff_location_id: uuid.UUID,
     ) -> Run:
         run = await self._get_or_404(run_id, for_update=True)
-        if run.runner_id == user.id:
-            raise BusinessRuleError("You cannot join your own run.", code="SELF_ORDER")
+        # A runner may attach their OWN order to their run (they're obviously
+        # picking up food for themselves too). It is auto-accepted, never
+        # notifies, and doesn't consume a requester spot (see _accepted_count).
+        is_self_order = run.runner_id == user.id
         if run.status != RunStatus.open:
             raise ConflictError("This run is no longer taking orders.", code="RUN_NOT_OPEN")
         if await self._repo.find_order(run_id, user.id) is not None:
             raise ConflictError("You already have an order on this run.", code="DUPLICATE_ORDER")
-        if self._accepted_count(run) >= run.spots_max:
+        if not is_self_order and self._accepted_count(run) >= run.spots_max:
             raise ConflictError("All spots on this run are taken.", code="RUN_FULL")
         # Resolve the picked catalog location → denormalize its name onto the
         # order so every read path stays a plain string (no free-text addresses).
@@ -274,16 +275,18 @@ class RunService:
             dropoff=location.name,
             dropoff_lat=location.lat,
             dropoff_lng=location.lng,
+            status=RunOrderStatus.accepted if is_self_order else RunOrderStatus.requested,
         )
         self._repo.add(order)
         await self._session.flush()
-        await self._notify(
-            run.runner_id,
-            NOTIFICATION_TYPE_RUN_REQUEST,
-            run=run,
-            dedup_key="run_id",
-            extra={"requester_name": user.display_name},
-        )
+        if not is_self_order:
+            await self._notify(
+                run.runner_id,
+                NOTIFICATION_TYPE_RUN_REQUEST,
+                run=run,
+                dedup_key="run_id",
+                extra={"requester_name": user.display_name},
+            )
         await self._session.commit()
         return await self._get_or_404(run_id)
 
@@ -418,6 +421,14 @@ class RunService:
                 f"Cannot go from {run.status} to {status}.", code="INVALID_TRANSITION"
             )
         if status == RunStatus.done:
+            # The runner's own order auto-resolves — they delivered to
+            # themselves, no confirmation needed.
+            for order in run.orders:
+                if order.requester_id == run.runner_id and order.status in (
+                    RunOrderStatus.accepted,
+                    RunOrderStatus.delivered,
+                ):
+                    order.status = RunOrderStatus.received
             # `delivered` counts as resolved — a requester who never taps
             # "received" must not block the runner from finishing.
             if any(o.status == RunOrderStatus.accepted for o in run.orders):
@@ -535,8 +546,12 @@ class RunService:
 
     @staticmethod
     def _accepted_count(run: Run) -> int:
+        # The runner's own order never consumes a requester spot.
         return sum(
-            1 for o in run.orders if o.status in (*_ACTIVE_ORDER_STATUSES, RunOrderStatus.received)
+            1
+            for o in run.orders
+            if o.requester_id != run.runner_id
+            and o.status in (*_ACTIVE_ORDER_STATUSES, RunOrderStatus.received)
         )
 
     @staticmethod

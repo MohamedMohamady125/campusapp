@@ -97,7 +97,7 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
         prepayRequired: _prepay,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
-      ref.read(runsFeedControllerProvider.notifier).refresh().ignore();
+      ref.read(runsFeedControllerProvider.notifier).pokeAfterMutation();
       if (!mounted) return;
       _snack('Run posted. Orders incoming!');
       context.go('/runs/run/${run.id}');

@@ -43,9 +43,10 @@ class PaymentMethod(BaseModel):
     @field_validator("qr_key")
     @classmethod
     def _own_namespace(cls, value: str | None) -> str | None:
-        # Only keys minted by the payment-QR upload endpoint are accepted, so
-        # a handle can never point at someone else's private object.
-        if value is not None and not value.startswith("payment-qr/"):
+        # Only keys minted by our upload endpoints are accepted ("payment-qr/"
+        # signed-URL namespace or "db/" DB-backed images), so a handle can
+        # never point at someone else's private object.
+        if value is not None and not (value.startswith("payment-qr/") or value.startswith("db/")):
             raise ValueError("Invalid QR key.")
         return value
 
@@ -53,9 +54,9 @@ class PaymentMethod(BaseModel):
     def _derive_qr_url(self) -> "PaymentMethod":
         if self.qr_key:
             # Local import: schemas must not pull integrations at module load.
-            from app.integrations.storage.provider import get_storage_provider
+            from app.integrations.storage.resolve import image_public_url
 
-            self.qr_url = get_storage_provider().public_url(self.qr_key)
+            self.qr_url = image_public_url(self.qr_key)
         return self
 
 

@@ -254,13 +254,16 @@ async def test_order_request_accept_flow(client: httpx.AsyncClient) -> None:
     )
     assert resp.json()["error"]["code"] == "DROPOFF_NOT_FOUND"
 
-    # Runner cannot join own run.
+    # Runner CAN attach their own order: auto-accepted, no spot consumed.
     resp = await client.post(
         f"/api/v1/runs/{run['id']}/orders",
-        json=_order_body("x", dropoff_id=dropoff_id),
+        json=_order_body("runner's own burrito", dropoff_id=dropoff_id),
         headers=runner,
     )
-    assert resp.json()["error"]["code"] == "SELF_ORDER"
+    assert resp.status_code == 201
+    self_body = resp.json()
+    assert self_body["my_order"]["status"] == "accepted"
+    assert self_body["accepted_count"] == 0  # self-order never takes a spot
 
     resp = await client.post(
         f"/api/v1/runs/{run['id']}/orders",
@@ -291,7 +294,8 @@ async def test_order_request_accept_flow(client: httpx.AsyncClient) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["accepted_count"] == 1
-    assert body["orders"][0]["status"] == "accepted"
+    by_id = {o["id"]: o["status"] for o in body["orders"]}
+    assert by_id[order["id"]] == "accepted"
 
 
 async def test_run_full_and_decline_and_withdraw(client: httpx.AsyncClient) -> None:

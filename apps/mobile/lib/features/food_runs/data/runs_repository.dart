@@ -1,6 +1,7 @@
+import 'dart:convert' show base64Encode;
+
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/network/api_provider.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -136,13 +137,25 @@ class RunsRepository {
     return res.data!;
   }
 
-  /// Off-app payment proof (spec §2.5): ask the API for a signed upload, push
-  /// the screenshot bytes straight to object storage, then submit the key +
-  /// optional note so it surfaces on the runner's order card.
-  ///
-  /// The direct-to-storage POST is best-effort: in local/stub deployments the
-  /// bucket host isn't reachable, so we still record the key and note (the
-  /// runner sees the note; the image resolves once real storage is wired).
+  /// Uploads image bytes to the API's DB-backed image store
+  /// (POST /images → "db/{uuid}" key) — works on bucket-less deployments,
+  /// unlike the old signed-URL flow that silently dropped the bytes.
+  Future<String> _uploadImage({
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    final res = await _api.getImagesApi().uploadImageApiV1ImagesPost(
+      imageUploadRequest: ImageUploadRequest(
+        (b) => b
+          ..contentType = contentType
+          ..dataBase64 = base64Encode(bytes),
+      ),
+    );
+    return res.data!.key;
+  }
+
+  /// Off-app payment proof (spec §2.5): upload the screenshot, then submit
+  /// the key + optional note so it surfaces on the runner's order card.
   Future<RunResponse> submitPaymentProof({
     required String runId,
     required String orderId,
@@ -150,48 +163,18 @@ class RunsRepository {
     required String contentType,
     String? note,
   }) async {
-    final signed = await _runs
-        // Generated client method name is fixed by the OpenAPI path.
-        // ignore: lines_longer_than_80_chars
-        .paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost(
-          runId: runId,
-          orderId: orderId,
-          paymentProofUploadUrlRequest: PaymentProofUploadUrlRequest(
-            (b) => b..contentType = contentType,
-          ),
-        );
-    final upload = signed.data!;
-    await _uploadBytes(upload.uploadUrl, upload.fields.toMap(), bytes);
+    final key = await _uploadImage(bytes: bytes, contentType: contentType);
     final res = await _runs
         .submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost(
           runId: runId,
           orderId: orderId,
           paymentProofSubmitRequest: PaymentProofSubmitRequest(
             (b) => b
-              ..proofKey = upload.key
+              ..proofKey = key
               ..note = note,
           ),
         );
     return res.data!;
-  }
-
-  Future<void> _uploadBytes(
-    String uploadUrl,
-    Map<String, String> fields,
-    Uint8List bytes,
-  ) async {
-    try {
-      final form = FormData();
-      fields.forEach((key, value) => form.fields.add(MapEntry(key, value)));
-      form.files.add(
-        MapEntry('file', MultipartFile.fromBytes(bytes, filename: 'upload')),
-      );
-      await Dio().post<void>(uploadUrl, data: form);
-    } on Object catch (e) {
-      // Stub/unreachable bucket in local dev — proceed with the key so the
-      // submission still lands (spec §2.5 stub-tolerant client).
-      debugPrint('storage upload skipped: $e');
-    }
   }
 
   /// Uploads a payment-app QR code image and returns its storage key, so it
@@ -199,19 +182,7 @@ class RunsRepository {
   Future<String> uploadPaymentQr({
     required Uint8List bytes,
     required String contentType,
-  }) async {
-    final signed = await _api
-        .getUsersApi()
-        // Generated client method name is fixed by the OpenAPI path.
-        .paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost(
-          paymentQrUploadUrlRequest: PaymentQrUploadUrlRequest(
-            (b) => b..contentType = contentType,
-          ),
-        );
-    final upload = signed.data!;
-    await _uploadBytes(upload.uploadUrl, upload.fields.toMap(), bytes);
-    return upload.key;
-  }
+  }) => _uploadImage(bytes: bytes, contentType: contentType);
 
   Future<RunResponse> updateStatus(String runId, RunStatus status) async {
     final res = await _runs.updateStatusApiV1RunsRunIdStatusPost(

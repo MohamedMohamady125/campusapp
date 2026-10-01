@@ -61,6 +61,14 @@ class AuthRepository {
     );
   }
 
+  /// Whether an account exists for [email] — login-page typo catcher.
+  Future<bool> emailExists(String email) async {
+    final res = await _auth.checkEmailApiV1AuthCheckEmailPost(
+      checkEmailRequest: CheckEmailRequest((b) => b..email = email),
+    );
+    return res.data!.exists;
+  }
+
   Future<void> logout() async {
     final refresh = await _storage.readRefreshToken();
     if (refresh != null) {

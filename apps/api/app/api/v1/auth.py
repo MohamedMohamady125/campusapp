@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_session
 from app.integrations.email.provider import get_email_provider
 from app.schemas.auth import (
+    CheckEmailRequest,
+    CheckEmailResponse,
     ForgotPasswordRequest,
     LoginRequest,
     LogoutRequest,
@@ -47,6 +49,14 @@ async def resend_code(
 ) -> MessageResponse:
     await svc.resend_code(email=body.email)
     return MessageResponse(message="If the account exists, a new code has been sent.")
+
+
+@router.post("/check-email", response_model=CheckEmailResponse)
+async def check_email(
+    body: CheckEmailRequest, svc: AuthService = Depends(_service)
+) -> CheckEmailResponse:
+    """Login/registration UX hint: does an account exist for this email?"""
+    return CheckEmailResponse(exists=await svc.email_exists(email=body.email))
 
 
 @router.post("/login", response_model=TokenResponse)

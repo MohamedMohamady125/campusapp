@@ -59,6 +59,12 @@ void main() {
     await tester.enterText(fields.at(1), 'me@gmail.com');
     await tester.enterText(fields.at(2), 'short');
     await tester.pumpAndSettle();
+    // No errors while typing — validation waits for the first submit.
+    expect(find.text('Use your .edu campus email'), findsNothing);
+    final submit = find.widgetWithText(FilledButton, 'Create account');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
     expect(find.text('Use your .edu campus email'), findsOneWidget);
     expect(find.text('Use at least 8 characters'), findsOneWidget);
   });

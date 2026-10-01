@@ -9,6 +9,7 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**checkEmailApiV1AuthCheckEmailPost**](AuthApi.md#checkemailapiv1authcheckemailpost) | **POST** /api/v1/auth/check-email | Check Email
 [**forgotPasswordApiV1AuthForgotPasswordPost**](AuthApi.md#forgotpasswordapiv1authforgotpasswordpost) | **POST** /api/v1/auth/forgot-password | Forgot Password
 [**loginApiV1AuthLoginPost**](AuthApi.md#loginapiv1authloginpost) | **POST** /api/v1/auth/login | Login
 [**logoutApiV1AuthLogoutPost**](AuthApi.md#logoutapiv1authlogoutpost) | **POST** /api/v1/auth/logout | Logout
@@ -18,6 +19,49 @@ Method | HTTP request | Description
 [**resetPasswordApiV1AuthResetPasswordPost**](AuthApi.md#resetpasswordapiv1authresetpasswordpost) | **POST** /api/v1/auth/reset-password | Reset Password
 [**verifyApiV1AuthVerifyPost**](AuthApi.md#verifyapiv1authverifypost) | **POST** /api/v1/auth/verify | Verify
 
+
+# **checkEmailApiV1AuthCheckEmailPost**
+> CheckEmailResponse checkEmailApiV1AuthCheckEmailPost(checkEmailRequest)
+
+Check Email
+
+Login/registration UX hint: does an account exist for this email?
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getAuthApi();
+final CheckEmailRequest checkEmailRequest = ; // CheckEmailRequest | 
+
+try {
+    final response = api.checkEmailApiV1AuthCheckEmailPost(checkEmailRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AuthApi->checkEmailApiV1AuthCheckEmailPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md)|  | 
+
+### Return type
+
+[**CheckEmailResponse**](CheckEmailResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **forgotPasswordApiV1AuthForgotPasswordPost**
 > AppSchemasAuthMessageResponse forgotPasswordApiV1AuthForgotPasswordPost(forgotPasswordRequest)

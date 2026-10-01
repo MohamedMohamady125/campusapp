@@ -10,6 +10,7 @@ from app.models.moderation import AuditLog, Rating, Report
 from app.models.monetization import Payment, Subscription
 from app.models.notification import Notification, NotificationPreference
 from app.models.run import DropoffLocation, FoodSpot, Run, RunOrder
+from app.models.stored_image import StoredImage
 from app.models.user import RefreshToken, User, VerificationCode
 
 __all__ = [
@@ -36,6 +37,7 @@ __all__ = [
     "Report",
     "Run",
     "RunOrder",
+    "StoredImage",
     "Subscription",
     "TutorOffering",
     "User",

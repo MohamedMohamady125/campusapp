@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Live-feed poll cadence: a run's spots fill in real time between classes,
 /// so the feed refreshes itself while the app is up.
-const kRunsFeedPollInterval = Duration(seconds: 15);
+const kRunsFeedPollInterval = Duration(seconds: 10);
 
 /// Feed state: accumulated pages of live runs plus the user's own runs.
 @immutable
@@ -87,9 +87,14 @@ class RunsFeedController extends Notifier<RunsFeedState> {
 
   Future<void> _silentRefresh() async {
     try {
-      final page = await _repo.fetchFeed();
+      // Feed and "my runs" refresh together so both tabs stay live.
+      final (page, mine) = await (
+        _repo.fetchFeed(),
+        _repo.fetchMyRuns(),
+      ).wait;
       state = state._copyWith(
         items: page.items,
+        myRuns: mine,
         nextCursor: () => page.nextCursor,
         error: () => null,
       );
@@ -97,6 +102,10 @@ class RunsFeedController extends Notifier<RunsFeedState> {
       debugPrint('RunsFeedController.poll ERROR: $e');
     }
   }
+
+  /// Fire-and-forget re-sync after any run mutation (post, request, accept…)
+  /// so the feed reflects it immediately instead of waiting for the poll.
+  void pokeAfterMutation() => _silentRefresh().ignore();
 
   Future<void> refresh() async {
     state = state._copyWith(loading: state.items.isEmpty, error: () => null);

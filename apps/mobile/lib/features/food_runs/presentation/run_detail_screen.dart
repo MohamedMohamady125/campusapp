@@ -164,8 +164,9 @@ class _RunDetailBody extends ConsumerWidget {
 
   Future<void> _showRequestSheet(
     BuildContext context,
-    RunDetailController controller,
-  ) {
+    RunDetailController controller, {
+    String success = "Request sent — you'll hear back soon.",
+  }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -174,7 +175,7 @@ class _RunDetailBody extends ConsumerWidget {
         onSubmit: (order, dropoffId) => _act(
           context,
           () => controller.requestSpot(order, dropoffId),
-          success: "Request sent — you'll hear back soon.",
+          success: success,
         ),
       ),
     );
@@ -258,7 +259,12 @@ class _RunDetailBody extends ConsumerWidget {
     RunDetailController controller,
   ) {
     final tokens = context.tokens;
-    final orders = run.orders?.toList() ?? [];
+    // The runner's own order rides along but isn't a "request" — it is
+    // auto-accepted server-side and never consumes a requester spot.
+    final myOrder = run.myOrder;
+    final orders = (run.orders?.toList() ?? [])
+        .where((o) => o.requester.id != run.runner.id)
+        .toList();
     final unresolved = orders.any(
       (o) => o.status == RunOrderStatus.accepted,
     );
@@ -298,6 +304,22 @@ class _RunDetailBody extends ConsumerWidget {
         RunnerLocationBroadcaster(runId: run.id),
         SizedBox(height: tokens.space3),
         RunnerRouteCard(run: run),
+        SizedBox(height: tokens.space3),
+      ],
+      // Runner grabs their own food too — attach while the run is open.
+      if (myOrder == null && run.status == RunStatus.open) ...[
+        OutlinedButton.icon(
+          icon: const Icon(Icons.lunch_dining_outlined),
+          label: const Text('Attach my order'),
+          onPressed: () => _showRequestSheet(
+            context,
+            controller,
+            success: 'Your order is on the list.',
+          ),
+        ),
+        SizedBox(height: tokens.space3),
+      ] else if (myOrder != null) ...[
+        _RunnerOwnOrderCard(order: myOrder),
         SizedBox(height: tokens.space3),
       ],
       Padding(
@@ -907,39 +929,82 @@ class _PaymentMethodRow extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
     final qrUrl = method.qrUrl;
-    return Row(
+    final hasQr = qrUrl != null && qrUrl.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(method.type.icon, size: 20, color: colors.onSurfaceVariant),
-        SizedBox(width: tokens.space3),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(method.type.label, style: context.text.labelSmall),
-              Text(method.handle, style: context.text.bodyMedium),
-            ],
-          ),
+        Row(
+          children: [
+            Icon(method.type.icon, size: 20, color: colors.onSurfaceVariant),
+            SizedBox(width: tokens.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(method.type.label, style: context.text.labelSmall),
+                  Text(method.handle, style: context.text.bodyMedium),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Copy',
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.copy_outlined, size: 18),
+              onPressed: () {
+                unawaited(
+                  Clipboard.setData(ClipboardData(text: method.handle)),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${method.type.label} handle copied'),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-        if (qrUrl != null && qrUrl.isNotEmpty)
-          IconButton(
-            tooltip: 'Show QR code',
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.qr_code_2, size: 20),
-            onPressed: () => _showQr(context, qrUrl),
+        // QR shows automatically when the runner attached one — the payer
+        // just scans; tap to enlarge.
+        if (hasQr)
+          Padding(
+            padding: EdgeInsets.only(
+              left: tokens.space3 + 20,
+              top: tokens.space2,
+            ),
+            child: GestureDetector(
+              onTap: () => _showQr(context, qrUrl),
+              child: ClipRRect(
+                borderRadius: tokens.brSm,
+                child: Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(6),
+                  child: Image.network(
+                    qrUrl,
+                    width: 132,
+                    height: 132,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.qr_code_2,
+                          size: 18,
+                          color: colors.onSurfaceVariant,
+                        ),
+                        SizedBox(width: tokens.space2),
+                        Text(
+                          'QR unavailable',
+                          style: context.text.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        IconButton(
-          tooltip: 'Copy',
-          visualDensity: VisualDensity.compact,
-          icon: const Icon(Icons.copy_outlined, size: 18),
-          onPressed: () {
-            unawaited(
-              Clipboard.setData(ClipboardData(text: method.handle)),
-            );
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${method.type.label} handle copied')),
-            );
-          },
-        ),
       ],
     );
   }
@@ -1002,6 +1067,58 @@ class _RunnerStatusStepper extends StatelessWidget {
 
 /// One incoming order on the runner's screen: trust row + order text +
 /// the actions legal for its status.
+/// The runner's own attached order — informational, no accept/decline
+/// controls (it is auto-accepted and resolves itself when the run is done).
+class _RunnerOwnOrderCard extends StatelessWidget {
+  const _RunnerOwnOrderCard({required this.order});
+
+  final RunOrderResponse order;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return Container(
+      padding: EdgeInsets.all(tokens.space4),
+      decoration: BoxDecoration(
+        color: AppColors.primaryBg,
+        borderRadius: tokens.brMd,
+        border: Border.all(color: AppColors.primaryBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.lunch_dining_outlined,
+                size: 18,
+                color: AppColors.primaryDark,
+              ),
+              SizedBox(width: tokens.space2),
+              Text(
+                'Your order',
+                style: context.text.titleSmall?.copyWith(
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: tokens.space2),
+          Text(order.orderText, style: context.text.bodyMedium),
+          SizedBox(height: tokens.space2),
+          Text(
+            'Drop at ${order.dropoff}',
+            style: context.text.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _OrderCard extends StatelessWidget {
   const _OrderCard({
     required this.order,
