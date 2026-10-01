@@ -41,13 +41,6 @@ class ProfileScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.storefront_outlined),
-                        title: const Text('My listings'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.go('/profile/my-listings'),
-                      ),
-                      const Divider(height: 1, indent: 56),
-                      ListTile(
                         leading: const Icon(
                           Icons.account_balance_wallet_outlined,
                         ),

@@ -468,17 +468,16 @@ async def _seed(session: AsyncSession) -> None:
             )
         )
 
-    # Recompute cached reputation (Bayesian §5.2: (C*m + sum) / (C + n), C=8, m=4.0).
+    # Recompute cached reputation (plain average — scoring.display_reputation).
     await session.flush()
     result = await session.execute(
         select(Rating.rated_user_id, func.count(), func.sum(Rating.stars)).group_by(
             Rating.rated_user_id
         )
     )
-    prior_c, global_m = 8, 4.0
     for rated_user_id, n, total in result.all():
         user = next(u for u in users if u.id == rated_user_id)
-        user.reputation_score = (prior_c * global_m + float(total)) / (prior_c + int(n))
+        user.reputation_score = float(total) / int(n)
         user.rating_count = int(n)
 
     await session.commit()

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
-from app.core.scoring import GLOBAL_MEAN_SEED, bayesian_reputation
+from app.core.scoring import display_reputation
 from app.integrations.analytics.base import EVENT_RATING_SUBMITTED
 from app.integrations.analytics.provider import get_analytics_provider
 from app.models import AuditLog, Listing, Rating, Report, RunOrder, User
@@ -58,7 +58,7 @@ class RatingService:
         self._session.add(rating)
         await self._session.flush()
 
-        # §5.2: recompute cached score in the same transaction as the insert.
+        # Recompute cached score in the same transaction as the insert.
         rated_sum, rated_n = (
             await self._session.execute(
                 select(func.coalesce(func.sum(Rating.stars), 0), func.count(Rating.id)).where(
@@ -66,16 +66,9 @@ class RatingService:
                 )
             )
         ).one()
-        # m = global mean across the platform (nightly job recomputes; the same
-        # aggregate is cheap enough to read live here), seeded to 4.0.
-        global_mean = (
-            await self._session.execute(
-                select(func.avg(Rating.stars)).where(Rating.deleted_at.is_(None))
-            )
-        ).scalar()
-        m = float(global_mean) if global_mean is not None else GLOBAL_MEAN_SEED
-        rated.reputation_score = bayesian_reputation(
-            ratings_sum=float(rated_sum), ratings_count=int(rated_n), global_mean=m
+        # User-visible score is the plain average (see scoring.display_reputation).
+        rated.reputation_score = display_reputation(
+            ratings_sum=float(rated_sum), ratings_count=int(rated_n)
         )
         rated.rating_count = int(rated_n)
         await get_analytics_provider().track(

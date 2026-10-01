@@ -4,7 +4,7 @@ import httpx
 import pytest
 from sqlalchemy import update
 
-from app.core.scoring import GLOBAL_MEAN_SEED, bayesian_reputation
+from app.core.scoring import GLOBAL_MEAN_SEED, bayesian_reputation, display_reputation
 from app.db.session import async_session_factory
 from app.models import User
 from app.models.enums import UserRole
@@ -26,6 +26,12 @@ def test_bayesian_small_sample_does_not_outrank_large() -> None:
     many_high = bayesian_reputation(ratings_sum=4.8 * 200, ratings_count=200, global_mean=4.0)
     assert many_high > two_fives
     assert two_fives == pytest.approx((8 * 4.0 + 10) / 10)
+
+
+def test_display_reputation_is_plain_average() -> None:
+    """A straight-5★ user must display 5.0 (no prior drag)."""
+    assert display_reputation(ratings_sum=10, ratings_count=2) == pytest.approx(5.0)
+    assert display_reputation(ratings_sum=0, ratings_count=0) == pytest.approx(GLOBAL_MEAN_SEED)
 
 
 def test_bayesian_converges_to_true_mean() -> None:
@@ -77,7 +83,7 @@ async def test_rating_updates_cached_score_in_transaction(client: httpx.AsyncCli
     # Cached score visible immediately on the public profile.
     profile = (await client.get(f"/api/v1/users/{seller_id}", headers=buyer)).json()
     assert profile["rating_count"] == 1
-    # First platform rating: m = avg = 5 → (8*5 + 5) / 9 = 5.0
+    # Display score is the plain average: one 5★ rating → 5.0.
     assert profile["reputation_score"] == pytest.approx(5.0)
 
     # Ratings listable on the profile endpoint.
