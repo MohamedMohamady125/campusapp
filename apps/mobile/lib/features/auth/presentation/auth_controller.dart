@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,15 +32,22 @@ class AuthController extends Notifier<AuthState> {
   AuthRepository get _repo => ref.read(authRepositoryProvider);
 
   Future<void> _bootstrap() async {
-    if (!await _repo.hasSession()) {
-      state = const AuthState(status: AuthStatus.unauthenticated);
-      return;
-    }
+    // Never leave the app stuck on AuthStatus.unknown: a hung secure-storage
+    // read or an unexpected error must land on the login screen, not a dead
+    // shell with an empty feed and a spinning profile.
     try {
+      final hasSession = await _repo.hasSession().timeout(
+        const Duration(seconds: 5),
+      );
+      if (!hasSession) {
+        state = const AuthState(status: AuthStatus.unauthenticated);
+        return;
+      }
       final me = await _repo.fetchMe();
       state = AuthState(status: AuthStatus.authenticated, user: me);
-    } on DioException {
-      // Stored tokens rejected (and refresh failed) — treat as signed out.
+    } on Object {
+      // Stored tokens rejected, storage unreadable, or network dead —
+      // treat as signed out and let the user log back in.
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
