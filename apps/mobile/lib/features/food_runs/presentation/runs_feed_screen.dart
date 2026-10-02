@@ -14,7 +14,9 @@ import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
+import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
+import 'package:campusconnect/features/food_runs/presentation/run_row.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:campusconnect/features/notifications/presentation/notification_bell.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
@@ -22,13 +24,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// Feed view filter. `all` keeps server order; `topRated`/`closingSoon` are
-/// client-side sorts over already-loaded runs (real data, no new endpoint);
-/// `mine` switches to the user's own runs.
-enum _RunFilter { all, topRated, closingSoon, mine }
+/// client-side sorts over already-loaded runs (real data, no new endpoint).
+enum _RunFilter { all, topRated, closingSoon }
 
 /// Food runs — the hero home screen. A blue hero card for the run you should
-/// grab right now, then the rest as compact rows. "My runs" folds into the
-/// same filter row.
+/// grab right now, then the rest as compact rows. The user's own runs live
+/// in the dedicated My Runs tab.
 class RunsFeedScreen extends ConsumerStatefulWidget {
   const RunsFeedScreen({super.key});
 
@@ -40,13 +41,10 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   final _scroll = ScrollController();
   _RunFilter _filter = _RunFilter.all;
 
-  bool get _showMine => _filter == _RunFilter.mine;
-
   @override
   void initState() {
     super.initState();
     _scroll.addListener(() {
-      if (_showMine) return;
       if (_scroll.position.pixels > _scroll.position.maxScrollExtent - 400) {
         ref.read(runsFeedControllerProvider.notifier).loadMore().ignore();
       }
@@ -60,17 +58,11 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   }
 
   Future<void> _refresh() async {
-    final controller = ref.read(runsFeedControllerProvider.notifier);
-    await (_showMine ? controller.refreshMyRuns() : controller.refresh());
+    await ref.read(runsFeedControllerProvider.notifier).refresh();
     unawaited(HapticFeedback.selectionClick());
   }
 
-  void _setFilter(_RunFilter filter) {
-    setState(() => _filter = filter);
-    if (filter == _RunFilter.mine) {
-      ref.read(runsFeedControllerProvider.notifier).refreshMyRuns().ignore();
-    }
-  }
+  void _setFilter(_RunFilter filter) => setState(() => _filter = filter);
 
   /// Live runs re-ordered for the active filter. Sorts are pure views over the
   /// loaded page — every key is a field the API already returns.
@@ -88,7 +80,6 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
           ..sort((a, b) => a.leavingAt.compareTo(b.leavingAt));
         return list;
       case _RunFilter.all:
-      case _RunFilter.mine:
         return items;
     }
   }
@@ -124,10 +115,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
                   ),
                 ),
               ),
-              if (_showMine)
-                ..._myRunsSlivers(state)
-              else
-                ..._liveSlivers(state),
+              ..._liveSlivers(state),
             ],
           ),
         ),
@@ -175,6 +163,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
     final sorted = _sorted(state.items);
     final hero = sorted.first;
     final rest = sorted.skip(1).toList();
+    final myId = ref.read(authControllerProvider).user?.id;
 
     return [
       SliverToBoxAdapter(
@@ -185,7 +174,9 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
             tokens.space4,
             tokens.space4,
           ),
-          child: FadeSlideIn(child: _HeroRunCard(run: hero)),
+          child: FadeSlideIn(
+            child: _HeroRunCard(run: hero, isMine: hero.runner.id == myId),
+          ),
         ),
       ),
       if (rest.isNotEmpty)
@@ -208,7 +199,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
           separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
           itemBuilder: (context, i) => FadeSlideIn(
             index: i + 1,
-            child: _RunRow(run: rest[i]),
+            child: RunRow(run: rest[i]),
           ),
         ),
       ),
@@ -225,79 +216,6 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
             ),
           ),
         ),
-    ];
-  }
-
-  List<Widget> _myRunsSlivers(RunsFeedState state) {
-    final tokens = context.tokens;
-    if (state.myRunsLoading) return const [_SkeletonList()];
-    if (state.myRuns.isEmpty) {
-      return [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: EmptyState(
-            icon: Icons.directions_run,
-            title: 'No runs yet',
-            body: 'Runs you post and orders you join will show up here.',
-            actionLabel: 'Post a run',
-            onAction: () => context.go('/runs/create'),
-          ),
-        ),
-      ];
-    }
-    // Live commitments first, finished runs below — "Mine" is a dashboard
-    // of what needs attention now, not a flat history dump.
-    const activeStatuses = {
-      RunStatus.open,
-      RunStatus.locked,
-      RunStatus.atStore,
-      RunStatus.delivering,
-    };
-    final active = state.myRuns
-        .where((r) => activeStatuses.contains(r.status))
-        .toList();
-    final past = state.myRuns
-        .where((r) => !activeStatuses.contains(r.status))
-        .toList();
-    Widget section(String label) => Padding(
-      padding: EdgeInsets.fromLTRB(
-        tokens.space4,
-        tokens.space2,
-        tokens.space4,
-        tokens.space2,
-      ),
-      child: Text(label, style: AppTextStyles.label),
-    );
-    return [
-      if (active.isNotEmpty) ...[
-        SliverToBoxAdapter(child: section('ACTIVE')),
-        SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: tokens.space4),
-          sliver: SliverList.separated(
-            itemCount: active.length,
-            separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
-            itemBuilder: (context, i) => FadeSlideIn(
-              index: i,
-              child: _RunRow(run: active[i], showStatus: true),
-            ),
-          ),
-        ),
-      ],
-      if (past.isNotEmpty) ...[
-        SliverToBoxAdapter(child: section('HISTORY')),
-        SliverPadding(
-          padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
-          sliver: SliverList.separated(
-            itemCount: past.length,
-            separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
-            itemBuilder: (context, i) => FadeSlideIn(
-              index: i,
-              child: _RunRow(run: past[i], showStatus: true),
-            ),
-          ),
-        ),
-      ] else
-        const SliverToBoxAdapter(child: SizedBox(height: 96)),
     ];
   }
 }
@@ -425,7 +343,6 @@ class _FeedFilters extends StatelessWidget {
     (_RunFilter.all, 'All runs'),
     (_RunFilter.closingSoon, 'Closing soon'),
     (_RunFilter.topRated, 'Top rated'),
-    (_RunFilter.mine, 'My runs'),
   ];
 
   @override
@@ -473,9 +390,12 @@ class _FeedFilters extends StatelessWidget {
 /// The countdown ticks live every second (Uber-style urgency) and the spots
 /// bar animates as seats fill.
 class _HeroRunCard extends StatefulWidget {
-  const _HeroRunCard({required this.run});
+  const _HeroRunCard({required this.run, required this.isMine});
 
   final RunResponse run;
+
+  /// The viewer is this run's runner — never show them "Attach my order".
+  final bool isMine;
 
   @override
   State<_HeroRunCard> createState() => _HeroRunCardState();
@@ -666,7 +586,11 @@ class _HeroRunCardState extends State<_HeroRunCard> {
                   ),
                 ),
                 child: Text(
-                  'Attach my order',
+                  widget.isMine
+                      ? 'Manage my run'
+                      : run.myOrder != null
+                      ? 'View my order'
+                      : 'Attach my order',
                   style: AppTextStyles.button.copyWith(
                     color: AppColors.primary,
                   ),
@@ -792,118 +716,6 @@ class _HeroIconButton extends StatelessWidget {
       ),
     );
   }
-}
-
-/// One run as a compact row: urgency accent bar, destination + runner trust
-/// line, fee + spots on the right. Hairline border, no elevation.
-class _RunRow extends StatelessWidget {
-  const _RunRow({required this.run, this.showStatus = false});
-
-  final RunResponse run;
-  final bool showStatus;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final colors = context.colors;
-    final runner = run.runner;
-    final rated = runner.ratingCount > 0;
-    final ratingText = ReputationChip.formatRating(
-      runner.reputationScore.toDouble(),
-    );
-    final trustLine = rated
-        ? '${runner.displayName} · ★ $ratingText (${runner.ratingCount})'
-        : '${runner.displayName} · New runner';
-    final statusVisible = showStatus && run.status != RunStatus.open;
-    final accent = statusVisible
-        ? runStatusColor(context, run.status)
-        : _urgencyColor(context, run.leavingAt);
-
-    return Pressable(
-      onTap: () => context.go('/runs/run/${run.id}'),
-      child: Container(
-        padding: EdgeInsets.all(tokens.space3),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: tokens.brMd,
-          border: Border.all(color: colors.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: AppMotion.resolve(context, AppMotion.micro),
-              curve: AppMotion.standard,
-              width: 4,
-              height: 40,
-              decoration: BoxDecoration(
-                color: accent,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            SizedBox(width: tokens.space3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    run.foodSpot.name,
-                    style: AppTextStyles.titleMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: tokens.space1),
-                  Text(
-                    trustLine,
-                    style: context.text.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: tokens.space2),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  run.feeCents == 0 ? 'Free' : runFeeAmount(run.feeCents),
-                  style: AppTextStyles.titleSmall.copyWith(
-                    color: run.feeCents == 0
-                        ? tokens.success
-                        : colors.onSurface,
-                  ),
-                ),
-                SizedBox(height: tokens.space1),
-                Text(
-                  statusVisible ? runStatusLabel(run.status) : _spotsLabel(run),
-                  style: context.text.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-String _spotsLabel(RunResponse run) {
-  final left = run.spotsMax - run.acceptedCount;
-  if (run.acceptedCount == 0) return '${run.spotsMax} spots open';
-  if (left <= 0) return 'Full';
-  return '${run.acceptedCount} joined · $left left';
-}
-
-Color _urgencyColor(BuildContext context, DateTime leavingAt) {
-  final tokens = context.tokens;
-  final urgent =
-      leavingAt.toUtc().difference(DateTime.now().toUtc()) <
-      const Duration(minutes: 10);
-  return urgent ? tokens.warning : tokens.success;
 }
 
 /// Skeleton list matching the new hero + row geometry.

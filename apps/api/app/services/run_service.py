@@ -134,13 +134,9 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
         and my_order.status
         in (RunOrderStatus.accepted, RunOrderStatus.delivered, RunOrderStatus.received)
     )
-    # On prepay runs reveal payment info to pending requesters too — they need
-    # the handle/QR to pay before the runner can accept (chicken-and-egg fix).
-    show_payment = entitled or (
-        run.prepay_required
-        and my_order is not None
-        and my_order.status == RunOrderStatus.requested
-    )
+    # Payment info is revealed on accept — pending requesters don't need the
+    # runner's handle/QR yet (accept comes first, payment after, even on prepay).
+    show_payment = entitled
     # Live location: entitled viewer, run en route, and the runner has pinged.
     runner_location: RunLocation | None = None
     if (
@@ -316,11 +312,9 @@ class RunService:
             raise ConflictError("Order is not pending.", code="ORDER_NOT_PENDING")
         if self._accepted_count(run) >= run.spots_max:
             raise ConflictError("All spots on this run are taken.", code="RUN_FULL")
-        if run.prepay_required and not order.payment_submitted_at:
-            raise ConflictError(
-                "Requester must submit payment proof before you can accept on a prepay run.",
-                code="PREPAY_PROOF_REQUIRED",
-            )
+        # Prepay runs: accept FIRST, pay after. The accept notification is what
+        # prompts the requester to pay (proof upload requires accepted status),
+        # so gating accept on proof would deadlock the flow.
         order.status = RunOrderStatus.accepted
         await self._notify(
             order.requester_id,

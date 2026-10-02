@@ -8,6 +8,7 @@ import 'package:campusconnect/features/auth/presentation/verify_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chat_room_screen.dart';
 import 'package:campusconnect/features/chats/presentation/chats_screen.dart';
 import 'package:campusconnect/features/food_runs/presentation/create_run_screen.dart';
+import 'package:campusconnect/features/food_runs/presentation/my_runs_screen.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_methods_screen.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_detail_screen.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_screen.dart';
@@ -28,30 +29,29 @@ import 'package:go_router/go_router.dart';
 CustomTransitionPage<void> _slidePage({
   required Widget child,
   required GoRouterState state,
-}) =>
-    CustomTransitionPage<void>(
-      key: state.pageKey,
-      child: child,
-      reverseTransitionDuration: AppMotion.micro,
-      transitionsBuilder: (context, animation, _, child) {
-        if (MediaQuery.of(context).disableAnimations) return child;
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: AppMotion.decelerate,
-          reverseCurve: AppMotion.accelerate,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: SlideTransition(
-            position: Tween(
-              begin: const Offset(0, 0.06),
-              end: Offset.zero,
-            ).animate(curved),
-            child: child,
-          ),
-        );
-      },
+}) => CustomTransitionPage<void>(
+  key: state.pageKey,
+  child: child,
+  reverseTransitionDuration: AppMotion.micro,
+  transitionsBuilder: (context, animation, _, child) {
+    if (MediaQuery.of(context).disableAnimations) return child;
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: AppMotion.decelerate,
+      reverseCurve: AppMotion.accelerate,
     );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween(
+          begin: const Offset(0, 0.06),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
+  },
+);
 
 const _authLocations = {'/login', '/register', '/verify'};
 
@@ -236,6 +236,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // Appended after profile so earlier branch indices stay stable;
+          // the visible tab order is defined in _AppShell._tabs.
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/my-runs',
+                builder: (_, _) => const MyRunsScreen(),
+              ),
+            ],
+          ),
         ],
       ),
     ],
@@ -259,8 +269,8 @@ class _AppShell extends ConsumerWidget {
   final StatefulNavigationShell shell;
 
   /// Builds the visible tabs from the enabled flags. Branch order is
-  /// fixed (runs=0, market=1, tutors=2, chats=3, profile=4); visibility
-  /// is flag-driven so hidden tabs return with a DB row flip.
+  /// fixed (runs=0, market=1, tutors=2, chats=3, profile=4, my-runs=5);
+  /// visibility is flag-driven so hidden tabs return with a DB row flip.
   static List<_TabSpec> _tabs(Set<String> flags) => [
     const _TabSpec(
       branchIndex: 0,
@@ -268,6 +278,14 @@ class _AppShell extends ConsumerWidget {
         icon: Icon(Icons.directions_run_outlined),
         selectedIcon: Icon(Icons.directions_run),
         label: 'Runs',
+      ),
+    ),
+    const _TabSpec(
+      branchIndex: 5,
+      destination: NavigationDestination(
+        icon: Icon(Icons.receipt_long_outlined),
+        selectedIcon: Icon(Icons.receipt_long),
+        label: 'My Runs',
       ),
     ),
     if (flags.contains(kTabMarketplace))

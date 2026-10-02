@@ -436,6 +436,40 @@ async def test_payment_proof_flow(client: httpx.AsyncClient) -> None:
     assert "run_payment_submitted" in types
 
 
+async def test_prepay_run_accept_before_payment_proof(client: httpx.AsyncClient) -> None:
+    """Prepay flow is accept-first: the runner accepts, THEN the requester pays.
+
+    Regression: gating accept on payment proof deadlocked prepay runs — proof
+    upload requires an accepted order, so neither side could ever move.
+    """
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    spot_id = await _make_spot()
+    dropoff_id = await _make_dropoff()
+    await _set_payment(client, runner)
+    run = await _create_run(client, runner, spot_id, fee_cents=200, prepay_required=True)
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("wrap", dropoff_id=dropoff_id),
+        headers=req,
+    )
+    oid = resp.json()["my_order"]["id"]
+    base = f"/api/v1/runs/{run['id']}/orders/{oid}"
+
+    # Accept succeeds with no proof submitted.
+    accept = await client.post(f"{base}/accept", headers=runner)
+    assert accept.status_code == 200, accept.text
+
+    # Only now does the accepted requester see the runner's payment methods,
+    # and the proof upload path is open.
+    view = (await client.get(f"/api/v1/runs/{run['id']}", headers=req)).json()
+    assert view["runner"]["payment_methods"], "accepted requester must see payment rails"
+    signed = await client.post(
+        f"{base}/payment-proof-upload-url", json={"content_type": "image/png"}, headers=req
+    )
+    assert signed.status_code == 200, signed.text
+
+
 async def _accepted_run(
     client: httpx.AsyncClient, runner: dict[str, str], req: dict[str, str], spot_id: str
 ) -> tuple[dict, str]:

@@ -89,19 +89,21 @@ class _RunDetailBody extends ConsumerWidget {
       // "satisfying button" feel (honours the OS haptic setting).
       unawaited(HapticFeedback.selectionClick());
       if (success != null) {
-        messenger.showSnackBar(SnackBar(
-          content: Row(
-            children: [
-              const Icon(
-                Icons.check_circle_outline,
-                color: Colors.white,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Expanded(child: Text(success)),
-            ],
+        messenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(success)),
+              ],
+            ),
           ),
-        ));
+        );
       }
       return true;
     } on Object catch (e) {
@@ -319,19 +321,9 @@ class _RunDetailBody extends ConsumerWidget {
         RunnerRouteCard(run: run),
         SizedBox(height: tokens.space3),
       ],
-      // Runner grabs their own food too — attach while the run is open.
-      if (myOrder == null && run.status == RunStatus.open) ...[
-        OutlinedButton.icon(
-          icon: const Icon(Icons.lunch_dining_outlined),
-          label: const Text('Attach my order'),
-          onPressed: () => _showRequestSheet(
-            context,
-            controller,
-            success: 'Your order is on the list.',
-          ),
-        ),
-        SizedBox(height: tokens.space3),
-      ] else if (myOrder != null) ...[
+      // The runner never "requests a spot" on their own run — their food is
+      // implicit. Only legacy self-orders still render as a card.
+      if (myOrder != null) ...[
         _RunnerOwnOrderCard(order: myOrder),
         SizedBox(height: tokens.space3),
       ],
