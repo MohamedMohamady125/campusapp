@@ -98,7 +98,8 @@ abstract final class AppTheme {
         shadowColor: Colors.transparent,
         elevation: 0,
         height: 64,
-        // Selected is black, not blue — no pill indicator.
+        // Selected tab is brand blue (delivery-app convention) — no pill
+        // indicator, color alone carries the state.
         indicatorColor: Colors.transparent,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -107,14 +108,14 @@ abstract final class AppTheme {
             fontSize: 11,
             letterSpacing: 0.2,
             fontWeight: sel ? FontWeight.w700 : FontWeight.w600,
-            color: sel ? scheme.onSurface : AppColors.textTertiary,
+            color: sel ? scheme.primary : AppColors.textTertiary,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final sel = states.contains(WidgetState.selected);
           return IconThemeData(
             size: 24,
-            color: sel ? scheme.onSurface : AppColors.textTertiary,
+            color: sel ? scheme.primary : AppColors.textTertiary,
           );
         }),
       ),

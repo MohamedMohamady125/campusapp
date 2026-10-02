@@ -96,8 +96,8 @@ class _MyRunsScreenState extends ConsumerState<MyRunsScreen> {
           sliver: SliverList.list(
             children: [
               for (var i = 0; i < 6; i++) ...[
-                const SkeletonBox(width: double.infinity, height: 68),
-                SizedBox(height: tokens.space2),
+                const SkeletonBox(width: double.infinity, height: 84),
+                SizedBox(height: tokens.space3),
               ],
             ],
           ),
@@ -146,7 +146,7 @@ class _MyRunsScreenState extends ConsumerState<MyRunsScreen> {
           padding: EdgeInsets.symmetric(horizontal: tokens.space4),
           sliver: SliverList.separated(
             itemCount: active.length,
-            separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
+            separatorBuilder: (_, _) => SizedBox(height: tokens.space3),
             itemBuilder: (context, i) => FadeSlideIn(
               index: i,
               child: RunRow(run: active[i], showStatus: true),
@@ -160,7 +160,7 @@ class _MyRunsScreenState extends ConsumerState<MyRunsScreen> {
           padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
           sliver: SliverList.separated(
             itemCount: past.length,
-            separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
+            separatorBuilder: (_, _) => SizedBox(height: tokens.space3),
             itemBuilder: (context, i) => FadeSlideIn(
               index: i,
               child: RunRow(run: past[i], showStatus: true),

@@ -95,6 +95,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
         tooltip: 'Post a run',
         backgroundColor: AppColors.ink,
         foregroundColor: Colors.white,
+        shape: const StadiumBorder(),
         icon: const Icon(Icons.add),
         label: Text('Post a run', style: AppTextStyles.button),
       ),
@@ -196,7 +197,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
         padding: EdgeInsets.fromLTRB(tokens.space4, 0, tokens.space4, 96),
         sliver: SliverList.separated(
           itemCount: rest.length,
-          separatorBuilder: (_, _) => SizedBox(height: tokens.space2),
+          separatorBuilder: (_, _) => SizedBox(height: tokens.space3),
           itemBuilder: (context, i) => FadeSlideIn(
             index: i + 1,
             child: RunRow(run: rest[i]),
@@ -363,18 +364,24 @@ class _FeedFilters extends StatelessWidget {
                 selected: selected == value,
                 showCheckmark: false,
                 shape: const StadiumBorder(),
+                // Yamesh-kit chips: selected is a solid brand fill with white
+                // text, unselected stays a quiet hairline pill.
                 backgroundColor: colors.surface,
-                selectedColor: colors.primaryContainer,
+                selectedColor: colors.primary,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.space3,
+                  vertical: tokens.space2,
+                ),
                 side: selected == value
-                    ? const BorderSide(color: AppColors.primaryBorder)
+                    ? BorderSide.none
                     : BorderSide(color: colors.outlineVariant),
                 labelStyle: context.text.labelMedium?.copyWith(
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: selected == value
                       ? FontWeight.w700
                       : FontWeight.w500,
                   color: selected == value
-                      ? colors.primary
+                      ? Colors.white
                       : colors.onSurfaceVariant,
                 ),
                 onSelected: (_) => onSelected(value),
@@ -443,7 +450,7 @@ class _HeroRunCardState extends State<_HeroRunCard> {
               Color(0xFF2A72B4),
             ],
           ),
-          borderRadius: tokens.brLg,
+          borderRadius: BorderRadius.circular(tokens.radiusXl),
           boxShadow: AppShadows.primaryGlow,
         ),
         clipBehavior: Clip.antiAlias,
@@ -580,10 +587,9 @@ class _HeroRunCardState extends State<_HeroRunCard> {
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.primary,
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: tokens.brSm,
-                  ),
+                  minimumSize: const Size.fromHeight(52),
+                  // Full-round pill CTA — the delivery-kit signature shape.
+                  shape: const StadiumBorder(),
                 ),
                 child: Text(
                   widget.isMine
@@ -693,7 +699,6 @@ class _HeroIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
     return Semantics(
       button: true,
       label: 'View run details',
@@ -701,14 +706,14 @@ class _HeroIconButton extends StatelessWidget {
         message: 'View run details',
         child: Material(
           color: Colors.white.withValues(alpha: .16),
-          shape: RoundedRectangleBorder(borderRadius: tokens.brSm),
+          shape: const StadiumBorder(),
           child: InkWell(
             onTap: onTap,
             splashColor: Colors.white.withValues(alpha: .3),
-            borderRadius: tokens.brSm,
+            customBorder: const StadiumBorder(),
             child: SizedBox(
-              width: 48,
-              height: 48,
+              width: 52,
+              height: 52,
               child: Icon(icon, color: Colors.white, size: 20),
             ),
           ),
@@ -751,28 +756,28 @@ class _SkeletonList extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(tokens.space3),
               decoration: BoxDecoration(
-                borderRadius: tokens.brMd,
+                borderRadius: tokens.brLg,
                 border: Border.all(color: colors.outlineVariant),
               ),
               child: const Row(
                 children: [
-                  SkeletonBox(width: 4, height: 40),
+                  SkeletonBox(width: 56, height: 56),
                   SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SkeletonBox(width: 140, height: 16),
+                        SkeletonBox(width: 140, height: 18),
                         SizedBox(height: 8),
                         SkeletonBox(width: 180, height: 12),
                       ],
                     ),
                   ),
-                  SkeletonBox(width: 40, height: 16),
+                  SkeletonBox(width: 56, height: 28),
                 ],
               ),
             ),
-            SizedBox(height: tokens.space2),
+            SizedBox(height: tokens.space3),
           ],
         ],
       ),
