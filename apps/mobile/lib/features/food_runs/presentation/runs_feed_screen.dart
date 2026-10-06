@@ -87,17 +87,22 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(runsFeedControllerProvider);
     final liveCount = state.items.length;
+    // Empty feed shows a full EmptyState with its own "Post a run" CTA —
+    // the FAB on top of it reads as two competing buttons (QA S-01).
+    final showFab = state.loading || state.error != null || liveCount > 0;
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go('/runs/create'),
-        tooltip: 'Post a run',
-        backgroundColor: AppColors.ink,
-        foregroundColor: Colors.white,
-        shape: const StadiumBorder(),
-        icon: const Icon(Icons.add),
-        label: Text('Post a run', style: AppTextStyles.button),
-      ),
+      floatingActionButton: !showFab
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => context.go('/runs/create'),
+              tooltip: 'Post a run',
+              backgroundColor: AppColors.ink,
+              foregroundColor: Colors.white,
+              shape: const StadiumBorder(),
+              icon: const Icon(Icons.add),
+              label: Text('Post a run', style: AppTextStyles.button),
+            ),
       body: ContentWidth(
         child: RefreshIndicator(
           onRefresh: _refresh,
@@ -150,9 +155,8 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
           child: EmptyState(
             icon: Icons.fastfood_outlined,
             title: 'No runs open right now',
-            body:
-                'The lunch rush is quiet. Heading somewhere on campus? '
-                'Post a run and orders come to you.',
+            // Short enough to never truncate on small phones (QA S-01).
+            body: 'Heading somewhere? Post a run and orders come to you.',
             actionLabel: 'Post a run',
             onAction: () => context.go('/runs/create'),
           ),
@@ -547,7 +551,8 @@ class _HeroRunCardState extends State<_HeroRunCard> {
                   Text(
                     rated
                         ? '★ $ratingText · ${runner.ratingCount} ratings'
-                        : 'New runner',
+                        // Same label as ReputationChip (QA S-06).
+                        : 'New member',
                     style: context.text.labelSmall?.copyWith(
                       color: Colors.white.withValues(alpha: .75),
                     ),

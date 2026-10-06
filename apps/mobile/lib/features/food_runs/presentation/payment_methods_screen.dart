@@ -59,6 +59,27 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
   }
 
   Future<void> _remove(PaymentMethod method) async {
+    // QA S-02: removal is one tap on a trash icon — confirm first.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Remove ${method.type.label}?'),
+        content: Text(
+          'People you accept will no longer see ${method.handle}.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Keep it'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     await _persist([
       for (final m in _methods)
         if (m.type != method.type) m,
@@ -295,9 +316,29 @@ class _PaymentMethodEditorState extends ConsumerState<_PaymentMethodEditor> {
     }
   }
 
+  String? _handleError;
+
+  /// Per-rail sanity checks (QA M-08: Cash App accepted "two words").
+  /// Light-touch — the handle lives off-app, so we only catch obvious typos.
+  String? _validateHandle(String handle) {
+    if (handle.length < 2) return 'Enter the handle people pay you at.';
+    if (_type == PaymentMethodType.cashapp && handle.contains(' ')) {
+      return r'Cashtags have no spaces — e.g. $yourcashtag.';
+    }
+    if (_type == PaymentMethodType.venmo && handle.contains(' ')) {
+      return 'Venmo usernames have no spaces — e.g. @your-venmo.';
+    }
+    return null;
+  }
+
   void _save() {
     final handle = _handle.text.trim();
-    if (handle.length < 2) return;
+    final error = _validateHandle(handle);
+    if (error != null) {
+      // QA S-02: a dead Save button told the tester nothing — explain.
+      setState(() => _handleError = error);
+      return;
+    }
     Navigator.of(context).pop(
       PaymentMethod(
         (b) => b
@@ -347,7 +388,10 @@ class _PaymentMethodEditorState extends ConsumerState<_PaymentMethodEditor> {
                   ),
                 ),
             ],
-            onChanged: (t) => setState(() => _type = t ?? _type),
+            onChanged: (t) => setState(() {
+              _type = t ?? _type;
+              _handleError = null;
+            }),
           ),
           SizedBox(height: tokens.space3),
           TextField(
@@ -356,7 +400,11 @@ class _PaymentMethodEditorState extends ConsumerState<_PaymentMethodEditor> {
             decoration: InputDecoration(
               labelText: 'Phone, email, or username',
               hintText: _type.handleHint,
+              errorText: _handleError,
             ),
+            onChanged: (_) {
+              if (_handleError != null) setState(() => _handleError = null);
+            },
             onSubmitted: (_) => _save(),
           ),
           SizedBox(height: tokens.space3),

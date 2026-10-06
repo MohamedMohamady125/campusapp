@@ -29,7 +29,8 @@ class RunRow extends StatelessWidget {
     );
     final trustLine = rated
         ? '${runner.displayName} · ★ $ratingText (${runner.ratingCount})'
-        : '${runner.displayName} · New runner';
+        // "New member" everywhere (QA S-06) — same wording as ReputationChip.
+        : '${runner.displayName} · New member';
     final statusVisible = showStatus && run.status != RunStatus.open;
     final accent = statusVisible
         ? runStatusColor(context, run.status)
@@ -185,7 +186,9 @@ class _FeePill extends StatelessWidget {
 
 String spotsLabel(RunResponse run) {
   final left = run.spotsMax - run.acceptedCount;
-  if (run.acceptedCount == 0) return '${run.spotsMax} spots open';
+  if (run.acceptedCount == 0) {
+    return run.spotsMax == 1 ? '1 spot open' : '${run.spotsMax} spots open';
+  }
   if (left <= 0) return 'Full';
   return '${run.acceptedCount} joined · $left left';
 }
