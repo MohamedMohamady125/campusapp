@@ -22,6 +22,7 @@ part 'run_order_response.g.dart';
 /// * [paymentNote] 
 /// * [paymentProofUrl] 
 /// * [paymentSubmittedAt] 
+/// * [ratedByMe] 
 /// * [requester] 
 /// * [runId] 
 /// * [status] 
@@ -54,6 +55,9 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
   @BuiltValueField(wireName: r'payment_submitted_at')
   DateTime? get paymentSubmittedAt;
 
+  @BuiltValueField(wireName: r'rated_by_me')
+  bool? get ratedByMe;
+
   @BuiltValueField(wireName: r'requester')
   RunUserSummary get requester;
 
@@ -69,7 +73,8 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
   factory RunOrderResponse([void updates(RunOrderResponseBuilder b)]) = _$RunOrderResponse;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(RunOrderResponseBuilder b) => b;
+  static void _defaults(RunOrderResponseBuilder b) => b
+      ..ratedByMe = false;
 
   @BuiltValueSerializer(custom: true)
   static Serializer<RunOrderResponse> get serializer => _$RunOrderResponseSerializer();
@@ -140,6 +145,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       yield serializers.serialize(
         object.paymentSubmittedAt,
         specifiedType: const FullType.nullable(DateTime),
+      );
+    }
+    if (object.ratedByMe != null) {
+      yield r'rated_by_me';
+      yield serializers.serialize(
+        object.ratedByMe,
+        specifiedType: const FullType(bool),
       );
     }
     yield r'requester';
@@ -247,6 +259,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
           ) as DateTime?;
           if (valueDes == null) continue;
           result.paymentSubmittedAt = valueDes;
+          break;
+        case r'rated_by_me':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(bool),
+          ) as bool;
+          result.ratedByMe = valueDes;
           break;
         case r'requester':
           final valueDes = serializers.deserialize(

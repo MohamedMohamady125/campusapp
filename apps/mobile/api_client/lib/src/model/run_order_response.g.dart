@@ -26,6 +26,8 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   final DateTime? paymentSubmittedAt;
   @override
+  final bool? ratedByMe;
+  @override
   final RunUserSummary requester;
   @override
   final String runId;
@@ -46,6 +48,7 @@ class _$RunOrderResponse extends RunOrderResponse {
       this.paymentNote,
       this.paymentProofUrl,
       this.paymentSubmittedAt,
+      this.ratedByMe,
       required this.requester,
       required this.runId,
       required this.status})
@@ -71,6 +74,7 @@ class _$RunOrderResponse extends RunOrderResponse {
         paymentNote == other.paymentNote &&
         paymentProofUrl == other.paymentProofUrl &&
         paymentSubmittedAt == other.paymentSubmittedAt &&
+        ratedByMe == other.ratedByMe &&
         requester == other.requester &&
         runId == other.runId &&
         status == other.status;
@@ -88,6 +92,7 @@ class _$RunOrderResponse extends RunOrderResponse {
     _$hash = $jc(_$hash, paymentNote.hashCode);
     _$hash = $jc(_$hash, paymentProofUrl.hashCode);
     _$hash = $jc(_$hash, paymentSubmittedAt.hashCode);
+    _$hash = $jc(_$hash, ratedByMe.hashCode);
     _$hash = $jc(_$hash, requester.hashCode);
     _$hash = $jc(_$hash, runId.hashCode);
     _$hash = $jc(_$hash, status.hashCode);
@@ -107,6 +112,7 @@ class _$RunOrderResponse extends RunOrderResponse {
           ..add('paymentNote', paymentNote)
           ..add('paymentProofUrl', paymentProofUrl)
           ..add('paymentSubmittedAt', paymentSubmittedAt)
+          ..add('ratedByMe', ratedByMe)
           ..add('requester', requester)
           ..add('runId', runId)
           ..add('status', status))
@@ -156,6 +162,10 @@ class RunOrderResponseBuilder
   set paymentSubmittedAt(DateTime? paymentSubmittedAt) =>
       _$this._paymentSubmittedAt = paymentSubmittedAt;
 
+  bool? _ratedByMe;
+  bool? get ratedByMe => _$this._ratedByMe;
+  set ratedByMe(bool? ratedByMe) => _$this._ratedByMe = ratedByMe;
+
   RunUserSummaryBuilder? _requester;
   RunUserSummaryBuilder get requester =>
       _$this._requester ??= RunUserSummaryBuilder();
@@ -186,6 +196,7 @@ class RunOrderResponseBuilder
       _paymentNote = $v.paymentNote;
       _paymentProofUrl = $v.paymentProofUrl;
       _paymentSubmittedAt = $v.paymentSubmittedAt;
+      _ratedByMe = $v.ratedByMe;
       _requester = $v.requester.toBuilder();
       _runId = $v.runId;
       _status = $v.status;
@@ -225,6 +236,7 @@ class RunOrderResponseBuilder
             paymentNote: paymentNote,
             paymentProofUrl: paymentProofUrl,
             paymentSubmittedAt: paymentSubmittedAt,
+            ratedByMe: ratedByMe,
             requester: requester.build(),
             runId: BuiltValueNullFieldError.checkNotNull(
                 runId, r'RunOrderResponse', 'runId'),

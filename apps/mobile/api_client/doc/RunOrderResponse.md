@@ -17,6 +17,7 @@ Name | Type | Description | Notes
 **paymentNote** | **String** |  | [optional] 
 **paymentProofUrl** | **String** |  | [optional] 
 **paymentSubmittedAt** | [**DateTime**](DateTime.md) |  | [optional] 
+**ratedByMe** | **bool** |  | [optional] [default to false]
 **requester** | [**RunUserSummary**](RunUserSummary.md) |  | 
 **runId** | **String** |  | 
 **status** | [**RunOrderStatus**](RunOrderStatus.md) |  | 

@@ -209,10 +209,13 @@ class _RunDetailBody extends ConsumerWidget {
       RunOrderStatus.delivered,
       RunOrderStatus.received,
     }.contains(order.status);
-    final canRate =
+    final rateable =
         run.status == RunStatus.done &&
         (order.status == RunOrderStatus.delivered ||
             order.status == RunOrderStatus.received);
+    // Server-authoritative (QA M-05): a submitted rating disables the CTA.
+    final alreadyRated = order.ratedByMe ?? false;
+    final canRate = rateable && !alreadyRated;
     return [
       _MyOrderCard(order: order),
       if (accepted && (run.feeCents > 0 || run.prepayRequired)) ...[
@@ -255,15 +258,27 @@ class _RunDetailBody extends ConsumerWidget {
         FilledButton.tonalIcon(
           icon: const Icon(Icons.star_outline),
           label: Text('Rate ${run.runner.displayName}'),
-          onPressed: () => showRateRunSheet(
-            context,
-            ratedUserId: run.runner.id,
-            ratedName: run.runner.displayName,
-            orderId: order.id,
-            dropoff: order.dropoff,
-            currentRating: run.runner.reputationScore,
-            ratingCount: run.runner.ratingCount,
-          ),
+          onPressed: () async {
+            await showRateRunSheet(
+              context,
+              ratedUserId: run.runner.id,
+              ratedName: run.runner.displayName,
+              orderId: order.id,
+              dropoff: order.dropoff,
+              currentRating: run.runner.reputationScore,
+              ratingCount: run.runner.ratingCount,
+            );
+            // Done runs no longer poll — re-sync so ratedByMe flips the
+            // CTA to "Rated" immediately (QA M-05).
+            await controller.refresh();
+          },
+        ),
+      ] else if (rateable && alreadyRated) ...[
+        SizedBox(height: tokens.space3),
+        FilledButton.tonalIcon(
+          icon: const Icon(Icons.star),
+          label: Text('You rated ${run.runner.displayName}'),
+          onPressed: null,
         ),
       ],
     ];
@@ -336,8 +351,11 @@ class _RunDetailBody extends ConsumerWidget {
         Padding(
           padding: EdgeInsets.symmetric(vertical: tokens.space4),
           child: Text(
-            'No requests yet — they show up here the moment '
-            'someone wants in.',
+            // QA S-07: a wrapped-up run must not promise future requests.
+            active
+                ? 'No requests yet — they show up here the moment '
+                      'someone wants in.'
+                : 'This run ended without any orders.',
             style: context.text.bodyMedium?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
@@ -365,15 +383,21 @@ class _RunDetailBody extends ConsumerWidget {
               context,
               () => controller.markNoShow(order.id),
             ),
-            onRate: () => showRateRunSheet(
-              context,
-              ratedUserId: order.requester.id,
-              ratedName: order.requester.displayName,
-              orderId: order.id,
-              dropoff: order.dropoff,
-              currentRating: order.requester.reputationScore,
-              ratingCount: order.requester.ratingCount,
-            ),
+            onRate: () async {
+              await showRateRunSheet(
+                context,
+                ratedUserId: order.requester.id,
+                ratedName: order.requester.displayName,
+                orderId: order.id,
+                // Runner rating a customer — customer tags, not delivery.
+                ratingRunner: false,
+                dropoff: order.dropoff,
+                currentRating: order.requester.reputationScore,
+                ratingCount: order.requester.ratingCount,
+              );
+              // Done runs no longer poll — re-sync to flip Rate → Rated.
+              await controller.refresh();
+            },
           ),
           SizedBox(height: tokens.space3),
         ],
@@ -1161,10 +1185,14 @@ class _OrderCard extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
     final requester = order.requester;
-    final canRate =
+    final rateable =
         runDone &&
         (order.status == RunOrderStatus.delivered ||
             order.status == RunOrderStatus.received);
+    // Server-authoritative (QA M-05): once rated, the CTA flips to a
+    // disabled "Rated" so it can't be tapped into a guaranteed 409.
+    final alreadyRated = order.ratedByMe ?? false;
+    final canRate = rateable && !alreadyRated;
     final card = Container(
       padding: EdgeInsets.all(tokens.space4),
       decoration: BoxDecoration(
@@ -1262,6 +1290,12 @@ class _OrderCard extends StatelessWidget {
                     onPressed: onRate,
                     icon: const Icon(Icons.star_outline, size: 18),
                     label: const Text('Rate'),
+                  )
+                else if (rateable && alreadyRated)
+                  TextButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.star, size: 18),
+                    label: const Text('Rated'),
                   ),
               ],
             ),

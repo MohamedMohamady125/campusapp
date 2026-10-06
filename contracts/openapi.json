@@ -2349,6 +2349,11 @@
             ],
             "title": "Payment Submitted At"
           },
+          "rated_by_me": {
+            "default": false,
+            "title": "Rated By Me",
+            "type": "boolean"
+          },
           "requester": {
             "$ref": "#/components/schemas/RunUserSummary"
           },

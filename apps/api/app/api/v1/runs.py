@@ -138,7 +138,11 @@ async def get_run(
     svc: RunService = Depends(_service),
 ) -> RunResponse:
     run = await svc.get_run(run_id)
-    return run_response(run, viewer_id=user.id)
+    # Detail is where Rate CTAs live — mark orders the viewer already rated
+    # so the client can grey them out (QA M-05). List endpoints skip this
+    # extra query; they never render a Rate button.
+    rated = await svc.rated_order_ids(run=run, rater_id=user.id)
+    return run_response(run, viewer_id=user.id, rated_order_ids=rated)
 
 
 @router.post("", response_model=RunResponse, status_code=201)

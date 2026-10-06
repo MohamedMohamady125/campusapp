@@ -14,6 +14,7 @@ Bayesian reputation.
 import uuid
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import (
@@ -33,11 +34,12 @@ from app.integrations.storage.resolve import image_public_url
 from app.models import (
     DropoffLocation,
     FoodSpot,
+    Rating,
     Run,
     RunOrder,
     User,
 )
-from app.models.enums import RunOrderStatus, RunStatus
+from app.models.enums import RatingContext, RunOrderStatus, RunStatus
 from app.repositories.chat_repo import NotificationRepository
 from app.repositories.run_repo import RunRepository
 from app.schemas.run import (
@@ -95,9 +97,10 @@ def _user_summary(user: User, *, include_payment: bool = False) -> RunUserSummar
     )
 
 
-def _order_response(order: RunOrder) -> RunOrderResponse:
+def _order_response(order: RunOrder, *, rated_by_me: bool = False) -> RunOrderResponse:
     proof_url = image_public_url(order.payment_proof_key) if order.payment_proof_key else None
     return RunOrderResponse(
+        rated_by_me=rated_by_me,
         id=order.id,
         run_id=order.run_id,
         requester=_user_summary(order.requester),
@@ -113,7 +116,12 @@ def _order_response(order: RunOrder) -> RunOrderResponse:
     )
 
 
-def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
+def run_response(
+    run: Run,
+    *,
+    viewer_id: uuid.UUID,
+    rated_order_ids: frozenset[uuid.UUID] | set[uuid.UUID] = frozenset(),
+) -> RunResponse:
     """Serialize a run for a specific viewer (authz-in-serialization):
 
     - runner sees every order;
@@ -166,8 +174,12 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
         pending_count=len(pending),
         created_at=run.created_at,
         # Runner sees every order; requesters/visitors get [] here.
-        orders=[_order_response(o) for o in run.orders] if is_runner else [],
-        my_order=_order_response(my_order) if my_order is not None else None,
+        orders=[_order_response(o, rated_by_me=o.id in rated_order_ids) for o in run.orders]
+        if is_runner
+        else [],
+        my_order=_order_response(my_order, rated_by_me=my_order.id in rated_order_ids)
+        if my_order is not None
+        else None,
         runner_location=runner_location,
     )
 
@@ -244,6 +256,22 @@ class RunService:
 
     async def get_run(self, run_id: uuid.UUID) -> Run:
         return await self._get_or_404(run_id)
+
+    async def rated_order_ids(self, *, run: Run, rater_id: uuid.UUID) -> set[uuid.UUID]:
+        """Order ids on [run] the viewer has already rated (QA M-05: the Rate
+        CTA must grey out server-authoritatively, not from client memory)."""
+        order_ids = [o.id for o in run.orders]
+        if not order_ids:
+            return set()
+        rows = await self._session.execute(
+            select(Rating.context_id).where(
+                Rating.rater_id == rater_id,
+                Rating.context_type == RatingContext.run,
+                Rating.context_id.in_(order_ids),
+                Rating.deleted_at.is_(None),
+            )
+        )
+        return {cid for cid in rows.scalars() if cid is not None}
 
     # -- orders ------------------------------------------------------------
 

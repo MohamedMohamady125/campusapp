@@ -99,6 +99,10 @@ class RunOrderResponse(BaseModel):
     payment_proof_url: str | None = None
     payment_note: str | None = None
     payment_submitted_at: datetime | None = None
+    # Server-authoritative "the viewer already rated this order" flag (ratings
+    # are unique per rater+order). The client greys out its Rate CTA on this —
+    # it must never guess from local state (QA M-05: Rate stayed active).
+    rated_by_me: bool = False
 
 
 class RunResponse(BaseModel):

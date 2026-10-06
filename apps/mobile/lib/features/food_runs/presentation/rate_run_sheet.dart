@@ -10,20 +10,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// One-tap quality signals; selecting them composes the rating comment so the
 /// happy path needs zero typing (real POST /ratings, no new field).
-const _quickTags = <String>[
+/// Role-aware (QA M-04): a requester rates the *delivery*, a runner rates
+/// the *customer* — delivery tags like "Still hot" make no sense in reverse.
+const _runnerTags = <String>[
   'On time',
   'Order correct',
   'Great comms',
   'Still hot',
 ];
+const _customerTags = <String>[
+  'Paid fast',
+  'Clear order',
+  'Easy drop-off',
+  'Friendly',
+];
 
 /// Two-way run rating sheet (POST /ratings, context `run`,
 /// context_id = RunOrder id). Double-rates come back as a friendly line.
+/// [ratingRunner] = true when a requester rates the runner (delivery tags);
+/// false when the runner rates a customer (customer tags).
 Future<void> showRateRunSheet(
   BuildContext context, {
   required String ratedUserId,
   required String ratedName,
   required String orderId,
+  bool ratingRunner = true,
   String? dropoff,
   num? currentRating,
   int ratingCount = 0,
@@ -36,6 +47,7 @@ Future<void> showRateRunSheet(
       ratedUserId: ratedUserId,
       ratedName: ratedName,
       orderId: orderId,
+      ratingRunner: ratingRunner,
       dropoff: dropoff,
       currentRating: currentRating,
       ratingCount: ratingCount,
@@ -49,6 +61,7 @@ class _RateRunSheet extends ConsumerStatefulWidget {
     required this.ratedName,
     required this.orderId,
     required this.ratingCount,
+    required this.ratingRunner,
     this.dropoff,
     this.currentRating,
   });
@@ -56,6 +69,7 @@ class _RateRunSheet extends ConsumerStatefulWidget {
   final String ratedUserId;
   final String ratedName;
   final String orderId;
+  final bool ratingRunner;
   final String? dropoff;
   final num? currentRating;
   final int ratingCount;
@@ -80,6 +94,9 @@ class _RateRunSheetState extends ConsumerState<_RateRunSheet> {
 
   /// Folds selected quick-tags and free text into the single `comment` the API
   /// accepts, so chips and typing share one real submit path.
+  List<String> get _quickTags =>
+      widget.ratingRunner ? _runnerTags : _customerTags;
+
   String? _composedComment() {
     final free = _comment.text.trim();
     final tags = _quickTags.where(_tags.contains).toList();
