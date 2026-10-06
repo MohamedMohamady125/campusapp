@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **feeCents** | **int** |  | 
 **foodSpot** | [**FoodSpotResponse**](FoodSpotResponse.md) |  | 
 **id** | **String** |  | 
+**isMine** | **bool** |  | [optional] [default to false]
 **leavingAt** | [**DateTime**](DateTime.md) |  | 
 **myOrder** | [**RunOrderResponse**](RunOrderResponse.md) |  | [optional] 
 **note** | **String** |  | 

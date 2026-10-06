@@ -104,6 +104,10 @@ class RunOrderResponse(BaseModel):
 class RunResponse(BaseModel):
     id: uuid.UUID
     runner: RunUserSummary
+    # Server-authoritative "the viewer IS this run's runner" flag. The client
+    # must never derive this by comparing ids (a not-yet-loaded profile made
+    # runners see requester CTAs like "Attach my order").
+    is_mine: bool = False
     food_spot: FoodSpotResponse
     note: str | None
     leaving_at: datetime

@@ -18,6 +18,8 @@ class _$RunResponse extends RunResponse {
   @override
   final String id;
   @override
+  final bool? isMine;
+  @override
   final DateTime leavingAt;
   @override
   final RunOrderResponse? myOrder;
@@ -47,6 +49,7 @@ class _$RunResponse extends RunResponse {
       required this.feeCents,
       required this.foodSpot,
       required this.id,
+      this.isMine,
       required this.leavingAt,
       this.myOrder,
       this.note,
@@ -74,6 +77,7 @@ class _$RunResponse extends RunResponse {
         feeCents == other.feeCents &&
         foodSpot == other.foodSpot &&
         id == other.id &&
+        isMine == other.isMine &&
         leavingAt == other.leavingAt &&
         myOrder == other.myOrder &&
         note == other.note &&
@@ -94,6 +98,7 @@ class _$RunResponse extends RunResponse {
     _$hash = $jc(_$hash, feeCents.hashCode);
     _$hash = $jc(_$hash, foodSpot.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
+    _$hash = $jc(_$hash, isMine.hashCode);
     _$hash = $jc(_$hash, leavingAt.hashCode);
     _$hash = $jc(_$hash, myOrder.hashCode);
     _$hash = $jc(_$hash, note.hashCode);
@@ -116,6 +121,7 @@ class _$RunResponse extends RunResponse {
           ..add('feeCents', feeCents)
           ..add('foodSpot', foodSpot)
           ..add('id', id)
+          ..add('isMine', isMine)
           ..add('leavingAt', leavingAt)
           ..add('myOrder', myOrder)
           ..add('note', note)
@@ -155,6 +161,10 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
   String? _id;
   String? get id => _$this._id;
   set id(String? id) => _$this._id = id;
+
+  bool? _isMine;
+  bool? get isMine => _$this._isMine;
+  set isMine(bool? isMine) => _$this._isMine = isMine;
 
   DateTime? _leavingAt;
   DateTime? get leavingAt => _$this._leavingAt;
@@ -214,6 +224,7 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
       _feeCents = $v.feeCents;
       _foodSpot = $v.foodSpot.toBuilder();
       _id = $v.id;
+      _isMine = $v.isMine;
       _leavingAt = $v.leavingAt;
       _myOrder = $v.myOrder?.toBuilder();
       _note = $v.note;
@@ -255,6 +266,7 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
                 feeCents, r'RunResponse', 'feeCents'),
             foodSpot: foodSpot.build(),
             id: BuiltValueNullFieldError.checkNotNull(id, r'RunResponse', 'id'),
+            isMine: isMine,
             leavingAt: BuiltValueNullFieldError.checkNotNull(
                 leavingAt, r'RunResponse', 'leavingAt'),
             myOrder: _myOrder?.build(),

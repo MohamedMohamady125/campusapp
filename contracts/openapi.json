@@ -2438,6 +2438,11 @@
             "title": "Id",
             "type": "string"
           },
+          "is_mine": {
+            "default": false,
+            "title": "Is Mine",
+            "type": "boolean"
+          },
           "leaving_at": {
             "format": "date-time",
             "title": "Leaving At",

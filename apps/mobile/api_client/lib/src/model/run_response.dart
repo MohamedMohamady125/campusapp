@@ -22,6 +22,7 @@ part 'run_response.g.dart';
 /// * [feeCents] 
 /// * [foodSpot] 
 /// * [id] 
+/// * [isMine] 
 /// * [leavingAt] 
 /// * [myOrder] 
 /// * [note] 
@@ -48,6 +49,9 @@ abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
 
   @BuiltValueField(wireName: r'id')
   String get id;
+
+  @BuiltValueField(wireName: r'is_mine')
+  bool? get isMine;
 
   @BuiltValueField(wireName: r'leaving_at')
   DateTime get leavingAt;
@@ -86,6 +90,7 @@ abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
 
   @BuiltValueHook(initializeBuilder: true)
   static void _defaults(RunResponseBuilder b) => b
+      ..isMine = false
       ..orders = ListBuilder();
 
   @BuiltValueSerializer(custom: true)
@@ -129,6 +134,13 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
       object.id,
       specifiedType: const FullType(String),
     );
+    if (object.isMine != null) {
+      yield r'is_mine';
+      yield serializers.serialize(
+        object.isMine,
+        specifiedType: const FullType(bool),
+      );
+    }
     yield r'leaving_at';
     yield serializers.serialize(
       object.leavingAt,
@@ -242,6 +254,13 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
             specifiedType: const FullType(String),
           ) as String;
           result.id = valueDes;
+          break;
+        case r'is_mine':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(bool),
+          ) as bool;
+          result.isMine = valueDes;
           break;
         case r'leaving_at':
           final valueDes = serializers.deserialize(

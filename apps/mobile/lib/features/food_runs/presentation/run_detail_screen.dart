@@ -14,7 +14,6 @@ import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
-import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/live_map_card.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
 import 'package:campusconnect/features/food_runs/presentation/rate_run_sheet.dart';
@@ -38,7 +37,6 @@ class RunDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(runDetailControllerProvider(runId));
-    final myId = ref.watch(authControllerProvider).user?.id;
     final run = state.run;
 
     return Scaffold(
@@ -60,7 +58,10 @@ class RunDetailScreen extends ConsumerWidget {
           ),
           (_, final RunResponse run) => _RunDetailBody(
             run: run,
-            isRunner: run.runner.id == myId,
+            // Server-authoritative: never derived from a client id compare —
+            // a not-yet-loaded profile used to demote the runner to visitor
+            // and show them "Request a spot" on their own run.
+            isRunner: run.isMine ?? false,
           ),
         },
       ),

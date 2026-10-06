@@ -154,6 +154,7 @@ def run_response(run: Run, *, viewer_id: uuid.UUID) -> RunResponse:
     return RunResponse(
         id=run.id,
         runner=_user_summary(run.runner, include_payment=show_payment),
+        is_mine=is_runner,
         food_spot=FoodSpotResponse.model_validate(run.food_spot),
         note=run.note,
         leaving_at=run.leaving_at,

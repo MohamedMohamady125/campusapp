@@ -14,7 +14,6 @@ import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
-import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_row.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
@@ -164,7 +163,6 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
     final sorted = _sorted(state.items);
     final hero = sorted.first;
     final rest = sorted.skip(1).toList();
-    final myId = ref.read(authControllerProvider).user?.id;
 
     return [
       SliverToBoxAdapter(
@@ -176,7 +174,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
             tokens.space4,
           ),
           child: FadeSlideIn(
-            child: _HeroRunCard(run: hero, isMine: hero.runner.id == myId),
+            child: _HeroRunCard(run: hero, isMine: hero.isMine ?? false),
           ),
         ),
       ),
