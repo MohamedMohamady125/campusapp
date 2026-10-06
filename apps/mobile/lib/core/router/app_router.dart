@@ -2,6 +2,7 @@ import 'package:campusconnect/core/flags/flags_provider.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
+import 'package:campusconnect/features/auth/presentation/forgot_password_screen.dart';
 import 'package:campusconnect/features/auth/presentation/login_screen.dart';
 import 'package:campusconnect/features/auth/presentation/register_screen.dart';
 import 'package:campusconnect/features/auth/presentation/verify_screen.dart';
@@ -19,6 +20,7 @@ import 'package:campusconnect/features/marketplace/presentation/my_listings_scre
 import 'package:campusconnect/features/marketplace/presentation/sell_screen.dart';
 import 'package:campusconnect/features/messaging/presentation/thread_screen.dart';
 import 'package:campusconnect/features/notifications/presentation/notifications_screen.dart';
+import 'package:campusconnect/features/profile/presentation/edit_profile_screen.dart';
 import 'package:campusconnect/features/profile/presentation/profile_screen.dart';
 import 'package:campusconnect/features/tutoring/presentation/tutor_search_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,12 +55,15 @@ CustomTransitionPage<void> _slidePage({
   },
 );
 
-const _authLocations = {'/login', '/register', '/verify'};
+const _authLocations = {'/login', '/register', '/verify', '/forgot-password'};
 
 /// Location prefix → the flag that must be on to visit it. Runs and
 /// profile are always reachable.
 const _flaggedPrefixes = <String, String>{
   '/market': kTabMarketplace,
+  // My listings is marketplace UI living under /profile — gate it with the
+  // same flag so no Sell entry point survives while the tab is off (QA M-07).
+  '/profile/my-listings': kTabMarketplace,
   '/tutors': kTabTutoring,
   '/chats': kTabChats,
 };
@@ -104,6 +109,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verify',
         builder: (_, state) => VerifyScreen(email: state.extra! as String),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (_, _) => const ForgotPasswordScreen(),
       ),
       // Pushed over the shell from any tab's bell (Sprint 6).
       GoRoute(
@@ -224,6 +233,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'my-listings',
                     builder: (_, _) => const MyListingsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (_, state) => _slidePage(
+                      state: state,
+                      child: const EditProfileScreen(),
+                    ),
                   ),
                   GoRoute(
                     path: 'payment-methods',

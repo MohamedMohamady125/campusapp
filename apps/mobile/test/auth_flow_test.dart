@@ -90,6 +90,11 @@ void main() {
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
 
+    // Confirmation dialog (QA S-03) — confirm to actually sign out.
+    expect(find.text('Sign out?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign out'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Sign in with your campus email'), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
   });

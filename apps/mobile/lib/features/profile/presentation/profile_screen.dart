@@ -1,3 +1,7 @@
+import 'dart:async' show unawaited;
+
+import 'package:campusconnect/core/legal.dart';
+import 'package:campusconnect/core/theme_mode_provider.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
@@ -50,12 +54,11 @@ class ProfileScreen extends ConsumerWidget {
                         onTap: () => context.go('/profile/payment-methods'),
                       ),
                       const Divider(height: 1, indent: 56),
-                      const ListTile(
-                        leading: Icon(Icons.person_outline),
-                        title: Text('Edit profile'),
-                        trailing: Icon(Icons.chevron_right),
-                        // Editing lands with a later milestone.
-                        enabled: false,
+                      ListTile(
+                        leading: const Icon(Icons.person_outline),
+                        title: const Text('Edit profile'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.go('/profile/edit'),
                       ),
                     ],
                   ),
@@ -64,22 +67,32 @@ class ProfileScreen extends ConsumerWidget {
                 Card(
                   child: Column(
                     children: [
-                      const ListTile(
-                        leading: Icon(Icons.notifications_outlined),
-                        title: Text('Notifications'),
-                        trailing: Icon(Icons.chevron_right),
-                        enabled: false,
-                      ),
-                      const Divider(height: 1, indent: 56),
+                      // QA M-06: the greyed Notifications row looked broken.
+                      // There are no per-type prefs yet — the bell in every
+                      // app bar is the whole story, so the row is gone.
+                      // QA S-05: Appearance is a real picker now.
                       ListTile(
                         leading: const Icon(Icons.brightness_6_outlined),
                         title: const Text('Appearance'),
-                        subtitle: const Text('Follows your device setting'),
-                        trailing: Icon(
-                          Theme.of(context).brightness == Brightness.dark
-                              ? Icons.dark_mode_outlined
-                              : Icons.light_mode_outlined,
+                        subtitle: Text(
+                          _themeModeLabel(ref.watch(themeModeProvider)),
                         ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _pickThemeMode(context, ref),
+                      ),
+                      const Divider(height: 1, indent: 56),
+                      ListTile(
+                        leading: const Icon(Icons.description_outlined),
+                        title: const Text('Terms of Service'),
+                        trailing: const Icon(Icons.open_in_new, size: 18),
+                        onTap: () => unawaited(openLegalUrl(kTermsUrl)),
+                      ),
+                      const Divider(height: 1, indent: 56),
+                      ListTile(
+                        leading: const Icon(Icons.privacy_tip_outlined),
+                        title: const Text('Privacy Policy'),
+                        trailing: const Icon(Icons.open_in_new, size: 18),
+                        onTap: () => unawaited(openLegalUrl(kPrivacyUrl)),
                       ),
                     ],
                   ),
@@ -92,8 +105,36 @@ class ProfileScreen extends ConsumerWidget {
                       'Sign out',
                       style: TextStyle(color: colors.error),
                     ),
-                    onTap: () =>
-                        ref.read(authControllerProvider.notifier).logOut(),
+                    // QA S-03: signing out from a list tap is too easy to
+                    // fat-finger — confirm first.
+                    onTap: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: const Text('Sign out?'),
+                          content: const Text(
+                            "You'll need your password to sign back in.",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(false),
+                              child: const Text('Stay signed in'),
+                            ),
+                            FilledButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(true),
+                              child: const Text('Sign out'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed ?? false) {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .logOut();
+                      }
+                    },
                   ),
                 ),
                 SizedBox(height: tokens.space6),
@@ -101,6 +142,56 @@ class ProfileScreen extends ConsumerWidget {
             ),
     );
   }
+}
+
+String _themeModeLabel(ThemeMode mode) => switch (mode) {
+  ThemeMode.light => 'Light',
+  ThemeMode.dark => 'Dark',
+  ThemeMode.system => 'Match device',
+};
+
+/// Appearance picker (QA S-05): Light / Dark / Match device, persisted
+/// locally via [themeModeProvider].
+void _pickThemeMode(BuildContext context, WidgetRef ref) {
+  final current = ref.read(themeModeProvider);
+  unawaited(
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final mode in const [
+              ThemeMode.light,
+              ThemeMode.dark,
+              ThemeMode.system,
+            ])
+              ListTile(
+                leading: Icon(switch (mode) {
+                  ThemeMode.light => Icons.light_mode_outlined,
+                  ThemeMode.dark => Icons.dark_mode_outlined,
+                  ThemeMode.system => Icons.phone_iphone_outlined,
+                }),
+                title: Text(_themeModeLabel(mode)),
+                trailing: mode == current
+                    ? Icon(
+                        Icons.check_rounded,
+                        color: Theme.of(sheetContext).colorScheme.primary,
+                      )
+                    : null,
+                onTap: () {
+                  unawaited(
+                    ref.read(themeModeProvider.notifier).set(mode),
+                  );
+                  Navigator.of(sheetContext).pop();
+                },
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// Identity card + real reputation stats (spec §4.2: never a bare average —
