@@ -12,6 +12,8 @@ class _$FoodSpotCreateRequest extends FoodSpotCreateRequest {
   @override
   final String? description;
   @override
+  final String? imageUrl;
+  @override
   final num? lat;
   @override
   final num? lng;
@@ -23,7 +25,12 @@ class _$FoodSpotCreateRequest extends FoodSpotCreateRequest {
       (FoodSpotCreateRequestBuilder()..update(updates))._build();
 
   _$FoodSpotCreateRequest._(
-      {this.category, this.description, this.lat, this.lng, required this.name})
+      {this.category,
+      this.description,
+      this.imageUrl,
+      this.lat,
+      this.lng,
+      required this.name})
       : super._();
   @override
   FoodSpotCreateRequest rebuild(
@@ -40,6 +47,7 @@ class _$FoodSpotCreateRequest extends FoodSpotCreateRequest {
     return other is FoodSpotCreateRequest &&
         category == other.category &&
         description == other.description &&
+        imageUrl == other.imageUrl &&
         lat == other.lat &&
         lng == other.lng &&
         name == other.name;
@@ -50,6 +58,7 @@ class _$FoodSpotCreateRequest extends FoodSpotCreateRequest {
     var _$hash = 0;
     _$hash = $jc(_$hash, category.hashCode);
     _$hash = $jc(_$hash, description.hashCode);
+    _$hash = $jc(_$hash, imageUrl.hashCode);
     _$hash = $jc(_$hash, lat.hashCode);
     _$hash = $jc(_$hash, lng.hashCode);
     _$hash = $jc(_$hash, name.hashCode);
@@ -62,6 +71,7 @@ class _$FoodSpotCreateRequest extends FoodSpotCreateRequest {
     return (newBuiltValueToStringHelper(r'FoodSpotCreateRequest')
           ..add('category', category)
           ..add('description', description)
+          ..add('imageUrl', imageUrl)
           ..add('lat', lat)
           ..add('lng', lng)
           ..add('name', name))
@@ -80,6 +90,10 @@ class FoodSpotCreateRequestBuilder
   String? _description;
   String? get description => _$this._description;
   set description(String? description) => _$this._description = description;
+
+  String? _imageUrl;
+  String? get imageUrl => _$this._imageUrl;
+  set imageUrl(String? imageUrl) => _$this._imageUrl = imageUrl;
 
   num? _lat;
   num? get lat => _$this._lat;
@@ -102,6 +116,7 @@ class FoodSpotCreateRequestBuilder
     if ($v != null) {
       _category = $v.category;
       _description = $v.description;
+      _imageUrl = $v.imageUrl;
       _lat = $v.lat;
       _lng = $v.lng;
       _name = $v.name;
@@ -128,6 +143,7 @@ class FoodSpotCreateRequestBuilder
         _$FoodSpotCreateRequest._(
           category: category,
           description: description,
+          imageUrl: imageUrl,
           lat: lat,
           lng: lng,
           name: BuiltValueNullFieldError.checkNotNull(

@@ -194,18 +194,24 @@ class _RunnerPin extends StatelessWidget {
   }
 }
 
-/// "Live · updated Ns ago" overlay chip.
+/// "Live · updated Ns ago" overlay chip. A ping older than ~5 minutes isn't
+/// live anymore — the badge goes gray and says when the runner was last
+/// seen, in humane units (never "5670m ago").
 class _LiveBadge extends StatelessWidget {
   const _LiveBadge({required this.updatedAt});
 
   final DateTime updatedAt;
 
+  bool get _stale =>
+      DateTime.now().difference(updatedAt) > const Duration(minutes: 5);
+
   String get _ago {
-    final secs = DateTime.now().difference(updatedAt).inSeconds;
-    if (secs < 10) return 'just now';
-    if (secs < 60) return '${secs}s ago';
-    final mins = secs ~/ 60;
-    return '${mins}m ago';
+    final diff = DateTime.now().difference(updatedAt);
+    if (diff.inSeconds < 10) return 'just now';
+    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return 'over a day ago';
   }
 
   @override
@@ -226,14 +232,14 @@ class _LiveBadge extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(
-              color: Color(0xFF34D399),
+            decoration: BoxDecoration(
+              color: _stale ? const Color(0xFF9CA3AF) : const Color(0xFF34D399),
               shape: BoxShape.circle,
             ),
           ),
           SizedBox(width: tokens.space2),
           Text(
-            'Live · $_ago',
+            _stale ? 'Last seen $_ago' : 'Live · $_ago',
             style: context.text.labelSmall?.copyWith(color: Colors.white),
           ),
         ],

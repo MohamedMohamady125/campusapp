@@ -14,6 +14,7 @@ part 'food_spot_create_request.g.dart';
 /// Properties:
 /// * [category] 
 /// * [description] 
+/// * [imageUrl] 
 /// * [lat] 
 /// * [lng] 
 /// * [name] 
@@ -25,6 +26,9 @@ abstract class FoodSpotCreateRequest implements Built<FoodSpotCreateRequest, Foo
 
   @BuiltValueField(wireName: r'description')
   String? get description;
+
+  @BuiltValueField(wireName: r'image_url')
+  String? get imageUrl;
 
   @BuiltValueField(wireName: r'lat')
   num? get lat;
@@ -70,6 +74,13 @@ class _$FoodSpotCreateRequestSerializer implements PrimitiveSerializer<FoodSpotC
       yield r'description';
       yield serializers.serialize(
         object.description,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
+    if (object.imageUrl != null) {
+      yield r'image_url';
+      yield serializers.serialize(
+        object.imageUrl,
         specifiedType: const FullType.nullable(String),
       );
     }
@@ -129,6 +140,14 @@ class _$FoodSpotCreateRequestSerializer implements PrimitiveSerializer<FoodSpotC
           ) as String?;
           if (valueDes == null) continue;
           result.description = valueDes;
+          break;
+        case r'image_url':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.imageUrl = valueDes;
           break;
         case r'lat':
           final valueDes = serializers.deserialize(

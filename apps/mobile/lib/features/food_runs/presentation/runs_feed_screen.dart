@@ -17,6 +17,7 @@ import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_row.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
+import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
 import 'package:campusconnect/features/notifications/presentation/notification_bell.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -352,6 +353,10 @@ class _FeedFilters extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
+    // Custom pills instead of Material FilterChip — the stock chip clipped
+    // its own label at this size ("All run", "Closing soo"). Full-control
+    // stadium pills: selected is a solid brand fill with white text,
+    // unselected stays a quiet hairline pill.
     return SizedBox(
       height: 48,
       child: ListView(
@@ -361,32 +366,46 @@ class _FeedFilters extends StatelessWidget {
           for (final (value, label) in _options)
             Padding(
               padding: EdgeInsets.only(right: tokens.space2),
-              child: FilterChip(
-                label: Text(label),
-                selected: selected == value,
-                showCheckmark: false,
-                shape: const StadiumBorder(),
-                // Yamesh-kit chips: selected is a solid brand fill with white
-                // text, unselected stays a quiet hairline pill.
-                backgroundColor: colors.surface,
-                selectedColor: colors.primary,
-                padding: EdgeInsets.symmetric(
-                  horizontal: tokens.space3,
-                  vertical: tokens.space2,
+              child: Center(
+                child: Semantics(
+                  button: true,
+                  selected: selected == value,
+                  child: Pressable(
+                    onTap: () => onSelected(value),
+                    child: AnimatedContainer(
+                      duration: AppMotion.resolve(context, AppMotion.micro),
+                      curve: AppMotion.emphasized,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.space4,
+                        vertical: tokens.space2 + 2,
+                      ),
+                      decoration: ShapeDecoration(
+                        color: selected == value
+                            ? colors.primary
+                            : colors.surface,
+                        shape: StadiumBorder(
+                          side: selected == value
+                              ? BorderSide.none
+                              : BorderSide(color: colors.outlineVariant),
+                        ),
+                      ),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: context.text.labelMedium?.copyWith(
+                          fontSize: 13,
+                          fontWeight: selected == value
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: selected == value
+                              ? Colors.white
+                              : colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                side: selected == value
-                    ? BorderSide.none
-                    : BorderSide(color: colors.outlineVariant),
-                labelStyle: context.text.labelMedium?.copyWith(
-                  fontSize: 13,
-                  fontWeight: selected == value
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                  color: selected == value
-                      ? Colors.white
-                      : colors.onSurfaceVariant,
-                ),
-                onSelected: (_) => onSelected(value),
               ),
             ),
         ],
@@ -458,6 +477,32 @@ class _HeroRunCardState extends State<_HeroRunCard> {
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
+            // Spot photo backdrop under a heavy brand-blue wash: the card
+            // leads with real food texture while staying legible and
+            // unmistakably branded.
+            if (run.foodSpot.imageUrl != null)
+              Positioned.fill(
+                child: SpotImage(
+                  name: run.foodSpot.name,
+                  imageUrl: run.foodSpot.imageUrl,
+                ),
+              ),
+            if (run.foodSpot.imageUrl != null)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primaryDark.withValues(alpha: .92),
+                        AppColors.primary.withValues(alpha: .88),
+                        const Color(0xFF2A72B4).withValues(alpha: .86),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             // Soft decorative glow orb in the corner — persona, not clutter.
             Positioned(
               top: -60,
@@ -755,28 +800,32 @@ class _SkeletonList extends StatelessWidget {
           // Section eyebrow ("OPEN NOW · ON CAMPUS") placeholder.
           const SkeletonBox(width: 140, height: 12),
           SizedBox(height: tokens.space3),
-          for (var i = 0; i < 4; i++) ...[
+          for (var i = 0; i < 3; i++) ...[
+            // Image-led card skeleton: photo banner + title/trust footer.
             Container(
-              padding: EdgeInsets.all(tokens.space3),
               decoration: BoxDecoration(
                 borderRadius: tokens.brLg,
                 border: Border.all(color: colors.outlineVariant),
               ),
-              child: const Row(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SkeletonBox(width: 56, height: 56),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
+                  const SkeletonBox(
+                    width: double.infinity,
+                    height: 132,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(tokens.space3),
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SkeletonBox(width: 140, height: 18),
+                        SkeletonBox(width: 160, height: 18),
                         SizedBox(height: 8),
-                        SkeletonBox(width: 180, height: 12),
+                        SkeletonBox(width: 200, height: 12),
                       ],
                     ),
                   ),
-                  SkeletonBox(width: 56, height: 28),
                 ],
               ),
             ),

@@ -21,6 +21,7 @@ import 'package:campusconnect/features/food_runs/presentation/run_detail_control
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runner_location_broadcaster.dart';
 import 'package:campusconnect/features/food_runs/presentation/runner_route_card.dart';
+import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/services.dart'
     show Clipboard, ClipboardData, HapticFeedback;
@@ -460,97 +461,122 @@ class _RunHeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
-    final runner = run.runner;
     final terminal =
         run.status == RunStatus.cancelled || run.status == RunStatus.expired;
     return Container(
-      padding: EdgeInsets.all(tokens.space4),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: tokens.brMd,
         border: Border.all(color: colors.outlineVariant),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(run.foodSpot.name, style: AppTextStyles.heading),
+          // Spot photo header — the detail screen opens on the food, not a
+          // wall of text. Hidden entirely when the spot has no imagery.
+          if (run.foodSpot.imageUrl != null)
+            SizedBox(
+              height: 168,
+              width: double.infinity,
+              child: SpotImage(
+                name: run.foodSpot.name,
+                imageUrl: run.foodSpot.imageUrl,
               ),
-              if (terminal) _DetailStatusChip(run: run),
-            ],
+            ),
+          Padding(
+            padding: EdgeInsets.all(tokens.space4),
+            child: _headerBody(context, terminal: terminal),
           ),
-          if (!terminal) ...[
-            SizedBox(height: tokens.space5),
-            _LifecycleRail(status: run.status),
+        ],
+      ),
+    );
+  }
+
+  Widget _headerBody(BuildContext context, {required bool terminal}) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final runner = run.runner;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(run.foodSpot.name, style: AppTextStyles.heading),
+            ),
+            if (terminal) _DetailStatusChip(run: run),
           ],
-          SizedBox(height: tokens.space4),
-          Row(
-            children: [
-              VerifiedAvatar(name: runner.displayName),
-              SizedBox(width: tokens.space3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      runner.displayName,
-                      style: context.text.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: tokens.space1),
-                    ReputationChip(
-                      rating: runner.ratingCount > 0
-                          ? runner.reputationScore.toDouble()
-                          : null,
-                      ratingCount: runner.ratingCount,
-                      variant: ReputationVariant.compact,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: tokens.space4),
-          _InfoRow(
-            icon: Icons.schedule,
-            label: run.status == RunStatus.open
-                ? leavingLabel(run.leavingAt)
-                : runStatusLabel(run.status),
-          ),
-          SizedBox(height: tokens.space2),
-          _InfoRow(
-            icon: Icons.payments_outlined,
-            label: run.prepayRequired
-                ? '${runFeeLabel(run.feeCents)} · prepay required'
-                : runFeeLabel(run.feeCents),
-          ),
-          SizedBox(height: tokens.space2),
-          _InfoRow(
-            icon: Icons.group_outlined,
-            label: '${run.acceptedCount}/${run.spotsMax} spots taken',
-          ),
-          if (run.note != null && run.note!.isNotEmpty) ...[
-            SizedBox(height: tokens.space3),
-            Container(
-              padding: EdgeInsets.all(tokens.space3),
-              decoration: BoxDecoration(
-                color: colors.surfaceContainerLow,
-                borderRadius: tokens.brXs,
-              ),
-              child: Text(
-                run.note!,
-                style: context.text.bodySmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
+        ),
+        if (!terminal) ...[
+          SizedBox(height: tokens.space5),
+          _LifecycleRail(status: run.status),
+        ],
+        SizedBox(height: tokens.space4),
+        Row(
+          children: [
+            VerifiedAvatar(name: runner.displayName),
+            SizedBox(width: tokens.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    runner.displayName,
+                    style: context.text.titleSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: tokens.space1),
+                  ReputationChip(
+                    rating: runner.ratingCount > 0
+                        ? runner.reputationScore.toDouble()
+                        : null,
+                    ratingCount: runner.ratingCount,
+                    variant: ReputationVariant.compact,
+                  ),
+                ],
               ),
             ),
           ],
+        ),
+        SizedBox(height: tokens.space4),
+        _InfoRow(
+          icon: Icons.schedule,
+          label: run.status == RunStatus.open
+              ? leavingLabel(run.leavingAt)
+              : runStatusLabel(run.status),
+        ),
+        SizedBox(height: tokens.space2),
+        _InfoRow(
+          icon: Icons.payments_outlined,
+          label: run.prepayRequired
+              ? '${runFeeLabel(run.feeCents)} · prepay required'
+              : runFeeLabel(run.feeCents),
+        ),
+        SizedBox(height: tokens.space2),
+        _InfoRow(
+          icon: Icons.group_outlined,
+          label: '${run.acceptedCount}/${run.spotsMax} spots taken',
+        ),
+        if (run.note != null && run.note!.isNotEmpty) ...[
+          SizedBox(height: tokens.space3),
+          Container(
+            padding: EdgeInsets.all(tokens.space3),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLow,
+              borderRadius: tokens.brXs,
+            ),
+            child: Text(
+              run.note!,
+              style: context.text.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 }

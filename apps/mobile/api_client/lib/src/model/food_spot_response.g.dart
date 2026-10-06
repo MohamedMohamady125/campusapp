@@ -14,6 +14,8 @@ class _$FoodSpotResponse extends FoodSpotResponse {
   @override
   final String id;
   @override
+  final String? imageUrl;
+  @override
   final num? lat;
   @override
   final num? lng;
@@ -28,6 +30,7 @@ class _$FoodSpotResponse extends FoodSpotResponse {
       {required this.category,
       this.description,
       required this.id,
+      this.imageUrl,
       this.lat,
       this.lng,
       required this.name})
@@ -47,6 +50,7 @@ class _$FoodSpotResponse extends FoodSpotResponse {
         category == other.category &&
         description == other.description &&
         id == other.id &&
+        imageUrl == other.imageUrl &&
         lat == other.lat &&
         lng == other.lng &&
         name == other.name;
@@ -58,6 +62,7 @@ class _$FoodSpotResponse extends FoodSpotResponse {
     _$hash = $jc(_$hash, category.hashCode);
     _$hash = $jc(_$hash, description.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
+    _$hash = $jc(_$hash, imageUrl.hashCode);
     _$hash = $jc(_$hash, lat.hashCode);
     _$hash = $jc(_$hash, lng.hashCode);
     _$hash = $jc(_$hash, name.hashCode);
@@ -71,6 +76,7 @@ class _$FoodSpotResponse extends FoodSpotResponse {
           ..add('category', category)
           ..add('description', description)
           ..add('id', id)
+          ..add('imageUrl', imageUrl)
           ..add('lat', lat)
           ..add('lng', lng)
           ..add('name', name))
@@ -94,6 +100,10 @@ class FoodSpotResponseBuilder
   String? get id => _$this._id;
   set id(String? id) => _$this._id = id;
 
+  String? _imageUrl;
+  String? get imageUrl => _$this._imageUrl;
+  set imageUrl(String? imageUrl) => _$this._imageUrl = imageUrl;
+
   num? _lat;
   num? get lat => _$this._lat;
   set lat(num? lat) => _$this._lat = lat;
@@ -116,6 +126,7 @@ class FoodSpotResponseBuilder
       _category = $v.category;
       _description = $v.description;
       _id = $v.id;
+      _imageUrl = $v.imageUrl;
       _lat = $v.lat;
       _lng = $v.lng;
       _name = $v.name;
@@ -145,6 +156,7 @@ class FoodSpotResponseBuilder
           description: description,
           id: BuiltValueNullFieldError.checkNotNull(
               id, r'FoodSpotResponse', 'id'),
+          imageUrl: imageUrl,
           lat: lat,
           lng: lng,
           name: BuiltValueNullFieldError.checkNotNull(

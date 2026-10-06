@@ -146,16 +146,19 @@ _FLAGS = [
 ]
 
 # GCU launch catalog: Lopes Way venues + walkable off-campus staples.
-# name, category, description, lat, lng — coordinates cluster around GCU
-# (3300 W Camelback Rd, Phoenix) so the live map's destination pins land in
-# the real campus neighborhood. Approximate demo values.
-_FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float]] = [
+# name, category, description, lat, lng, image_url — coordinates cluster around
+# GCU (3300 W Camelback Rd, Phoenix) so the live map's destination pins land in
+# the real campus neighborhood. Approximate demo values. Images are Unsplash
+# food photos sized for feed-card banners (w=800, q=60).
+_UNSPLASH = "https://images.unsplash.com/photo-{pid}?auto=format&fit=crop&w=800&q=60"
+_FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
     (
         "Chick-fil-A (Lopes Way)",
         FoodSpotCategory.campus,
         "Closed Sundays. Lines get long at noon.",
         33.5098,
         -112.1276,
+        _UNSPLASH.format(pid="1606755962773-d324e0a13086"),
     ),
     (
         "Panda Express (Lopes Way)",
@@ -163,23 +166,47 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float]] = [
         "Orange chicken never misses.",
         33.5099,
         -112.1279,
+        _UNSPLASH.format(pid="1512058564366-18510be2db19"),
     ),
-    ("Qdoba (Lopes Way)", FoodSpotCategory.campus, "Burritos, bowls, queso.", 33.5097, -112.1281),
-    ("Subway (Lopes Way)", FoodSpotCategory.campus, "Footlongs on Lopes Way.", 33.5100, -112.1274),
+    (
+        "Qdoba (Lopes Way)",
+        FoodSpotCategory.campus,
+        "Burritos, bowls, queso.",
+        33.5097,
+        -112.1281,
+        _UNSPLASH.format(pid="1546069901-ba9599a7e63c"),
+    ),
+    (
+        "Subway (Lopes Way)",
+        FoodSpotCategory.campus,
+        "Footlongs on Lopes Way.",
+        33.5100,
+        -112.1274,
+        _UNSPLASH.format(pid="1509722747041-616f39b57569"),
+    ),
     (
         "Pita Jungle (GCU)",
         FoodSpotCategory.campus,
         "Fresh Mediterranean on campus.",
         33.5094,
         -112.1283,
+        _UNSPLASH.format(pid="1540914124281-342587941389"),
     ),
-    ("Canyon Pizza Co.", FoodSpotCategory.campus, "Late-night slices.", 33.5092, -112.1278),
+    (
+        "Canyon Pizza Co.",
+        FoodSpotCategory.campus,
+        "Late-night slices.",
+        33.5092,
+        -112.1278,
+        _UNSPLASH.format(pid="1513104890138-7c749659a591"),
+    ),
     (
         "The Grid (POD Market)",
         FoodSpotCategory.campus,
         "Snacks, drinks, essentials.",
         33.5091,
         -112.1285,
+        _UNSPLASH.format(pid="1621939514649-280e2ee25f60"),
     ),
     (
         "Chipotle (27th Ave)",
@@ -187,6 +214,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float]] = [
         "Just off campus — bowl run classic.",
         33.5093,
         -112.1168,
+        _UNSPLASH.format(pid="1582234372722-50d7ccc30ebd"),
     ),
     (
         "Raising Cane's (Camelback)",
@@ -194,6 +222,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float]] = [
         "Box combos + Cane's sauce.",
         33.5095,
         -112.1003,
+        _UNSPLASH.format(pid="1562967914-608f82629710"),
     ),
     (
         "Dutch Bros (Camelback)",
@@ -201,6 +230,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float]] = [
         "Coffee runs before 8am class.",
         33.5096,
         -112.1102,
+        _UNSPLASH.format(pid="1509042239860-f550ce710b93"),
     ),
     (
         "In-N-Out (Northern Ave)",
@@ -208,6 +238,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float]] = [
         "Worth the drive. Animal style.",
         33.5541,
         -112.1289,
+        _UNSPLASH.format(pid="1568901346375-23c9450c58cd"),
     ),
 ]
 
@@ -334,7 +365,7 @@ async def _seed(session: AsyncSession) -> None:
 
     # Food spots + demo runs (food-runs spec).
     spots: list[FoodSpot] = []
-    for spot_name, spot_category, spot_desc, spot_lat, spot_lng in _FOOD_SPOTS:
+    for spot_name, spot_category, spot_desc, spot_lat, spot_lng, spot_img in _FOOD_SPOTS:
         spot = FoodSpot(
             name=spot_name,
             category=spot_category,
@@ -342,6 +373,7 @@ async def _seed(session: AsyncSession) -> None:
             active=True,
             lat=spot_lat,
             lng=spot_lng,
+            image_url=spot_img,
         )
         spots.append(spot)
         session.add(spot)

@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **category** | [**FoodSpotCategory**](FoodSpotCategory.md) |  | [optional] [default to FoodSpotCategory.campus]
 **description** | **String** |  | [optional] 
+**imageUrl** | **String** |  | [optional] 
 **lat** | **num** |  | [optional] 
 **lng** | **num** |  | [optional] 
 **name** | **String** |  | 

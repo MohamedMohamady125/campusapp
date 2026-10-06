@@ -19,6 +19,8 @@ class FoodSpotResponse(BaseModel):
     # Destination coordinates for the live map (null if the spot isn't geocoded).
     lat: float | None = None
     lng: float | None = None
+    # Hero photo for feed cards / run detail (null → monogram fallback).
+    image_url: str | None = None
 
 
 class FoodSpotCreateRequest(BaseModel):
@@ -29,6 +31,7 @@ class FoodSpotCreateRequest(BaseModel):
     description: str | None = Field(default=None, max_length=200)
     lat: float | None = Field(default=None, ge=-90, le=90)
     lng: float | None = Field(default=None, ge=-180, le=180)
+    image_url: str | None = Field(default=None, max_length=500)
 
 
 class DropoffLocationResponse(BaseModel):

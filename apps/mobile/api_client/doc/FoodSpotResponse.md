@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **category** | [**FoodSpotCategory**](FoodSpotCategory.md) |  | 
 **description** | **String** |  | 
 **id** | **String** |  | 
+**imageUrl** | **String** |  | [optional] 
 **lat** | **num** |  | [optional] 
 **lng** | **num** |  | [optional] 
 **name** | **String** |  | 

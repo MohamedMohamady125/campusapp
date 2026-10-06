@@ -227,6 +227,7 @@ class RunService:
             description=body.description,
             lat=body.lat,
             lng=body.lng,
+            image_url=body.image_url,
         )
         self._repo.add_spot(spot)
         await self._session.commit()

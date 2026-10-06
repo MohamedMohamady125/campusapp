@@ -45,6 +45,9 @@ class FoodSpot(TimestampedBase):
     # can exist without being geocoded; the map simply omits the pin.
     lat: Mapped[float | None] = mapped_column(Float)
     lng: Mapped[float | None] = mapped_column(Float)
+    # Hero photo for the spot (feed cards + run detail header). Nullable so a
+    # spot can exist without imagery; the app falls back to a monogram tile.
+    image_url: Mapped[str | None] = mapped_column(String(500))
 
 
 class DropoffLocation(TimestampedBase):
