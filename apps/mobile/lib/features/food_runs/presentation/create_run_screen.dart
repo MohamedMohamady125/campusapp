@@ -9,6 +9,7 @@ import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
+import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -181,42 +182,41 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
               children: [
                 const _SectionLabel(label: 'Where are you headed?'),
                 SizedBox(height: tokens.space2),
+                // Once a spot is picked the selector becomes an image-led
+                // card (same photo-banner language as the feed); until then
+                // it's a quiet "pick a spot" row.
                 Pressable(
                   onTap: _pickSpot,
-                  child: Container(
-                    padding: EdgeInsets.all(tokens.space4),
-                    decoration: BoxDecoration(
-                      borderRadius: tokens.brSm,
-                      border: Border.all(color: colors.outlineVariant),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _spot == null
-                              ? Icons.storefront_outlined
-                              : Icons.check_circle_outline,
-                          color: _spot == null
-                              ? colors.onSurfaceVariant
-                              : tokens.success,
-                        ),
-                        SizedBox(width: tokens.space3),
-                        Expanded(
-                          child: Text(
-                            _spot?.name ?? 'Pick a food spot',
-                            style: context.text.titleSmall?.copyWith(
-                              color: _spot == null
-                                  ? colors.onSurfaceVariant
-                                  : colors.onSurface,
-                            ),
+                  child: _spot == null
+                      ? Container(
+                          padding: EdgeInsets.all(tokens.space4),
+                          decoration: BoxDecoration(
+                            borderRadius: tokens.brSm,
+                            border: Border.all(color: colors.outlineVariant),
                           ),
-                        ),
-                        Icon(
-                          Icons.expand_more,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
-                  ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.storefront_outlined,
+                                color: colors.onSurfaceVariant,
+                              ),
+                              SizedBox(width: tokens.space3),
+                              Expanded(
+                                child: Text(
+                                  'Pick a food spot',
+                                  style: context.text.titleSmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              Icon(
+                                Icons.expand_more,
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        )
+                      : _SelectedSpotCard(spot: _spot!),
                 ),
                 SizedBox(height: tokens.space6),
 
@@ -264,27 +264,22 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                   ),
                 ),
                 SizedBox(height: tokens.space3),
+                // Quick departure offsets as the same custom stadium pills
+                // the feed filters use — no stock Material chips.
                 Wrap(
                   spacing: tokens.space2,
+                  runSpacing: tokens.space2,
                   children: [
-                    ActionChip(
-                      label: const Text('Now'),
-                      onPressed: () => _quickLeaving(Duration.zero),
-                    ),
-                    ActionChip(
-                      label: const Text('+15 min'),
-                      onPressed: () =>
-                          _quickLeaving(const Duration(minutes: 15)),
-                    ),
-                    ActionChip(
-                      label: const Text('+30 min'),
-                      onPressed: () =>
-                          _quickLeaving(const Duration(minutes: 30)),
-                    ),
-                    ActionChip(
-                      label: const Text('+1 hr'),
-                      onPressed: () => _quickLeaving(const Duration(hours: 1)),
-                    ),
+                    for (final (label, offset) in const [
+                      ('Now', Duration.zero),
+                      ('+15 min', Duration(minutes: 15)),
+                      ('+30 min', Duration(minutes: 30)),
+                      ('+1 hr', Duration(hours: 1)),
+                    ])
+                      _TimePill(
+                        label: label,
+                        onTap: () => _quickLeaving(offset),
+                      ),
                   ],
                 ),
                 SizedBox(height: tokens.space6),
@@ -385,6 +380,142 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                 ),
                 SizedBox(height: tokens.space6),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Selected destination as an image-led banner card — same photo language
+/// as the feed cards, with the name on a bottom scrim and a check pill.
+class _SelectedSpotCard extends StatelessWidget {
+  const _SelectedSpotCard({required this.spot});
+
+  final FoodSpotResponse spot;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        borderRadius: tokens.brLg,
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          SpotImage(name: spot.name, imageUrl: spot.imageUrl),
+          // Bottom scrim so the name reads over any photo.
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x00000000), Color(0x99000000)],
+              ),
+            ),
+          ),
+          Positioned(
+            left: tokens.space3,
+            right: tokens.space3,
+            bottom: tokens.space2 + 2,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    spot.name,
+                    style: AppTextStyles.titleLarge.copyWith(
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                SizedBox(width: tokens.space2),
+                Text(
+                  'Change',
+                  style: context.text.labelSmall?.copyWith(
+                    color: Colors.white.withValues(alpha: .85),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: tokens.space2,
+            right: tokens.space2,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: tokens.space2,
+                vertical: tokens.space1,
+              ),
+              decoration: const ShapeDecoration(
+                color: Colors.white,
+                shape: StadiumBorder(),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle, size: 14, color: tokens.success),
+                  SizedBox(width: tokens.space1),
+                  Text(
+                    'Picked',
+                    style: context.text.labelSmall?.copyWith(
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Quick departure-offset pill — same custom stadium pill as the feed
+/// filters (stock chips clip their labels at this size).
+class _TimePill extends StatelessWidget {
+  const _TimePill({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return Semantics(
+      button: true,
+      child: Pressable(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: tokens.space4,
+            vertical: tokens.space2 + 2,
+          ),
+          decoration: ShapeDecoration(
+            color: colors.surface,
+            shape: StadiumBorder(
+              side: BorderSide(color: colors.outlineVariant),
+            ),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            style: context.text.labelMedium?.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
             ),
           ),
         ),
@@ -636,12 +767,22 @@ class _SpotPickerSheetState extends State<_SpotPickerSheet> {
   }
 
   Widget _spotTile(BuildContext context, FoodSpotResponse spot) {
+    final tokens = context.tokens;
+    // Photo thumbnail leads each tile — the picker sells the food, not a
+    // generic storefront glyph.
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        spot.category == FoodSpotCategory.campus
-            ? Icons.school_outlined
-            : Icons.storefront_outlined,
+      leading: ClipRRect(
+        borderRadius: tokens.brSm,
+        child: SizedBox(
+          width: 64,
+          height: 48,
+          child: SpotImage(
+            name: spot.name,
+            imageUrl: spot.imageUrl,
+            monogramFontSize: 18,
+          ),
+        ),
       ),
       title: Text(spot.name),
       subtitle: spot.description == null ? null : Text(spot.description!),

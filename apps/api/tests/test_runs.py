@@ -751,3 +751,30 @@ async def test_expired_runs_leave_the_feed(client: httpx.AsyncClient) -> None:
 
     mine = (await client.get("/api/v1/runs/mine", headers=runner)).json()
     assert [r["id"] for r in mine["items"]] == [run["id"]]
+
+
+# -- demo keep-alive ----------------------------------------------------------
+
+
+async def test_demo_keepalive_tick_tops_up_and_is_idempotent(
+    client: httpx.AsyncClient,
+) -> None:
+    from app.workers.demo_keepalive import TARGET_OPEN_RUNS, demo_keepalive_tick
+
+    # The keep-alive posts as the seeded demo users against real spots.
+    for email in ("ben1@campus.edu", "chloe2@campus.edu", "dan3@campus.edu"):
+        await make_user(client, email)
+    await _make_spot()
+
+    async with async_session_factory() as session:
+        created = await demo_keepalive_tick(session)
+    assert created == TARGET_OPEN_RUNS
+
+    viewer = await make_user(client, "viewer@campus.edu")
+    feed = (await client.get("/api/v1/runs", headers=viewer)).json()
+    assert len(feed["items"]) == TARGET_OPEN_RUNS
+    assert all(r["status"] == "open" for r in feed["items"])
+
+    # Second tick: target already met → no-op.
+    async with async_session_factory() as session:
+        assert await demo_keepalive_tick(session) == 0

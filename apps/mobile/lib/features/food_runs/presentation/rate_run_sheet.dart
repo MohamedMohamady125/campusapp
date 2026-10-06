@@ -1,7 +1,9 @@
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
+import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
@@ -187,11 +189,13 @@ class _RateRunSheetState extends ConsumerState<_RateRunSheet> {
                     runSpacing: tokens.space2,
                     children: [
                       for (final tag in _quickTags)
-                        FilterChip(
-                          label: Text(tag),
+                        _TagPill(
+                          label: tag,
                           selected: _tags.contains(tag),
-                          onSelected: (on) => setState(
-                            () => on ? _tags.add(tag) : _tags.remove(tag),
+                          onTap: () => setState(
+                            () => _tags.contains(tag)
+                                ? _tags.remove(tag)
+                                : _tags.add(tag),
                           ),
                         ),
                     ],
@@ -282,6 +286,59 @@ class _Hero extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Toggleable quick-tag pill — same custom stadium language as the runs feed
+/// filters (stock FilterChip clips labels and looks off-brand).
+class _TagPill extends StatelessWidget {
+  const _TagPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Pressable(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: AppMotion.resolve(context, AppMotion.micro),
+          curve: AppMotion.emphasized,
+          padding: EdgeInsets.symmetric(
+            horizontal: tokens.space4,
+            vertical: tokens.space2 + 2,
+          ),
+          decoration: ShapeDecoration(
+            color: selected ? colors.primary : colors.surface,
+            shape: StadiumBorder(
+              side: selected
+                  ? BorderSide.none
+                  : BorderSide(color: colors.outlineVariant),
+            ),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            style: context.text.labelMedium?.copyWith(
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected ? Colors.white : colors.onSurfaceVariant,
+            ),
+          ),
+        ),
       ),
     );
   }

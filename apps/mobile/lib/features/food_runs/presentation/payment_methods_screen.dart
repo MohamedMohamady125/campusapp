@@ -115,7 +115,15 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
           if (methods.isEmpty)
             _EmptyMethods(onAdd: _saving ? null : _addOrEdit)
           else
-            Card(
+            // Hairline-bordered surface instead of an elevated Card — same
+            // airy language as the runs feed cards.
+            Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: tokens.brMd,
+                border: Border.all(color: colors.outlineVariant),
+              ),
               child: Column(
                 children: [
                   for (var i = 0; i < methods.length; i++) ...[

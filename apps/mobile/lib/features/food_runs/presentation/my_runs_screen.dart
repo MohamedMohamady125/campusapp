@@ -95,9 +95,14 @@ class _MyRunsScreenState extends ConsumerState<MyRunsScreen> {
           ),
           sliver: SliverList.list(
             children: [
-              for (var i = 0; i < 6; i++) ...[
-                const SkeletonBox(width: double.infinity, height: 84),
-                SizedBox(height: tokens.space3),
+              // Match the image-led RunRow silhouette: photo banner + footer.
+              for (var i = 0; i < 3; i++) ...[
+                const SkeletonBox(width: double.infinity, height: 132),
+                SizedBox(height: tokens.space2),
+                const SkeletonBox(width: 200, height: 18),
+                SizedBox(height: tokens.space2),
+                const SkeletonBox(width: 140, height: 14),
+                SizedBox(height: tokens.space4),
               ],
             ],
           ),

@@ -1,5 +1,9 @@
 """FastAPI app factory (spec §2.2)."""
 
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -34,6 +38,19 @@ def _init_sentry(dsn: str, environment: str) -> None:
     sentry_sdk.init(dsn=dsn, environment=environment, traces_sample_rate=0.1)
 
 
+@asynccontextmanager
+async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Optional in-process background work (prod runs no Celery worker)."""
+    keepalive: asyncio.Task[None] | None = None
+    if get_settings().demo_runs_keepalive:
+        from app.workers.demo_keepalive import demo_keepalive_loop
+
+        keepalive = asyncio.create_task(demo_keepalive_loop())
+    yield
+    if keepalive is not None:
+        keepalive.cancel()
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(json_logs=settings.is_prod)
@@ -42,6 +59,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version="0.1.0",
+        lifespan=_lifespan,
         # Swagger UI is a dev tool (docs/owasp.md); ReDoc stays served in prod (spec M10).
         docs_url=None if settings.is_prod else "/docs",
         redoc_url="/redoc",

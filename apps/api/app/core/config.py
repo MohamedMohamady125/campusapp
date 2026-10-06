@@ -60,6 +60,10 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000,http://localhost:8080"
 
+    # Pre-launch only: keep a few demo food runs open so the feed never looks
+    # dead (app/workers/demo_keepalive.py). Turn off once real users post.
+    demo_runs_keepalive: bool = False
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

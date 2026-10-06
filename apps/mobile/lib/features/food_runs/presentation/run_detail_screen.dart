@@ -1469,6 +1469,48 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Photo-led header — the spot imagery carries through the whole
+          // request flow, matching the feed/detail aesthetic.
+          ClipRRect(
+            borderRadius: tokens.brMd,
+            child: SizedBox(
+              height: 96,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  SpotImage(
+                    name: run.foodSpot.name,
+                    imageUrl: run.foodSpot.imageUrl,
+                    monogramFontSize: 22,
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x00000000), Color(0x99000000)],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: tokens.space3,
+                    right: tokens.space3,
+                    bottom: tokens.space2,
+                    child: Text(
+                      run.foodSpot.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.text.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: tokens.space4),
           Text("What's your order?", style: AppTextStyles.subheading),
           SizedBox(height: tokens.space3),
           TextField(
