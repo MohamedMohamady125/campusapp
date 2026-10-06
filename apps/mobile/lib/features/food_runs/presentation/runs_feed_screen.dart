@@ -23,10 +23,6 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Feed view filter. `all` keeps server order; `topRated`/`closingSoon` are
-/// client-side sorts over already-loaded runs (real data, no new endpoint).
-enum _RunFilter { all, topRated, closingSoon }
-
 /// Food runs — the hero home screen. A blue hero card for the run you should
 /// grab right now, then the rest as compact rows. The user's own runs live
 /// in the dedicated My Runs tab.
@@ -39,7 +35,6 @@ class RunsFeedScreen extends ConsumerStatefulWidget {
 
 class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   final _scroll = ScrollController();
-  _RunFilter _filter = _RunFilter.all;
 
   @override
   void initState() {
@@ -60,28 +55,6 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   Future<void> _refresh() async {
     await ref.read(runsFeedControllerProvider.notifier).refresh();
     unawaited(HapticFeedback.selectionClick());
-  }
-
-  void _setFilter(_RunFilter filter) => setState(() => _filter = filter);
-
-  /// Live runs re-ordered for the active filter. Sorts are pure views over the
-  /// loaded page — every key is a field the API already returns.
-  List<RunResponse> _sorted(List<RunResponse> items) {
-    switch (_filter) {
-      case _RunFilter.topRated:
-        final list = [...items]
-          ..sort(
-            (a, b) =>
-                b.runner.reputationScore.compareTo(a.runner.reputationScore),
-          );
-        return list;
-      case _RunFilter.closingSoon:
-        final list = [...items]
-          ..sort((a, b) => a.leavingAt.compareTo(b.leavingAt));
-        return list;
-      case _RunFilter.all:
-        return items;
-    }
   }
 
   @override
@@ -114,11 +87,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
               SliverToBoxAdapter(
                 child: SafeArea(
                   bottom: false,
-                  child: _Header(
-                    liveCount: liveCount,
-                    filter: _filter,
-                    onFilter: _setFilter,
-                  ),
+                  child: _Header(liveCount: liveCount),
                 ),
               ),
               ..._liveSlivers(state),
@@ -165,9 +134,8 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
       ];
     }
 
-    final sorted = _sorted(state.items);
-    final hero = sorted.first;
-    final rest = sorted.skip(1).toList();
+    final hero = state.items.first;
+    final rest = state.items.skip(1).toList();
 
     return [
       SliverToBoxAdapter(
@@ -224,17 +192,11 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   }
 }
 
-/// Screen header: date eyebrow, title + live pill + bell, filter chips.
+/// Screen header: date eyebrow, title + live pill + bell.
 class _Header extends StatelessWidget {
-  const _Header({
-    required this.liveCount,
-    required this.filter,
-    required this.onFilter,
-  });
+  const _Header({required this.liveCount});
 
   final int liveCount;
-  final _RunFilter filter;
-  final ValueChanged<_RunFilter> onFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -271,9 +233,7 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: tokens.space3),
-        _FeedFilters(selected: filter, onSelected: onFilter),
-        SizedBox(height: tokens.space1),
+        SizedBox(height: tokens.space2),
       ],
     );
   }
@@ -330,84 +290,6 @@ class _LivePill extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Horizontal filter row — doubles as the sort selector and the My-runs switch.
-class _FeedFilters extends StatelessWidget {
-  const _FeedFilters({required this.selected, required this.onSelected});
-
-  final _RunFilter selected;
-  final ValueChanged<_RunFilter> onSelected;
-
-  static const _options = <(_RunFilter, String)>[
-    (_RunFilter.all, 'All runs'),
-    (_RunFilter.closingSoon, 'Closing soon'),
-    (_RunFilter.topRated, 'Top rated'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final colors = context.colors;
-    // Custom pills instead of Material FilterChip — the stock chip clipped
-    // its own label at this size ("All run", "Closing soo"). Full-control
-    // stadium pills: selected is a solid brand fill with white text,
-    // unselected stays a quiet hairline pill.
-    return SizedBox(
-      height: 48,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: tokens.space4),
-        children: [
-          for (final (value, label) in _options)
-            Padding(
-              padding: EdgeInsets.only(right: tokens.space2),
-              child: Center(
-                child: Semantics(
-                  button: true,
-                  selected: selected == value,
-                  child: Pressable(
-                    onTap: () => onSelected(value),
-                    child: AnimatedContainer(
-                      duration: AppMotion.resolve(context, AppMotion.micro),
-                      curve: AppMotion.emphasized,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: tokens.space4,
-                        vertical: tokens.space2 + 2,
-                      ),
-                      decoration: ShapeDecoration(
-                        color: selected == value
-                            ? colors.primary
-                            : colors.surface,
-                        shape: StadiumBorder(
-                          side: selected == value
-                              ? BorderSide.none
-                              : BorderSide(color: colors.outlineVariant),
-                        ),
-                      ),
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        softWrap: false,
-                        style: context.text.labelMedium?.copyWith(
-                          fontSize: 13,
-                          fontWeight: selected == value
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: selected == value
-                              ? Colors.white
-                              : colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
