@@ -778,3 +778,64 @@ async def test_demo_keepalive_tick_tops_up_and_is_idempotent(
     # Second tick: target already met → no-op.
     async with async_session_factory() as session:
         assert await demo_keepalive_tick(session) == 0
+
+
+# -- run order chat -----------------------------------------------------------
+
+
+async def test_run_order_chat_is_runner_and_orderer_only(
+    client: httpx.AsyncClient,
+) -> None:
+    """context_type='run' conversations are gated to the runner and that
+    order's requester (spec §8 authz); anyone else gets 403 NOT_RUN_PARTY."""
+    runner = await make_user(client, "chatrunner@campus.edu")
+    requester = await make_user(client, "chatreq@campus.edu")
+    outsider = await make_user(client, "chatout@campus.edu")
+    spot_id = await _make_spot("Chat Spot")
+    dropoff_id = await _make_dropoff()
+    run = await _create_run(client, runner, spot_id)
+    runner_id = run["runner"]["id"]
+
+    order = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("1 spicy deluxe", dropoff_id=dropoff_id),
+        headers=requester,
+    )
+    assert order.status_code == 201, order.text
+    order_id = order.json()["my_order"]["id"]
+
+    body = {"recipient_id": runner_id, "context_type": "run", "context_id": order_id}
+    resp = await client.post("/api/v1/conversations", json=body, headers=requester)
+    assert resp.status_code == 201, resp.text
+    conv_id = resp.json()["id"]
+
+    # Re-opening reuses the same thread.
+    again = await client.post("/api/v1/conversations", json=body, headers=requester)
+    assert again.json()["id"] == conv_id
+
+    # Messages flow both ways inside the run thread.
+    sent = await client.post(
+        f"/api/v1/conversations/{conv_id}/messages",
+        json={"body": "They're out of fries — chips ok?"},
+        headers=runner,
+    )
+    assert sent.status_code == 201, sent.text
+
+    # An outsider can't open a chat on someone else's order.
+    forbidden = await client.post("/api/v1/conversations", json=body, headers=outsider)
+    assert forbidden.status_code == 403
+    assert forbidden.json()["error"]["code"] == "NOT_RUN_PARTY"
+
+    # Unknown order id is a 404, and run chats require a context_id.
+    missing = await client.post(
+        "/api/v1/conversations",
+        json={**body, "context_id": str(uuid.uuid4())},
+        headers=requester,
+    )
+    assert missing.status_code == 404
+    no_ctx = await client.post(
+        "/api/v1/conversations",
+        json={"recipient_id": runner_id, "context_type": "run"},
+        headers=requester,
+    )
+    assert no_ctx.status_code == 422

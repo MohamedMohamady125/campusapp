@@ -23,6 +23,7 @@ class ConversationsList extends ConsumerWidget {
     ConversationContext.listing: 'Marketplace',
     ConversationContext.tutoring: 'Tutoring',
     ConversationContext.direct: 'Direct',
+    ConversationContext.run: 'Food run',
   };
 
   @override

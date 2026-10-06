@@ -14,7 +14,7 @@ from app.core.errors import BusinessRuleError, ForbiddenError, NotFoundError
 from app.core.rate_limit import enforce_rate_limit
 from app.integrations.analytics.base import EVENT_MESSAGE_SENT
 from app.integrations.analytics.provider import get_analytics_provider
-from app.models import Conversation, ConversationParticipant, Message, User
+from app.models import Conversation, ConversationParticipant, Message, Run, RunOrder, User
 from app.models.enums import ConversationContext
 from app.repositories.chat_repo import NotificationRepository
 from app.repositories.conversation_repo import ConversationRepository
@@ -48,8 +48,13 @@ class MessagingService:
             raise NotFoundError("Recipient not found.", code="USER_NOT_FOUND")
         if context_type != ConversationContext.direct and context_id is None:
             raise BusinessRuleError(
-                "context_id is required for listing/tutoring conversations.",
+                "context_id is required for listing/tutoring/run conversations.",
                 code="CONTEXT_ID_REQUIRED",
+            )
+        if context_type == ConversationContext.run:
+            assert context_id is not None  # guarded above
+            await self._assert_run_order_party(
+                order_id=context_id, user_id=user.id, recipient_id=recipient_id
             )
 
         existing = await self._repo.find_between(
@@ -68,6 +73,23 @@ class MessagingService:
             self._repo.add(ConversationParticipant(conversation_id=conversation.id, user_id=uid))
         await self._session.commit()
         return await self._get_or_404(conversation.id)
+
+    async def _assert_run_order_party(
+        self, *, order_id: uuid.UUID, user_id: uuid.UUID, recipient_id: uuid.UUID
+    ) -> None:
+        """Run chats are strictly between the runner and that order's requester
+        (spec §8 authz: ownership checks on every mutating endpoint)."""
+        order = await self._session.get(RunOrder, order_id)
+        if order is None:
+            raise NotFoundError("Order not found.", code="ORDER_NOT_FOUND")
+        run = await self._session.get(Run, order.run_id)
+        if run is None:  # pragma: no cover — FK guarantees the parent run
+            raise NotFoundError("Run not found.", code="RUN_NOT_FOUND")
+        if {user_id, recipient_id} != {run.runner_id, order.requester_id}:
+            raise ForbiddenError(
+                "Run chats are between the runner and the orderer only.",
+                code="NOT_RUN_PARTY",
+            )
 
     async def _get_or_404(self, conversation_id: uuid.UUID) -> Conversation:
         conversation = await self._repo.get(conversation_id)

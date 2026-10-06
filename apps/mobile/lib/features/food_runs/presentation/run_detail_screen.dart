@@ -22,10 +22,12 @@ import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runner_location_broadcaster.dart';
 import 'package:campusconnect/features/food_runs/presentation/runner_route_card.dart';
 import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
+import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/services.dart'
     show Clipboard, ClipboardData, HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// Run detail — one screen, three viewers (visitor / requester / runner),
@@ -115,6 +117,32 @@ class _RunDetailBody extends ConsumerWidget {
     }
   }
 
+  /// Opens (or resumes) the 1:1 run chat for [orderId] — strictly between
+  /// the runner and that order's requester (DoorDash-style order chat).
+  Future<void> _openRunChat(
+    BuildContext context,
+    WidgetRef ref, {
+    required String recipientId,
+    required String recipientName,
+    required String orderId,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final convo = await ref
+          .read(conversationsRepositoryProvider)
+          .openConversation(
+            recipientId: recipientId,
+            contextType: ConversationContext.run,
+            contextId: orderId,
+          );
+      if (context.mounted) {
+        context.go('/chats/conversation/${convo.id}', extra: recipientName);
+      }
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
@@ -133,9 +161,9 @@ class _RunDetailBody extends ConsumerWidget {
           SizedBox(height: tokens.space4),
         ],
         if (isRunner)
-          ..._runnerSection(context, controller)
+          ..._runnerSection(context, ref, controller)
         else if (myOrder != null)
-          ..._requesterSection(context, controller, myOrder)
+          ..._requesterSection(context, ref, controller, myOrder)
         else
           ..._visitorSection(context, controller),
         SizedBox(height: tokens.space8),
@@ -201,6 +229,7 @@ class _RunDetailBody extends ConsumerWidget {
   // ── Requester ──────────────────────────────────────────────────────────
   List<Widget> _requesterSection(
     BuildContext context,
+    WidgetRef ref,
     RunDetailController controller,
     RunOrderResponse order,
   ) {
@@ -219,6 +248,18 @@ class _RunDetailBody extends ConsumerWidget {
     final canRate = rateable && !alreadyRated;
     return [
       _MyOrderCard(order: order),
+      SizedBox(height: tokens.space3),
+      OutlinedButton.icon(
+        icon: const Icon(Icons.chat_bubble_outline, size: 18),
+        label: Text('Message ${run.runner.displayName}'),
+        onPressed: () => _openRunChat(
+          context,
+          ref,
+          recipientId: run.runner.id,
+          recipientName: run.runner.displayName,
+          orderId: order.id,
+        ),
+      ),
       if (accepted && (run.feeCents > 0 || run.prepayRequired)) ...[
         SizedBox(height: tokens.space3),
         _PaymentCard(run: run),
@@ -288,6 +329,7 @@ class _RunDetailBody extends ConsumerWidget {
   // ── Runner ─────────────────────────────────────────────────────────────
   List<Widget> _runnerSection(
     BuildContext context,
+    WidgetRef ref,
     RunDetailController controller,
   ) {
     final tokens = context.tokens;
@@ -367,6 +409,13 @@ class _RunDetailBody extends ConsumerWidget {
           _OrderCard(
             order: order,
             runDone: run.status == RunStatus.done,
+            onMessage: () => _openRunChat(
+              context,
+              ref,
+              recipientId: order.requester.id,
+              recipientName: order.requester.displayName,
+              orderId: order.id,
+            ),
             onAccept: () => _act(
               context,
               () => controller.accept(order.id),
@@ -1191,6 +1240,7 @@ class _OrderCard extends StatelessWidget {
   const _OrderCard({
     required this.order,
     required this.runDone,
+    required this.onMessage,
     required this.onAccept,
     required this.onDecline,
     required this.onDelivered,
@@ -1200,6 +1250,7 @@ class _OrderCard extends StatelessWidget {
 
   final RunOrderResponse order;
   final bool runDone;
+  final VoidCallback onMessage;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
   final VoidCallback onDelivered;
@@ -1250,6 +1301,14 @@ class _OrderCard extends StatelessWidget {
                     : null,
                 ratingCount: requester.ratingCount,
                 variant: ReputationVariant.compact,
+              ),
+              SizedBox(width: tokens.space1),
+              IconButton(
+                onPressed: onMessage,
+                tooltip: 'Message ${requester.displayName}',
+                icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                color: colors.primary,
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),
