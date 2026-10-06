@@ -1,5 +1,6 @@
 import 'dart:async' show unawaited;
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/core/validation.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
@@ -205,7 +206,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           if (value.isEmpty) {
                             return 'Enter your email';
                           }
-                          if (!value.contains('@')) {
+                          // QA M-01: "ben1@" must fail client-side, not
+                          // round-trip to the server.
+                          if (!kEmailPattern.hasMatch(value)) {
                             return 'That does not look like an email';
                           }
                           return null;

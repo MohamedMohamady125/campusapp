@@ -69,6 +69,29 @@ class AuthRepository {
     return res.data!.exists;
   }
 
+  /// Request a password-reset code (QA M-11). The API always answers 200 so
+  /// account existence is never leaked.
+  Future<void> forgotPassword({required String email}) async {
+    await _auth.forgotPasswordApiV1AuthForgotPasswordPost(
+      forgotPasswordRequest: ForgotPasswordRequest((b) => b..email = email),
+    );
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    await _auth.resetPasswordApiV1AuthResetPasswordPost(
+      resetPasswordRequest: ResetPasswordRequest(
+        (b) => b
+          ..email = email
+          ..code = code
+          ..newPassword = newPassword,
+      ),
+    );
+  }
+
   Future<void> logout() async {
     final refresh = await _storage.readRefreshToken();
     if (refresh != null) {
@@ -89,6 +112,26 @@ class AuthRepository {
 
   Future<UserMeResponse> fetchMe() async {
     final res = await _api.getUsersApi().getMeApiV1UsersMeGet();
+    return res.data!;
+  }
+
+  /// Edit-profile save (QA M-06) — PATCH /users/me. Only the identity
+  /// fields; payment methods have their own screen.
+  Future<UserMeResponse> updateProfile({
+    required String displayName,
+    String? year,
+    String? major,
+    String? bio,
+  }) async {
+    final res = await _api.getUsersApi().updateMeApiV1UsersMePatch(
+      userUpdateRequest: UserUpdateRequest(
+        (b) => b
+          ..displayName = displayName
+          ..year = year
+          ..major = major
+          ..bio = bio,
+      ),
+    );
     return res.data!;
   }
 }

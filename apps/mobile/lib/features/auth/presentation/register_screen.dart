@@ -1,5 +1,7 @@
 import 'dart:async' show unawaited;
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/core/legal.dart';
+import 'package:campusconnect/core/validation.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
@@ -101,6 +103,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       if (mounted) setState(() => _submitting = false);
     }
   }
+
+  /// Tappable legal-page span (QA M-10) — opens the hosted page in the
+  /// device browser. WidgetSpan avoids gesture-recognizer lifecycle fuss.
+  InlineSpan _legalLink(BuildContext context, String label, Uri url) =>
+      WidgetSpan(
+        alignment: PlaceholderAlignment.baseline,
+        baseline: TextBaseline.alphabetic,
+        child: GestureDetector(
+          onTap: () => unawaited(openLegalUrl(url)),
+          child: Text(
+            label,
+            style: context.text.bodySmall?.copyWith(
+              color: context.colors.primary,
+              decoration: TextDecoration.underline,
+              height: 1.4,
+            ),
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +239,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           if (value.isEmpty) {
                             return 'Enter your campus email';
                           }
-                          if (!value.contains('@')) {
+                          // QA M-01: "sharif@.edu" must fail here — a bare
+                          // `.edu` suffix check let it through to the server.
+                          if (!kEmailPattern.hasMatch(value)) {
                             return 'That does not look like an email';
                           }
                           if (!value.endsWith('.edu')) {
@@ -288,9 +311,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         padding: EdgeInsets.symmetric(
                           horizontal: tokens.space2,
                         ),
-                        child: Text(
-                          'By creating an account, you agree to our '
-                          'Terms of Service and Privacy Policy.',
+                        // QA M-10: the legal names must actually open the
+                        // hosted pages, not sit there as dead text.
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'By creating an account, you agree to our ',
+                            children: [
+                              _legalLink(
+                                context,
+                                'Terms of Service',
+                                kTermsUrl,
+                              ),
+                              const TextSpan(text: ' and '),
+                              _legalLink(
+                                context,
+                                'Privacy Policy',
+                                kPrivacyUrl,
+                              ),
+                              const TextSpan(text: '.'),
+                            ],
+                          ),
                           style: text.bodySmall?.copyWith(
                             color: colors.onSurfaceVariant.withValues(
                               alpha: 0.7,
