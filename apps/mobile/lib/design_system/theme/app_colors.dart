@@ -22,10 +22,10 @@ abstract final class AppColors {
   static const inkSoft = Color(0xFF1C2124);
 
   // Backgrounds / surfaces.
-  /// App canvas — a cool, blue-tinted off-white. White cards sit ON this,
-  /// giving the app depth and a brand-tinted persona instead of wall-to-wall
-  /// white.
-  static const canvas = Color(0xFFF3F6FA);
+  /// App canvas — a cool, clearly blue-tinted ice gray. White cards sit ON
+  /// this, giving the app depth and a brand-tinted persona instead of
+  /// wall-to-wall white. (Was 0xFFF3F6FA — too close to white to register.)
+  static const canvas = Color(0xFFE9EFF6);
   static const background = Color(0xFFFFFFFF);
   static const surface = Color(0xFFFFFFFF);
   static const surfaceLight = Color(0xFFF7F8F9); // input fills, subtle panels
