@@ -286,48 +286,15 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
 
                 const _SectionLabel(label: 'The deal'),
                 SizedBox(height: tokens.space3),
-                _StepperField(
-                  label: 'Fee per order',
-                  valueLabel: _feeCentsValue == 0
-                      ? 'Free'
-                      : runFeeAmount(_feeCentsValue),
-                  onDecrement: _feeCentsValue > 0
-                      ? () => setState(
-                          () => _feeCentsValue = (_feeCentsValue - 25).clamp(
-                            0,
-                            2000,
-                          ),
-                        )
-                      : null,
-                  onIncrement: _feeCentsValue < 2000
-                      ? () => setState(
-                          () => _feeCentsValue = (_feeCentsValue + 25).clamp(
-                            0,
-                            2000,
-                          ),
-                        )
-                      : null,
-                ),
-                SizedBox(height: tokens.space3),
-                _StepperField(
-                  label: 'Spots',
-                  valueLabel: '$_spotsMax',
-                  onDecrement: _spotsMax > 1
-                      ? () => setState(() => _spotsMax -= 1)
-                      : null,
-                  onIncrement: _spotsMax < 10
-                      ? () => setState(() => _spotsMax += 1)
-                      : null,
-                ),
-                SizedBox(height: tokens.space2),
-                SwitchListTile(
-                  value: _prepay,
-                  onChanged: (v) => setState(() => _prepay = v),
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Require prepay'),
-                  subtitle: const Text(
-                    'People pay you before you order',
-                  ),
+                // One widget card instead of a wall of stepper rows —
+                // tap-a-pill pricing, Uber-style, with a live earnings line.
+                _DealCard(
+                  feeCents: _feeCentsValue,
+                  spotsMax: _spotsMax,
+                  prepay: _prepay,
+                  onFeeChanged: (v) => setState(() => _feeCentsValue = v),
+                  onSpotsChanged: (v) => setState(() => _spotsMax = v),
+                  onPrepayChanged: (v) => setState(() => _prepay = v),
                 ),
                 if (_needsPayment) ...[
                   SizedBox(height: tokens.space3),
@@ -351,37 +318,50 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                     alignLabelWithHint: true,
                   ),
                 ),
-                SizedBox(height: tokens.space8),
-
-                FilledButton(
-                  onPressed: _submitting ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.ink,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: _submitting
-                      ? const SizedBox.square(
-                          dimension: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Post run · takes orders now'),
-                ),
-                SizedBox(height: tokens.space2),
-                Text(
-                  'Payment stays off-app — accepted people see your '
-                  'payment methods.',
-                  style: context.text.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant.withValues(alpha: .8),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
                 SizedBox(height: tokens.space6),
               ],
             ),
           ),
+        ),
+      ),
+      // Pinned CTA (Uber-style): always reachable, never scrolled away.
+      bottomNavigationBar: SafeArea(
+        minimum: EdgeInsets.fromLTRB(
+          tokens.space4,
+          tokens.space2,
+          tokens.space4,
+          tokens.space3,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FilledButton(
+              onPressed: _submitting ? null : _submit,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.ink,
+                foregroundColor: Colors.white,
+              ),
+              child: _submitting
+                  ? const SizedBox.square(
+                      dimension: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Post run · takes orders now'),
+            ),
+            SizedBox(height: tokens.space2),
+            Text(
+              'Payment stays off-app — accepted people see your '
+              'payment methods.',
+              style: context.text.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant.withValues(alpha: .8),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -536,63 +516,160 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// A labelled −/+ stepper row (fee, spots): eyebrow label left, big tabular
-/// value flanked by round steppers right. A stepper beats a keyboard for a
-/// tiny range and reads cleanly in the "Fifty Free" language.
-class _StepperField extends StatelessWidget {
-  const _StepperField({
-    required this.label,
-    required this.valueLabel,
-    required this.onDecrement,
-    required this.onIncrement,
+/// "The deal" as one widget card: tap-a-pill fee, tap-a-pill spots, prepay
+/// toggle and a live earnings line — replaces three stacked stepper rows
+/// that read like a settings form.
+class _DealCard extends StatelessWidget {
+  const _DealCard({
+    required this.feeCents,
+    required this.spotsMax,
+    required this.prepay,
+    required this.onFeeChanged,
+    required this.onSpotsChanged,
+    required this.onPrepayChanged,
   });
 
-  final String label;
-  final String valueLabel;
-  final VoidCallback? onDecrement;
-  final VoidCallback? onIncrement;
+  final int feeCents;
+  final int spotsMax;
+  final bool prepay;
+  final ValueChanged<int> onFeeChanged;
+  final ValueChanged<int> onSpotsChanged;
+  final ValueChanged<bool> onPrepayChanged;
+
+  static const _feeOptions = [0, 100, 150, 200, 300, 500];
+  static const _spotOptions = [1, 2, 3, 4, 5, 6];
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
+    final potential = feeCents * spotsMax;
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: tokens.space4,
-        vertical: tokens.space3,
-      ),
+      padding: EdgeInsets.all(tokens.space4),
       decoration: BoxDecoration(
-        borderRadius: tokens.brSm,
+        color: colors.surface,
+        borderRadius: tokens.brLg,
         border: Border.all(color: colors.outlineVariant),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(label.toUpperCase(), style: AppTextStyles.label),
+          Text('FEE PER ORDER', style: AppTextStyles.label),
+          SizedBox(height: tokens.space2),
+          Wrap(
+            spacing: tokens.space2,
+            runSpacing: tokens.space2,
+            children: [
+              for (final cents in _feeOptions)
+                _ChoicePill(
+                  label: cents == 0 ? 'Free' : runFeeAmount(cents),
+                  selected: feeCents == cents,
+                  onTap: () => onFeeChanged(cents),
+                ),
+            ],
           ),
-          IconButton(
-            tooltip: 'Less',
-            visualDensity: VisualDensity.compact,
-            onPressed: onDecrement,
-            icon: const Icon(Icons.remove_circle_outline, size: 24),
+          SizedBox(height: tokens.space4),
+          Text('SPOTS FOR ORDERS', style: AppTextStyles.label),
+          SizedBox(height: tokens.space2),
+          Wrap(
+            spacing: tokens.space2,
+            runSpacing: tokens.space2,
+            children: [
+              for (final n in _spotOptions)
+                _ChoicePill(
+                  label: '$n',
+                  selected: spotsMax == n,
+                  onTap: () => onSpotsChanged(n),
+                ),
+            ],
           ),
-          SizedBox(
-            width: 72,
-            child: Text(
-              valueLabel,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.titleLarge.copyWith(
-                color: colors.onSurface,
+          SizedBox(height: tokens.space3),
+          SwitchListTile(
+            value: prepay,
+            onChanged: onPrepayChanged,
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Require prepay'),
+            subtitle: const Text('People pay you before you order'),
+          ),
+          Divider(height: tokens.space4, color: colors.outlineVariant),
+          // Live payoff — the reason to run at all.
+          Row(
+            children: [
+              Icon(
+                Icons.trending_up,
+                size: 18,
+                color: potential > 0 ? tokens.success : colors.onSurfaceVariant,
               ),
-            ),
-          ),
-          IconButton(
-            tooltip: 'More',
-            visualDensity: VisualDensity.compact,
-            onPressed: onIncrement,
-            icon: const Icon(Icons.add_circle_outline, size: 24),
+              SizedBox(width: tokens.space2),
+              Expanded(
+                child: Text(
+                  potential > 0
+                      ? 'Earn up to ${runFeeAmount(potential)} if all '
+                            '$spotsMax '
+                            '${spotsMax == 1 ? 'spot fills' : 'spots fill'}'
+                      : 'Free run — pure good karma (and ratings)',
+                  style: context.text.bodySmall?.copyWith(
+                    color: potential > 0
+                        ? tokens.success
+                        : colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Selectable stadium pill (fee / spots options) — same custom pill language
+/// as the feed filters: solid brand fill when selected, hairline otherwise.
+class _ChoicePill extends StatelessWidget {
+  const _ChoicePill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Pressable(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: tokens.space4,
+            vertical: tokens.space2 + 2,
+          ),
+          decoration: ShapeDecoration(
+            color: selected ? colors.primary : colors.surface,
+            shape: StadiumBorder(
+              side: selected
+                  ? BorderSide.none
+                  : BorderSide(color: colors.outlineVariant),
+            ),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            style: context.text.labelMedium?.copyWith(
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              color: selected ? Colors.white : colors.onSurface,
+            ),
+          ),
+        ),
       ),
     );
   }
