@@ -27,13 +27,16 @@ Duration _remaining(DateTime arrivedAt) {
   return left.isNegative ? Duration.zero : left;
 }
 
-/// Urgency colour ramp: calm success → warning → error as the window drains.
+/// Urgency colour ramp: calm brand primary → warning → error as the window
+/// drains. Starting at primary keeps the fresh state inside the card's
+/// existing palette (it matches the Delivered button) instead of adding a
+/// third accent colour; amber/red only appear as genuine urgency.
 Color _urgencyColor(BuildContext context, Duration remaining) {
   final tokens = context.tokens;
   final f = 1 - remaining.inMilliseconds / kNoShowWait.inMilliseconds;
   if (f >= 1) return context.colors.error;
   return f < .5
-      ? Color.lerp(tokens.success, tokens.warning, f * 2)!
+      ? Color.lerp(context.colors.primary, tokens.warning, f * 2)!
       : Color.lerp(tokens.warning, context.colors.error, (f - .5) * 2)!;
 }
 
@@ -102,12 +105,14 @@ class ArrivedActions extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AnimatedContainer(
-              duration: AppMotion.resolve(context, AppMotion.micro),
+            // Neutral surface matching the card's other panels (order box,
+            // payment proof) so the card stays one calm palette — urgency is
+            // carried by the icon, the digits and the draining bar alone.
+            Container(
               width: double.infinity,
               padding: EdgeInsets.all(tokens.space3),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: .12),
+                color: context.colors.surfaceContainerLow,
                 borderRadius: tokens.brXs,
               ),
               child: Column(
@@ -129,7 +134,9 @@ class ArrivedActions extends StatelessWidget {
                               ? 'Window elapsed — no-show unlocked.'
                               : 'Waiting for them to show up…',
                           style: context.text.bodySmall?.copyWith(
-                            color: color,
+                            color: expired
+                                ? color
+                                : context.colors.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

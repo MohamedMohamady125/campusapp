@@ -1619,7 +1619,7 @@ class _OrderCard extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.all(tokens.space3),
               decoration: BoxDecoration(
-                color: tokens.warning.withValues(alpha: .12),
+                color: colors.surfaceContainerLow,
                 borderRadius: tokens.brXs,
               ),
               child: Row(
@@ -1813,10 +1813,12 @@ class _PaymentProofReview extends StatelessWidget {
     final colors = context.colors;
     final url = order.paymentProofUrl;
     final note = order.paymentNote;
+    // Neutral container matching the order box above it — the card stays one
+    // calm surface; "paid" reads from the green icon accent alone.
     return Container(
       padding: EdgeInsets.all(tokens.space3),
       decoration: BoxDecoration(
-        color: tokens.success.withValues(alpha: .12),
+        color: colors.surfaceContainerLow,
         borderRadius: tokens.brXs,
       ),
       child: Column(
