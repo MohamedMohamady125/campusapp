@@ -130,6 +130,10 @@ class RunOrder(TimestampedBase):
     payment_proof_key: Mapped[str | None] = mapped_column(String(300))
     payment_note: Mapped[str | None] = mapped_column(String(300))
     payment_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # No-show counter (DoorDash-style): the runner taps "I'm here" at the
+    # drop-off, stamping this and notifying the requester. No-show is only
+    # legal NO_SHOW_WAIT after this stamp — never an instant surprise.
+    arrived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     run: Mapped[Run] = relationship(back_populates="orders")
     requester: Mapped[User] = relationship()

@@ -292,6 +292,17 @@ async def confirm_received(
     return run_response(run, viewer_id=user.id)
 
 
+@router.post("/{run_id}/orders/{order_id}/arrived", response_model=RunResponse)
+async def mark_arrived(
+    run_id: uuid.UUID,
+    order_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    svc: RunService = Depends(_service),
+) -> RunResponse:
+    run = await svc.mark_arrived(run_id=run_id, order_id=order_id, actor=user)
+    return run_response(run, viewer_id=user.id)
+
+
 @router.post("/{run_id}/orders/{order_id}/no-show", response_model=RunResponse)
 async def mark_no_show(
     run_id: uuid.UUID,

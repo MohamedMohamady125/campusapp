@@ -102,6 +102,10 @@ class RunOrderResponse(BaseModel):
     payment_proof_url: str | None = None
     payment_note: str | None = None
     payment_submitted_at: datetime | None = None
+    # No-show counter: set when the runner taps "I'm here" at this drop-off.
+    # Both apps render a live 5-minute countdown from this stamp; the server
+    # refuses no-show until NO_SHOW_WAIT has elapsed past it.
+    arrived_at: datetime | None = None
     # Server-authoritative "the viewer already rated this order" flag (ratings
     # are unique per rater+order). The client greys out its Rate CTA on this —
     # it must never guess from local state (QA M-05: Rate stayed active).

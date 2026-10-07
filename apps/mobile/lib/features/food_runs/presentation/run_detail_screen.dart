@@ -15,6 +15,7 @@ import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/presentation/live_map_card.dart';
+import 'package:campusconnect/features/food_runs/presentation/no_show_countdown.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
 import 'package:campusconnect/features/food_runs/presentation/rate_run_sheet.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_detail_controller.dart';
@@ -547,8 +548,7 @@ class _RunDetailBody extends ConsumerWidget {
               ? () => _act(
                   context,
                   () => controller.decline(order.id),
-                  success:
-                      '${order.requester.displayName} removed — unpaid.',
+                  success: '${order.requester.displayName} removed — unpaid.',
                 )
               : null,
           onMessage: () => _openRunChat(
@@ -570,6 +570,13 @@ class _RunDetailBody extends ConsumerWidget {
           onDelivered: () => _act(
             context,
             () => controller.markDelivered(order.id),
+          ),
+          onImHere: () => _act(
+            context,
+            () => controller.markArrived(order.id),
+            success:
+                '${order.requester.displayName} pinged — '
+                '5-minute window started.',
           ),
           onNoShow: () => _act(
             context,
@@ -1025,6 +1032,16 @@ class _MyOrderCard extends StatelessWidget {
               ),
             ],
           ),
+          // Runner announced arrival: urgent animated banner with the live
+          // 5-minute window (same clock the runner's No-show unlock uses).
+          if (order.status == RunOrderStatus.accepted &&
+              order.arrivedAt != null) ...[
+            SizedBox(height: tokens.space3),
+            RunnerHereBanner(
+              arrivedAt: order.arrivedAt!,
+              dropoff: order.dropoff,
+            ),
+          ],
           SizedBox(height: tokens.space2),
           Text(order.orderText, style: context.text.bodyMedium),
           SizedBox(height: tokens.space2),
@@ -1487,6 +1504,7 @@ class _OrderCard extends StatelessWidget {
     required this.onAccept,
     required this.onDecline,
     required this.onDelivered,
+    required this.onImHere,
     required this.onNoShow,
     required this.onRate,
     this.onRemoveUnpaid,
@@ -1504,6 +1522,9 @@ class _OrderCard extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onDecline;
   final VoidCallback onDelivered;
+
+  /// "I'm here" — stamps the no-show counter for this drop-off.
+  final VoidCallback onImHere;
   final VoidCallback onNoShow;
   final VoidCallback onRate;
 
@@ -1641,6 +1662,18 @@ class _OrderCard extends StatelessWidget {
                 ),
               ],
             ),
+            // Arrived: the 5-minute no-show counter is running — countdown
+            // strip + Delivered, with No-show locked until the window elapses
+            // (mirrors the server's NO_SHOW_TOO_EARLY guard).
+            RunOrderStatus.accepted
+                when canResolve && order.arrivedAt != null =>
+              ArrivedActions(
+                arrivedAt: order.arrivedAt!,
+                onDelivered: onDelivered,
+                onNoShow: onNoShow,
+              ),
+            // Out with the food but not yet announced at this drop-off:
+            // "I'm here" starts the counter and pings the requester.
             RunOrderStatus.accepted when canResolve => Row(
               children: [
                 Expanded(
@@ -1651,9 +1684,10 @@ class _OrderCard extends StatelessWidget {
                 ),
                 SizedBox(width: tokens.space2),
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: onNoShow,
-                    child: const Text('No-show'),
+                  child: OutlinedButton.icon(
+                    onPressed: onImHere,
+                    icon: const Icon(Icons.hail_rounded, size: 18),
+                    label: const Text("I'm here"),
                   ),
                 ),
               ],

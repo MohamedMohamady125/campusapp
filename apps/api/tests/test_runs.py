@@ -12,6 +12,7 @@ from app.models import (
     FoodSpot,
     Notification,
     Run,
+    RunOrder,
     User,
 )
 from app.models.enums import FoodSpotCategory, UserRole
@@ -618,7 +619,43 @@ async def test_cancel_and_no_show(client: httpx.AsyncClient) -> None:
     await client.post(
         f"/api/v1/runs/{run2['id']}/status", json={"status": "at_store"}, headers=runner
     )
-    resp = await client.post(f"/api/v1/runs/{run2['id']}/orders/{oid2}/no-show", headers=runner)
+    base = f"/api/v1/runs/{run2['id']}/orders/{oid2}"
+    # No-show without announcing arrival is illegal — the runner must tap
+    # "I'm here" first, then wait out the requester's 5-minute window.
+    resp = await client.post(f"{base}/no-show", headers=runner)
+    assert resp.json()["error"]["code"] == "ARRIVAL_REQUIRED"
+    resp = await client.post(f"{base}/arrived", headers=runner)
+    first_arrived = resp.json()["orders"][0]["arrived_at"]
+    assert first_arrived is not None
+    # The requester sees the stamp (drives their countdown) and is notified.
+    view = (await client.get(f"/api/v1/runs/{run2['id']}", headers=req)).json()
+    assert view["my_order"]["arrived_at"] is not None
+    async with async_session_factory() as session:
+        notif = (
+            (
+                await session.execute(
+                    select(Notification).where(Notification.type == "run_runner_arrived")
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert len(notif) == 1
+    # Re-tap never resets the clock.
+    resp = await client.post(f"{base}/arrived", headers=runner)
+    assert resp.json()["orders"][0]["arrived_at"] == first_arrived
+    # Inside the window no-show is still refused.
+    resp = await client.post(f"{base}/no-show", headers=runner)
+    assert resp.json()["error"]["code"] == "NO_SHOW_TOO_EARLY"
+    # Backdate the stamp past the window — now it's legal.
+    async with async_session_factory() as session:
+        await session.execute(
+            update(RunOrder)
+            .where(RunOrder.id == uuid.UUID(oid2))
+            .values(arrived_at=datetime.now(UTC) - timedelta(minutes=6))
+        )
+        await session.commit()
+    resp = await client.post(f"{base}/no-show", headers=runner)
     assert resp.json()["orders"][0]["status"] == "no_show"
     # Cancelled past at_store is illegal.
     resp = await client.post(f"/api/v1/runs/{run2['id']}/cancel", headers=runner)

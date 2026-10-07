@@ -8,6 +8,7 @@ import 'package:campus_api/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**arrivedAt** | [**DateTime**](DateTime.md) |  | [optional] 
 **createdAt** | [**DateTime**](DateTime.md) |  | 
 **dropoff** | **String** |  | 
 **dropoffLat** | **num** |  | [optional] 

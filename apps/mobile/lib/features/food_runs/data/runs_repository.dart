@@ -120,6 +120,16 @@ class RunsRepository {
     return res.data!;
   }
 
+  /// Runner taps "I'm here" at a drop-off — stamps the no-show counter and
+  /// notifies the requester (idempotent server-side; re-tap never resets).
+  Future<RunResponse> markArrived(String runId, String orderId) async {
+    final res = await _runs.markArrivedApiV1RunsRunIdOrdersOrderIdArrivedPost(
+      runId: runId,
+      orderId: orderId,
+    );
+    return res.data!;
+  }
+
   Future<RunResponse> markNoShow(String runId, String orderId) async {
     final res = await _runs.markNoShowApiV1RunsRunIdOrdersOrderIdNoShowPost(
       runId: runId,

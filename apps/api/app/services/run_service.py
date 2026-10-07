@@ -61,9 +61,16 @@ NOTIFICATION_TYPE_RUN_DECLINED = "run_request_declined"
 NOTIFICATION_TYPE_RUN_STATUS = "run_status"
 NOTIFICATION_TYPE_RUN_COMPLETED = "run_completed"
 NOTIFICATION_TYPE_RUN_PAYMENT = "run_payment_submitted"
+NOTIFICATION_TYPE_RUN_ARRIVED = "run_runner_arrived"
 
 # Runner ghost protection: any active run hard-expires this long after leaving.
 RUN_HARD_EXPIRY = timedelta(minutes=90)
+
+# No-show counter (DoorDash-style): once the runner taps "I'm here" the
+# requester has this long to show before no-show becomes legal. Research:
+# DoorDash uses 5 min after contact, Uber Eats 7-8 min, UberX 2 min — 5 min
+# fits a dorm walk-down without stalling a multi-stop student runner.
+NO_SHOW_WAIT = timedelta(minutes=5)
 
 # The create form defaults the leaving time to "now"; a few seconds of clock
 # skew / submit latency shouldn't be rejected. Anything older than this is a
@@ -113,6 +120,7 @@ def _order_response(order: RunOrder, *, rated_by_me: bool = False) -> RunOrderRe
         payment_proof_url=proof_url,
         payment_note=order.payment_note,
         payment_submitted_at=order.payment_submitted_at,
+        arrived_at=order.arrived_at,
     )
 
 
@@ -595,6 +603,30 @@ class RunService:
         await self._session.commit()
         return await self._get_or_404(run_id)
 
+    async def mark_arrived(self, *, run_id: uuid.UUID, order_id: uuid.UUID, actor: User) -> Run:
+        """Runner taps "I'm here" at a drop-off: stamp the no-show counter and
+        notify the requester. Idempotent — a re-tap never resets the clock
+        (that would let a runner shorten the requester's window)."""
+        run = await self._get_or_404(run_id)
+        self._assert_runner(run, actor)
+        order = self._order_in(run, order_id)
+        if run.status not in (RunStatus.at_store, RunStatus.delivering):
+            raise ConflictError("Run is not out for delivery.", code="INVALID_TRANSITION")
+        if order.status != RunOrderStatus.accepted:
+            raise ConflictError("Order is not accepted.", code="ORDER_NOT_ACCEPTED")
+        if order.arrived_at is None:
+            order.arrived_at = datetime.now(UTC)
+            await self._notify(
+                order.requester_id,
+                NOTIFICATION_TYPE_RUN_ARRIVED,
+                run=run,
+                dedup_key="order_id",
+                dedup_value=str(order.id),
+                extra={"dropoff": order.dropoff},
+            )
+            await self._session.commit()
+        return await self._get_or_404(run_id)
+
     async def mark_no_show(self, *, run_id: uuid.UUID, order_id: uuid.UUID, actor: User) -> Run:
         run = await self._get_or_404(run_id)
         self._assert_runner(run, actor)
@@ -603,6 +635,21 @@ class RunService:
             raise ConflictError("Run is not out for delivery.", code="INVALID_TRANSITION")
         if order.status not in (RunOrderStatus.accepted, RunOrderStatus.delivered):
             raise ConflictError("Order is not accepted.", code="ORDER_NOT_ACCEPTED")
+        # No-show is never a surprise: the runner must announce arrival first
+        # ("I'm here"), then wait out NO_SHOW_WAIT before it becomes legal.
+        if order.arrived_at is None:
+            raise ConflictError(
+                'Tap "I\'m here" first — the requester gets a 5-minute window.',
+                code="ARRIVAL_REQUIRED",
+            )
+        arrived = order.arrived_at
+        if arrived.tzinfo is None:
+            arrived = arrived.replace(tzinfo=UTC)
+        if datetime.now(UTC) < arrived + NO_SHOW_WAIT:
+            raise ConflictError(
+                "The requester's 5-minute window hasn't elapsed yet.",
+                code="NO_SHOW_TOO_EARLY",
+            )
         order.status = RunOrderStatus.no_show
         await self._session.commit()
         return await self._get_or_404(run_id)

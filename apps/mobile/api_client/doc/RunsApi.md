@@ -19,6 +19,7 @@ Method | HTTP request | Description
 [**getRunApiV1RunsRunIdGet**](RunsApi.md#getrunapiv1runsrunidget) | **GET** /api/v1/runs/{run_id} | Get Run
 [**listDropoffsApiV1RunsDropoffsGet**](RunsApi.md#listdropoffsapiv1runsdropoffsget) | **GET** /api/v1/runs/dropoffs | List Dropoffs
 [**listSpotsApiV1RunsSpotsGet**](RunsApi.md#listspotsapiv1runsspotsget) | **GET** /api/v1/runs/spots | List Spots
+[**markArrivedApiV1RunsRunIdOrdersOrderIdArrivedPost**](RunsApi.md#markarrivedapiv1runsrunidordersorderidarrivedpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/arrived | Mark Arrived
 [**markDeliveredApiV1RunsRunIdOrdersOrderIdDeliveredPost**](RunsApi.md#markdeliveredapiv1runsrunidordersorderiddeliveredpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/delivered | Mark Delivered
 [**markNoShowApiV1RunsRunIdOrdersOrderIdNoShowPost**](RunsApi.md#marknoshowapiv1runsrunidordersorderidnoshowpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/no-show | Mark No Show
 [**myRunsApiV1RunsMineGet**](RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs
@@ -433,6 +434,49 @@ This endpoint does not need any parameter.
 ### Return type
 
 [**BuiltList&lt;FoodSpotResponse&gt;**](FoodSpotResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **markArrivedApiV1RunsRunIdOrdersOrderIdArrivedPost**
+> RunResponse markArrivedApiV1RunsRunIdOrdersOrderIdArrivedPost(runId, orderId)
+
+Mark Arrived
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getRunsApi();
+final String runId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String orderId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+
+try {
+    final response = api.markArrivedApiV1RunsRunIdOrdersOrderIdArrivedPost(runId, orderId);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling RunsApi->markArrivedApiV1RunsRunIdOrdersOrderIdArrivedPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **runId** | **String**|  | 
+ **orderId** | **String**|  | 
+
+### Return type
+
+[**RunResponse**](RunResponse.md)
 
 ### Authorization
 

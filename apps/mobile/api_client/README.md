@@ -123,6 +123,7 @@ Class | Method | HTTP request | Description
 [*RunsApi*](doc/RunsApi.md) | [**getRunApiV1RunsRunIdGet**](doc/RunsApi.md#getrunapiv1runsrunidget) | **GET** /api/v1/runs/{run_id} | Get Run
 [*RunsApi*](doc/RunsApi.md) | [**listDropoffsApiV1RunsDropoffsGet**](doc/RunsApi.md#listdropoffsapiv1runsdropoffsget) | **GET** /api/v1/runs/dropoffs | List Dropoffs
 [*RunsApi*](doc/RunsApi.md) | [**listSpotsApiV1RunsSpotsGet**](doc/RunsApi.md#listspotsapiv1runsspotsget) | **GET** /api/v1/runs/spots | List Spots
+[*RunsApi*](doc/RunsApi.md) | [**markArrivedApiV1RunsRunIdOrdersOrderIdArrivedPost**](doc/RunsApi.md#markarrivedapiv1runsrunidordersorderidarrivedpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/arrived | Mark Arrived
 [*RunsApi*](doc/RunsApi.md) | [**markDeliveredApiV1RunsRunIdOrdersOrderIdDeliveredPost**](doc/RunsApi.md#markdeliveredapiv1runsrunidordersorderiddeliveredpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/delivered | Mark Delivered
 [*RunsApi*](doc/RunsApi.md) | [**markNoShowApiV1RunsRunIdOrdersOrderIdNoShowPost**](doc/RunsApi.md#marknoshowapiv1runsrunidordersorderidnoshowpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/no-show | Mark No Show
 [*RunsApi*](doc/RunsApi.md) | [**myRunsApiV1RunsMineGet**](doc/RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs

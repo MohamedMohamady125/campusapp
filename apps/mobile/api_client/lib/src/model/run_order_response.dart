@@ -13,6 +13,7 @@ part 'run_order_response.g.dart';
 /// RunOrderResponse
 ///
 /// Properties:
+/// * [arrivedAt] 
 /// * [createdAt] 
 /// * [dropoff] 
 /// * [dropoffLat] 
@@ -28,6 +29,9 @@ part 'run_order_response.g.dart';
 /// * [status] 
 @BuiltValue()
 abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderResponseBuilder> {
+  @BuiltValueField(wireName: r'arrived_at')
+  DateTime? get arrivedAt;
+
   @BuiltValueField(wireName: r'created_at')
   DateTime get createdAt;
 
@@ -92,6 +96,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
     RunOrderResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    if (object.arrivedAt != null) {
+      yield r'arrived_at';
+      yield serializers.serialize(
+        object.arrivedAt,
+        specifiedType: const FullType.nullable(DateTime),
+      );
+    }
     yield r'created_at';
     yield serializers.serialize(
       object.createdAt,
@@ -192,6 +203,14 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'arrived_at':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
+          result.arrivedAt = valueDes;
+          break;
         case r'created_at':
           final valueDes = serializers.deserialize(
             value,

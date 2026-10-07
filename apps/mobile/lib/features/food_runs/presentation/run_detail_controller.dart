@@ -111,6 +111,9 @@ class RunDetailController
   Future<void> markDelivered(String orderId) =>
       _mutate(() => _repo.markDelivered(arg, orderId));
 
+  Future<void> markArrived(String orderId) =>
+      _mutate(() => _repo.markArrived(arg, orderId));
+
   Future<void> markNoShow(String orderId) =>
       _mutate(() => _repo.markNoShow(arg, orderId));
 

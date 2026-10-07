@@ -52,6 +52,11 @@ String notificationTitle(NotificationResponse n) {
       return _runStatusTitle(n);
     case 'run_completed':
       return 'Run complete — rate your runner';
+    case 'run_runner_arrived':
+      final dropoff = _str(n, 'dropoff');
+      return dropoff == null
+          ? 'Your runner is here — you have 5 minutes!'
+          : 'Your runner is at $dropoff — you have 5 minutes!';
   }
   return 'You have a new notification';
 }
@@ -91,7 +96,8 @@ NotificationRoute? notificationRoute(NotificationResponse n) {
         'run_request_accepted' ||
         'run_request_declined' ||
         'run_status' ||
-        'run_completed':
+        'run_completed' ||
+        'run_runner_arrived':
       final runId = _str(n, 'run_id');
       if (runId == null) return null;
       return ('/runs/run/$runId', _str(n, 'spot_name'));
@@ -108,6 +114,7 @@ IconData notificationIcon(NotificationResponse n) => switch (n.type) {
   'run_request_accepted' || 'run_completed' => Icons.check_circle_outline,
   'run_request_declined' => Icons.remove_circle_outline,
   'run_status' => Icons.directions_run,
+  'run_runner_arrived' => Icons.hail_rounded,
   _ => Icons.notifications_none,
 };
 

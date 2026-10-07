@@ -8,6 +8,8 @@ part of 'run_order_response.dart';
 
 class _$RunOrderResponse extends RunOrderResponse {
   @override
+  final DateTime? arrivedAt;
+  @override
   final DateTime createdAt;
   @override
   final String dropoff;
@@ -39,7 +41,8 @@ class _$RunOrderResponse extends RunOrderResponse {
       (RunOrderResponseBuilder()..update(updates))._build();
 
   _$RunOrderResponse._(
-      {required this.createdAt,
+      {this.arrivedAt,
+      required this.createdAt,
       required this.dropoff,
       this.dropoffLat,
       this.dropoffLng,
@@ -65,6 +68,7 @@ class _$RunOrderResponse extends RunOrderResponse {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is RunOrderResponse &&
+        arrivedAt == other.arrivedAt &&
         createdAt == other.createdAt &&
         dropoff == other.dropoff &&
         dropoffLat == other.dropoffLat &&
@@ -83,6 +87,7 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, arrivedAt.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
     _$hash = $jc(_$hash, dropoff.hashCode);
     _$hash = $jc(_$hash, dropoffLat.hashCode);
@@ -103,6 +108,7 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'RunOrderResponse')
+          ..add('arrivedAt', arrivedAt)
           ..add('createdAt', createdAt)
           ..add('dropoff', dropoff)
           ..add('dropoffLat', dropoffLat)
@@ -123,6 +129,10 @@ class _$RunOrderResponse extends RunOrderResponse {
 class RunOrderResponseBuilder
     implements Builder<RunOrderResponse, RunOrderResponseBuilder> {
   _$RunOrderResponse? _$v;
+
+  DateTime? _arrivedAt;
+  DateTime? get arrivedAt => _$this._arrivedAt;
+  set arrivedAt(DateTime? arrivedAt) => _$this._arrivedAt = arrivedAt;
 
   DateTime? _createdAt;
   DateTime? get createdAt => _$this._createdAt;
@@ -187,6 +197,7 @@ class RunOrderResponseBuilder
   RunOrderResponseBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _arrivedAt = $v.arrivedAt;
       _createdAt = $v.createdAt;
       _dropoff = $v.dropoff;
       _dropoffLat = $v.dropoffLat;
@@ -223,6 +234,7 @@ class RunOrderResponseBuilder
     try {
       _$result = _$v ??
           _$RunOrderResponse._(
+            arrivedAt: arrivedAt,
             createdAt: BuiltValueNullFieldError.checkNotNull(
                 createdAt, r'RunOrderResponse', 'createdAt'),
             dropoff: BuiltValueNullFieldError.checkNotNull(
