@@ -34,11 +34,29 @@ class GeolocatorRunnerLocationService implements RunnerLocationService {
 
   @override
   Future<LivePosition?> current() async {
-    if (!await ensurePermission()) return null;
-    final pos = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    );
-    return (lat: pos.latitude, lng: pos.longitude);
+    // Everything here can hang or throw (no GPS fix, services toggled off
+    // mid-call, web permission quirks). Bound it and swallow failures so
+    // callers always resolve — a null just means "route without my position".
+    try {
+      if (!await ensurePermission()) return null;
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      return (lat: pos.latitude, lng: pos.longitude);
+    } on Exception {
+      // Fall back to the OS-cached last fix (instant, often good enough on
+      // campus); null if there has never been one.
+      try {
+        final last = await Geolocator.getLastKnownPosition();
+        if (last == null) return null;
+        return (lat: last.latitude, lng: last.longitude);
+      } on Exception {
+        return null;
+      }
+    }
   }
 }
 

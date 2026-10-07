@@ -26,6 +26,8 @@ class RunnerRouteCard extends ConsumerStatefulWidget {
   ConsumerState<RunnerRouteCard> createState() => _RunnerRouteCardState();
 }
 
+const _distance = Distance();
+
 class _RunnerRouteCardState extends ConsumerState<RunnerRouteCard> {
   final MapController _map = MapController();
   LatLng? _start;
@@ -198,11 +200,19 @@ class _RunnerRouteCardState extends ConsumerState<RunnerRouteCard> {
               ),
             ),
           const Divider(height: 1),
+          // Ordered checklist mirroring the numbered map pins: stop 1 is the
+          // runner's next delivery, each row shows the walking leg to it.
           for (var i = 0; i < ordered.length; i++)
             _RouteStopRow(
               index: i + 1,
               stop: ordered[i],
               isLast: i == ordered.length - 1,
+              legMeters: start == null
+                  ? null
+                  : _distance(
+                      i == 0 ? start : ordered[i - 1].point,
+                      ordered[i].point,
+                    ),
             ),
         ],
       ),
@@ -222,16 +232,23 @@ class _RouteStopRow extends StatelessWidget {
     required this.index,
     required this.stop,
     required this.isLast,
+    this.legMeters,
   });
 
   final int index;
   final RouteStop stop;
   final bool isLast;
 
+  /// Walking distance of the leg INTO this stop (from the runner for stop 1,
+  /// from the previous stop otherwise). Null when we have no start fix.
+  final double? legMeters;
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
+    final isNext = index == 1;
+    final meters = legMeters;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: tokens.space4,
@@ -251,13 +268,15 @@ class _RouteStopRow extends StatelessWidget {
             height: 24,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: colors.secondary,
+              // Stop 1 wears the brand primary (it matches the runner pin and
+              // the route line) so "go here first" reads at a glance.
+              color: isNext ? colors.primary : colors.secondary,
               shape: BoxShape.circle,
             ),
             child: Text(
               '$index',
               style: context.text.labelSmall?.copyWith(
-                color: colors.onSecondary,
+                color: isNext ? colors.onPrimary : colors.onSecondary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -267,7 +286,12 @@ class _RouteStopRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(stop.hall, style: context.text.titleSmall),
+                Text(
+                  stop.hall,
+                  style: context.text.titleSmall?.copyWith(
+                    fontWeight: isNext ? FontWeight.w700 : null,
+                  ),
+                ),
                 Text(
                   stop.requesterName,
                   style: context.text.bodySmall?.copyWith(
@@ -277,6 +301,37 @@ class _RouteStopRow extends StatelessWidget {
               ],
             ),
           ),
+          if (isNext) ...[
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: tokens.space2,
+                vertical: 2,
+              ),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: .10),
+                borderRadius: tokens.brFull,
+              ),
+              child: Text(
+                'NEXT',
+                style: context.text.labelSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: .6,
+                ),
+              ),
+            ),
+            SizedBox(width: tokens.space2),
+          ],
+          if (meters != null)
+            Text(
+              meters < 1000
+                  ? '${meters.round()} m'
+                  : '${(meters / 1000).toStringAsFixed(1)} km',
+              style: context.text.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
         ],
       ),
     );
