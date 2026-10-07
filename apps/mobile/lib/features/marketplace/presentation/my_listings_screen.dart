@@ -1,5 +1,6 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/core/utils/auto_refresh.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
@@ -15,6 +16,7 @@ import 'package:go_router/go_router.dart';
 
 final AutoDisposeFutureProvider<List<ListingResponse>> myListingsProvider =
     FutureProvider.autoDispose<List<ListingResponse>>((ref) {
+      ref.autoRefresh();
       final userId = ref.watch(authControllerProvider).user?.id;
       if (userId == null) return [];
       return ref.watch(listingsRepositoryProvider).fetchMyListings(userId);

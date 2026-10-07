@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/marketplace/data/listings_repository.dart';
@@ -51,15 +53,24 @@ class BrowseState {
   );
 }
 
+/// Browse live poll: new listings surface without pull-to-refresh, matching
+/// the runs feed (spec §7.4 smart polling).
+const kBrowsePollInterval = Duration(seconds: 15);
+
 class BrowseController extends Notifier<BrowseState> {
+  Timer? _poll;
+
   @override
   BrowseState build() {
-    ref.listen(authControllerProvider, (prev, next) {
-      if (prev?.status != AuthStatus.authenticated &&
-          next.status == AuthStatus.authenticated) {
-        Future.microtask(refresh).ignore();
-      }
-    });
+    ref
+      ..listen(authControllerProvider, (prev, next) {
+        if (prev?.status != AuthStatus.authenticated &&
+            next.status == AuthStatus.authenticated) {
+          Future.microtask(refresh).ignore();
+        }
+      })
+      ..onDispose(() => _poll?.cancel());
+    _poll = Timer.periodic(kBrowsePollInterval, (_) => _pollTick());
     final auth = ref.read(authControllerProvider);
     if (auth.status == AuthStatus.authenticated) {
       Future.microtask(refresh).ignore();
@@ -70,6 +81,34 @@ class BrowseController extends Notifier<BrowseState> {
   }
 
   ListingsRepository get _repo => ref.read(listingsRepositoryProvider);
+
+  void _pollTick() {
+    if (ref.read(authControllerProvider).status != AuthStatus.authenticated) {
+      return;
+    }
+    // Skip while the user is mid-interaction (first load / paging in).
+    if (state.loading || state.loadingMore) return;
+    _silentRefresh().ignore();
+  }
+
+  /// Poll refresh of page one — never flips the skeletons back on.
+  Future<void> _silentRefresh() async {
+    try {
+      final page = await _repo.fetchPage(
+        query: state.query,
+        category: state.category,
+        minPrice: state.minPrice,
+        maxPrice: state.maxPrice,
+      );
+      state = state._copyWith(
+        items: page.items,
+        nextCursor: () => page.nextCursor,
+        error: () => null,
+      );
+    } on Object catch (e) {
+      debugPrint('BrowseController.poll ERROR: $e');
+    }
+  }
 
   Future<void> refresh() async {
     state = state._copyWith(

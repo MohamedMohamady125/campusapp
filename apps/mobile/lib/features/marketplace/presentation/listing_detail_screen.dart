@@ -1,5 +1,6 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/core/utils/auto_refresh.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/report_sheet.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
@@ -19,9 +20,10 @@ import 'package:go_router/go_router.dart';
 
 final AutoDisposeFutureProviderFamily<ListingResponse, String>
 listingDetailProvider = FutureProvider.autoDispose
-    .family<ListingResponse, String>(
-      (ref, id) => ref.watch(listingsRepositoryProvider).fetchListing(id),
-    );
+    .family<ListingResponse, String>((ref, id) {
+      ref.autoRefresh(); // price edits / sold status appear live
+      return ref.watch(listingsRepositoryProvider).fetchListing(id);
+    });
 
 /// Listing detail (spec §12.3): gallery, price + title, condition chip,
 /// seller card with reputation, safety card, report entry, sticky

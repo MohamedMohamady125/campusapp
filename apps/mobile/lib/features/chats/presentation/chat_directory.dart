@@ -1,5 +1,6 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/core/utils/auto_refresh.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/fade_slide_in.dart';
 import 'package:campusconnect/design_system/components/pressable.dart';
@@ -11,9 +12,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 final AutoDisposeFutureProvider<List<ChatResponse>> chatDirectoryProvider =
-    FutureProvider.autoDispose(
-      (ref) => ref.watch(chatsRepositoryProvider).directory(),
-    );
+    FutureProvider.autoDispose((ref) {
+      ref.autoRefresh(); // member counts / new groups stay current
+      return ref.watch(chatsRepositoryProvider).directory();
+    });
 
 /// Community chat directory (J3, spec §12.4): browse → join → post.
 /// Tapping a chat joins it (idempotent) and opens the room — ≤3 taps.

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:campus_api/campus_api.dart';
+import 'package:campusconnect/core/utils/auto_refresh.dart';
 import 'package:campusconnect/design_system/components/composer.dart';
 import 'package:campusconnect/design_system/components/message_bubble.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
@@ -15,10 +16,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Conversation detail (incl. run order context) for the pinned sub-header.
 final AutoDisposeFutureProviderFamily<ConversationResponse, String>
 conversationDetailProvider = FutureProvider.autoDispose
-    .family<ConversationResponse, String>(
-      (ref, id) =>
-          ref.watch(conversationsRepositoryProvider).fetchConversation(id),
-    );
+    .family<ConversationResponse, String>((ref, id) {
+      ref.autoRefresh(const Duration(seconds: 30)); // order edits stay fresh
+      return ref.watch(conversationsRepositoryProvider).fetchConversation(id);
+    });
 
 /// One conversation thread (spec §12.4): reversed message list with
 /// spec §10.5 bubbles, optimistic send + input restore on rollback,

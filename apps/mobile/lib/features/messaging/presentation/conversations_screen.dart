@@ -1,4 +1,5 @@
 import 'package:campus_api/campus_api.dart';
+import 'package:campusconnect/core/utils/auto_refresh.dart';
 import 'package:campusconnect/design_system/components/chat_list_row.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/fade_slide_in.dart';
@@ -10,9 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 final AutoDisposeFutureProvider<List<ConversationResponse>>
-conversationsProvider = FutureProvider.autoDispose(
-  (ref) => ref.watch(conversationsRepositoryProvider).fetchConversations(),
-);
+conversationsProvider = FutureProvider.autoDispose((ref) {
+  ref.autoRefresh(); // inbox stays live — new threads appear on their own
+  return ref.watch(conversationsRepositoryProvider).fetchConversations();
+});
 
 /// Inbox of 1:1 conversations (spec §12.4) — the "Messages" tab inside
 /// the Chats area. Rows are the shared [ChatListRow] (spec §10.5).
