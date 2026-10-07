@@ -156,9 +156,10 @@ class _RunDetailBody extends ConsumerWidget {
       children: [
         _RunHeaderCard(run: run),
         SizedBox(height: tokens.space4),
-        // Live "where's my runner" map — the response only carries
-        // runnerLocation when the viewer is entitled and the run is en route.
-        if (run.runnerLocation != null) ...[
+        // Live "where's my runner" map — requester/visitor only. The runner
+        // gets their own RunnerRouteCard map below; rendering both stacked
+        // two maps on the dasher's screen.
+        if (!isRunner && run.runnerLocation != null) ...[
           LiveMapCard(run: run),
           SizedBox(height: tokens.space4),
         ],
@@ -341,9 +342,22 @@ class _RunDetailBody extends ConsumerWidget {
     final orders = (run.orders?.toList() ?? [])
         .where((o) => o.requester.id != run.runner.id)
         .toList();
-    final unresolved = orders.any(
-      (o) => o.status == RunOrderStatus.accepted,
-    );
+    // Grouped by what the runner has to do next, so the screen reads as a
+    // worklist instead of one long undifferentiated pile of cards.
+    final pending = orders
+        .where((o) => o.status == RunOrderStatus.requested)
+        .toList();
+    final deliveries = orders
+        .where((o) => o.status == RunOrderStatus.accepted)
+        .toList();
+    final wrapped = orders
+        .where(
+          (o) =>
+              o.status != RunOrderStatus.requested &&
+              o.status != RunOrderStatus.accepted,
+        )
+        .toList();
+    final unresolved = deliveries.isNotEmpty;
     final active = const {
       RunStatus.open,
       RunStatus.locked,
@@ -359,6 +373,14 @@ class _RunDetailBody extends ConsumerWidget {
     }.contains(run.status);
 
     return [
+      // Glanceable dashboard: how many need an answer, how many are riding,
+      // what the fee is — replaces three scattered plain-text lines.
+      _RunnerDashboard(
+        run: run,
+        pendingCount: pending.length,
+        deliveryCount: deliveries.length,
+      ),
+      SizedBox(height: tokens.space3),
       if (active) ...[
         _RunnerStatusStepper(
           run: run,
@@ -379,6 +401,7 @@ class _RunDetailBody extends ConsumerWidget {
       if (enRoute) ...[
         RunnerLocationBroadcaster(runId: run.id),
         SizedBox(height: tokens.space3),
+        // The runner's single map: their position + numbered drop-offs.
         RunnerRouteCard(run: run),
         SizedBox(height: tokens.space3),
       ],
@@ -388,11 +411,11 @@ class _RunDetailBody extends ConsumerWidget {
         _RunnerOwnOrderCard(order: myOrder),
         SizedBox(height: tokens.space3),
       ],
-      Padding(
-        padding: EdgeInsets.only(top: tokens.space2, bottom: tokens.space2),
-        child: Text('ORDERS', style: AppTextStyles.label),
-      ),
-      if (orders.isEmpty)
+      if (orders.isEmpty) ...[
+        Padding(
+          padding: EdgeInsets.only(top: tokens.space2, bottom: tokens.space2),
+          child: Text('ORDERS', style: AppTextStyles.label),
+        ),
         Padding(
           padding: EdgeInsets.symmetric(vertical: tokens.space4),
           child: Text(
@@ -405,54 +428,12 @@ class _RunDetailBody extends ConsumerWidget {
               color: context.colors.onSurfaceVariant,
             ),
           ),
-        )
-      else
-        for (final order in orders) ...[
-          _OrderCard(
-            order: order,
-            runDone: run.status == RunStatus.done,
-            onMessage: () => _openRunChat(
-              context,
-              ref,
-              recipientId: order.requester.id,
-              recipientName: order.requester.displayName,
-              orderId: order.id,
-            ),
-            onAccept: () => _act(
-              context,
-              () => controller.accept(order.id),
-              success: '${order.requester.displayName} is in.',
-            ),
-            onDecline: () => _act(
-              context,
-              () => controller.decline(order.id),
-            ),
-            onDelivered: () => _act(
-              context,
-              () => controller.markDelivered(order.id),
-            ),
-            onNoShow: () => _act(
-              context,
-              () => controller.markNoShow(order.id),
-            ),
-            onRate: () async {
-              await showRateRunSheet(
-                context,
-                ratedUserId: order.requester.id,
-                ratedName: order.requester.displayName,
-                orderId: order.id,
-                // Runner rating a customer — customer tags, not delivery.
-                ratingRunner: false,
-                dropoff: order.dropoff,
-                currentRating: order.requester.reputationScore,
-                ratingCount: order.requester.ratingCount,
-              );
-              // Done runs no longer poll — re-sync to flip Rate → Rated.
-              await controller.refresh();
-            },
-          ),
-          SizedBox(height: tokens.space3),
-        ],
+        ),
+      ] else ...[
+        ..._orderGroup(context, ref, controller, 'NEW REQUESTS', pending),
+        ..._orderGroup(context, ref, controller, 'DELIVERIES', deliveries),
+        ..._orderGroup(context, ref, controller, 'WRAPPED UP', wrapped),
+      ],
       if (run.status == RunStatus.open || run.status == RunStatus.locked) ...[
         SizedBox(height: tokens.space2),
         TextButton(
@@ -462,6 +443,71 @@ class _RunDetailBody extends ConsumerWidget {
           onPressed: () => _confirmCancel(context, controller),
           child: const Text('Cancel run'),
         ),
+      ],
+    ];
+  }
+
+  /// One labelled group of order cards ("NEW REQUESTS · 2"); renders nothing
+  /// when the group is empty so the screen only shows sections that matter.
+  List<Widget> _orderGroup(
+    BuildContext context,
+    WidgetRef ref,
+    RunDetailController controller,
+    String label,
+    List<RunOrderResponse> group,
+  ) {
+    if (group.isEmpty) return const [];
+    final tokens = context.tokens;
+    return [
+      Padding(
+        padding: EdgeInsets.only(top: tokens.space2, bottom: tokens.space2),
+        child: Text('$label · ${group.length}', style: AppTextStyles.label),
+      ),
+      for (final order in group) ...[
+        _OrderCard(
+          order: order,
+          runDone: run.status == RunStatus.done,
+          onMessage: () => _openRunChat(
+            context,
+            ref,
+            recipientId: order.requester.id,
+            recipientName: order.requester.displayName,
+            orderId: order.id,
+          ),
+          onAccept: () => _act(
+            context,
+            () => controller.accept(order.id),
+            success: '${order.requester.displayName} is in.',
+          ),
+          onDecline: () => _act(
+            context,
+            () => controller.decline(order.id),
+          ),
+          onDelivered: () => _act(
+            context,
+            () => controller.markDelivered(order.id),
+          ),
+          onNoShow: () => _act(
+            context,
+            () => controller.markNoShow(order.id),
+          ),
+          onRate: () async {
+            await showRateRunSheet(
+              context,
+              ratedUserId: order.requester.id,
+              ratedName: order.requester.displayName,
+              orderId: order.id,
+              // Runner rating a customer — customer tags, not delivery.
+              ratingRunner: false,
+              dropoff: order.dropoff,
+              currentRating: order.requester.reputationScore,
+              ratingCount: order.requester.ratingCount,
+            );
+            // Done runs no longer poll — re-sync to flip Rate → Rated.
+            await controller.refresh();
+          },
+        ),
+        SizedBox(height: tokens.space3),
       ],
     ];
   }
@@ -1129,6 +1175,111 @@ class _PaymentMethodRow extends StatelessWidget {
   }
 }
 
+/// The dasher's at-a-glance strip: pending requests, live deliveries, and
+/// fee per order — three tiles instead of scattered plain-text lines.
+class _RunnerDashboard extends StatelessWidget {
+  const _RunnerDashboard({
+    required this.run,
+    required this.pendingCount,
+    required this.deliveryCount,
+  });
+
+  final RunResponse run;
+  final int pendingCount;
+  final int deliveryCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: tokens.brMd,
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            _DashboardStat(
+              value: '$pendingCount',
+              label: 'NEW',
+              icon: Icons.mark_email_unread_outlined,
+              // Pending requests are the runner's to-do — highlight them.
+              color: pendingCount > 0 ? tokens.warning : null,
+            ),
+            VerticalDivider(width: 1, color: colors.outlineVariant),
+            _DashboardStat(
+              value: '$deliveryCount/${run.spotsMax}',
+              label: 'GOING',
+              icon: Icons.group_outlined,
+            ),
+            VerticalDivider(width: 1, color: colors.outlineVariant),
+            _DashboardStat(
+              value: runFeeLabel(run.feeCents),
+              label: 'PER ORDER',
+              icon: Icons.payments_outlined,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardStat extends StatelessWidget {
+  const _DashboardStat({
+    required this.value,
+    required this.label,
+    required this.icon,
+    this.color,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final accent = color ?? colors.onSurfaceVariant;
+    return Expanded(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.space2,
+          vertical: tokens.space3,
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: accent),
+            SizedBox(height: tokens.space1),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: context.text.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: color ?? colors.onSurface,
+                ),
+              ),
+            ),
+            SizedBox(height: tokens.space1 / 2),
+            Text(
+              label,
+              style: AppTextStyles.label.copyWith(
+                fontSize: 10,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Runner's walk: open → at the store → delivering → done.
 class _RunnerStatusStepper extends StatelessWidget {
   const _RunnerStatusStepper({
@@ -1314,12 +1465,27 @@ class _OrderCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: tokens.space2),
-          Text(order.orderText, style: context.text.bodyMedium),
-          SizedBox(height: tokens.space2),
-          _InfoRow(
-            icon: Icons.place_outlined,
-            label: 'Drop at ${order.dropoff}',
+          SizedBox(height: tokens.space3),
+          // What + where, boxed together so the card scans in one glance
+          // instead of loose lines of plain text.
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(tokens.space3),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLow,
+              borderRadius: tokens.brXs,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(order.orderText, style: context.text.bodyMedium),
+                SizedBox(height: tokens.space2),
+                _InfoRow(
+                  icon: Icons.place_outlined,
+                  label: 'Drop at ${order.dropoff}',
+                ),
+              ],
+            ),
           ),
           if (order.paymentSubmittedAt != null) ...[
             SizedBox(height: tokens.space3),
@@ -1364,12 +1530,9 @@ class _OrderCard extends StatelessWidget {
             _ => Row(
               children: [
                 Expanded(
-                  child: Text(
-                    runOrderStatusLabel(order.status),
-                    style: context.text.labelSmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _OrderStatusPill(status: order.status),
                   ),
                 ),
                 if (canRate)
@@ -1408,6 +1571,44 @@ class _OrderCard extends StatelessWidget {
       );
     }
     return card;
+  }
+}
+
+/// Small stadium status pill for resolved orders (delivered / received /
+/// declined / no-show) — colour-coded instead of a bare text label.
+class _OrderStatusPill extends StatelessWidget {
+  const _OrderStatusPill({required this.status});
+
+  final RunOrderStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final color = switch (status) {
+      RunOrderStatus.delivered ||
+      RunOrderStatus.received => tokens.success,
+      RunOrderStatus.requested => tokens.warning,
+      RunOrderStatus.declined || RunOrderStatus.noShow => colors.error,
+      _ => colors.onSurfaceVariant,
+    };
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: tokens.space2,
+        vertical: tokens.space1,
+      ),
+      decoration: ShapeDecoration(
+        color: color.withValues(alpha: .12),
+        shape: const StadiumBorder(),
+      ),
+      child: Text(
+        runOrderStatusLabel(status),
+        style: context.text.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }
 
