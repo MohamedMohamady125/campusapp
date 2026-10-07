@@ -12,6 +12,11 @@ if [ "${SEED_ON_BOOT:-1}" = "1" ]; then
   python -m app.seed || echo "==> seed step failed; continuing to serve"
 fi
 
+# Catalog upsert is idempotent and keyed by name — keeps every GCU spot,
+# residence hall and building at its accurate OSM coordinate on each deploy.
+echo "==> Upserting GCU campus catalog (idempotent)"
+python -m app.seed_gcu_catalog || echo "==> gcu catalog step failed; continuing to serve"
+
 echo "==> Starting API on 0.0.0.0:${PORT:-8000} (${WEB_CONCURRENCY:-2} workers)"
 exec gunicorn app.main:app \
   -k uvicorn.workers.UvicornWorker \
