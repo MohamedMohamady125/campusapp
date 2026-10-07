@@ -100,7 +100,9 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
                             status: pending
                                 ? MessageStatus.sending
                                 : MessageStatus.sent,
-                            showTimestamp: pending || i == 0,
+                            // Every message carries its time — no guessing
+                            // when something was sent mid-run.
+                            showTimestamp: true,
                             timestamp: _timeLabel(msg.createdAt.toLocal()),
                           ),
                         );

@@ -15,6 +15,13 @@ import 'package:campusconnect/features/chats/presentation/chat_role_provider.dar
 import 'package:campusconnect/features/chats/presentation/moderation_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// `3:07 PM`-style label without pulling in intl (matches thread_screen).
+String _timeLabel(DateTime t) {
+  final hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
+  final minute = t.minute.toString().padLeft(2, '0');
+  return '$hour:$minute ${t.hour < 12 ? 'AM' : 'PM'}';
+}
+
 /// State for one chat room; messages ascending by `createdAt`.
 class ChatRoomState {
   const ChatRoomState({this.messages = const [], this.loading = true});
@@ -271,6 +278,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                             status: pending
                                 ? MessageStatus.sending
                                 : MessageStatus.sent,
+                            showTimestamp: true,
+                            timestamp: _timeLabel(msg.createdAt.toLocal()),
                             onLongPress: canModerate && !mine && !pending
                                 ? () =>
                                       _moderate(msg, isOwner: isOwner).ignore()
