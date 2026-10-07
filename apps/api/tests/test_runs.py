@@ -470,6 +470,56 @@ async def test_prepay_run_accept_before_payment_proof(client: httpx.AsyncClient)
     assert signed.status_code == 200, signed.text
 
 
+async def test_prepay_runner_can_drop_accepted_unpaid_order(client: httpx.AsyncClient) -> None:
+    """On a prepay run the runner may drop an accepted order with no proof —
+    but only before heading to the store; once paid, decline is rejected."""
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    paid_req = await make_user(client, "paid@campus.edu")
+    spot_id = await _make_spot()
+    dropoff_id = await _make_dropoff()
+    await _set_payment(client, runner)
+    run = await _create_run(
+        client, runner, spot_id, fee_cents=200, prepay_required=True, spots_max=3
+    )
+
+    async def place_and_accept(headers: dict[str, str], text: str) -> str:
+        resp = await client.post(
+            f"/api/v1/runs/{run['id']}/orders",
+            json=_order_body(text, dropoff_id=dropoff_id),
+            headers=headers,
+        )
+        oid: str = resp.json()["my_order"]["id"]
+        accept = await client.post(f"/api/v1/runs/{run['id']}/orders/{oid}/accept", headers=runner)
+        assert accept.status_code == 200, accept.text
+        return oid
+
+    unpaid_oid = await place_and_accept(req, "wrap")
+    paid_oid = await place_and_accept(paid_req, "bowl")
+
+    # One requester pays (submits proof); the other never does.
+    proof = await client.post(
+        f"/api/v1/runs/{run['id']}/orders/{paid_oid}/payment-proof",
+        json={"proof_key": "run-payments/x.png", "note": None},
+        headers=paid_req,
+    )
+    assert proof.status_code == 200, proof.text
+
+    # Paid accepted order cannot be dropped.
+    resp = await client.post(f"/api/v1/runs/{run['id']}/orders/{paid_oid}/decline", headers=runner)
+    assert resp.status_code == 409
+    assert resp.json()["error"]["code"] == "ORDER_NOT_PENDING"
+
+    # Unpaid accepted order can — while the run is still open/locked.
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders/{unpaid_oid}/decline", headers=runner
+    )
+    assert resp.status_code == 200, resp.text
+    statuses = {o["id"]: o["status"] for o in resp.json()["orders"]}
+    assert statuses[unpaid_oid] == "declined"
+    assert statuses[paid_oid] == "accepted"
+
+
 async def _accepted_run(
     client: httpx.AsyncClient, runner: dict[str, str], req: dict[str, str], spot_id: str
 ) -> tuple[dict, str]:

@@ -363,7 +363,17 @@ class RunService:
         order = self._order_in(run, order_id)
         if order.requester_id == run.runner_id:
             raise ConflictError("You cannot decline your own order.", code="CANNOT_DECLINE_SELF")
-        if order.status != RunOrderStatus.requested:
+        # Prepay enforcement is the runner's call, never automatic (off-app
+        # payment means the server can't verify money moved — only the human
+        # can). So on a prepay run the runner may drop an accepted order that
+        # still has no proof, but only before heading to the store.
+        droppable_unpaid = (
+            order.status == RunOrderStatus.accepted
+            and run.prepay_required
+            and order.payment_submitted_at is None
+            and run.status in (RunStatus.open, RunStatus.locked)
+        )
+        if order.status != RunOrderStatus.requested and not droppable_unpaid:
             raise ConflictError("Order is not pending.", code="ORDER_NOT_PENDING")
         order.status = RunOrderStatus.declined
         await self._notify(

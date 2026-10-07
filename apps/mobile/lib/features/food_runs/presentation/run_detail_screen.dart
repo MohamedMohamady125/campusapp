@@ -386,6 +386,26 @@ class _RunDetailBody extends ConsumerWidget {
           run: run,
           unresolved: unresolved,
           onAdvance: (next) async {
+            // Prepay gate: heading to the store with unpaid accepted orders
+            // is the dasher's money on the line — surface it as an explicit
+            // choice (drop them / front the money), never an auto-drop,
+            // because payment happens off-app and only a human can judge it.
+            if (next == RunStatus.atStore && run.prepayRequired) {
+              final unpaid = deliveries
+                  .where((o) => o.paymentSubmittedAt == null)
+                  .toList();
+              if (unpaid.isNotEmpty) {
+                final choice = await _confirmUnpaid(context, unpaid);
+                if (choice == null) return; // backed out
+                if (choice == _UnpaidChoice.dropUnpaid) {
+                  for (final o in unpaid) {
+                    if (!context.mounted) return;
+                    await _act(context, () => controller.decline(o.id));
+                  }
+                }
+              }
+            }
+            if (!context.mounted) return;
             final ok = await _act(
               context,
               () => controller.updateStatus(next),
@@ -447,6 +467,45 @@ class _RunDetailBody extends ConsumerWidget {
     ];
   }
 
+  /// The prepay decision gate: lists everyone who hasn't paid and lets the
+  /// dasher drop them, knowingly front the money, or back out.
+  Future<_UnpaidChoice?> _confirmUnpaid(
+    BuildContext context,
+    List<RunOrderResponse> unpaid,
+  ) {
+    final names = unpaid.map((o) => o.requester.displayName).join(', ');
+    return showDialog<_UnpaidChoice>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          unpaid.length == 1
+              ? "1 person hasn't paid yet"
+              : "${unpaid.length} people haven't paid yet",
+        ),
+        content: Text(
+          '$names — prepay is required on this run. Drop them now, or '
+          'continue and collect at drop-off.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Back'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_UnpaidChoice.continueAnyway),
+            child: const Text('Continue anyway'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_UnpaidChoice.dropUnpaid),
+            child: const Text('Drop unpaid'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// One labelled group of order cards ("NEW REQUESTS · 2"); renders nothing
   /// when the group is empty so the screen only shows sections that matter.
   List<Widget> _orderGroup(
@@ -467,6 +526,31 @@ class _RunDetailBody extends ConsumerWidget {
         _OrderCard(
           order: order,
           runDone: run.status == RunStatus.done,
+          // Delivered/No-show only make sense once the dasher is actually
+          // out (server rejects them earlier anyway).
+          canResolve: const {
+            RunStatus.atStore,
+            RunStatus.delivering,
+          }.contains(run.status),
+          awaitingPrepay:
+              run.prepayRequired &&
+              order.status == RunOrderStatus.accepted &&
+              order.paymentSubmittedAt == null,
+          onRemoveUnpaid:
+              run.prepayRequired &&
+                  order.status == RunOrderStatus.accepted &&
+                  order.paymentSubmittedAt == null &&
+                  const {
+                    RunStatus.open,
+                    RunStatus.locked,
+                  }.contains(run.status)
+              ? () => _act(
+                  context,
+                  () => controller.decline(order.id),
+                  success:
+                      '${order.requester.displayName} removed — unpaid.',
+                )
+              : null,
           onMessage: () => _openRunChat(
             context,
             ref,
@@ -545,6 +629,10 @@ class _RunDetailBody extends ConsumerWidget {
     }
   }
 }
+
+/// What the dasher chose at the prepay gate (heading to the store with
+/// unpaid accepted orders).
+enum _UnpaidChoice { dropUnpaid, continueAnyway }
 
 // ── Shared cards ─────────────────────────────────────────────────────────
 
@@ -1393,22 +1481,34 @@ class _OrderCard extends StatelessWidget {
   const _OrderCard({
     required this.order,
     required this.runDone,
+    required this.canResolve,
+    required this.awaitingPrepay,
     required this.onMessage,
     required this.onAccept,
     required this.onDecline,
     required this.onDelivered,
     required this.onNoShow,
     required this.onRate,
+    this.onRemoveUnpaid,
   });
 
   final RunOrderResponse order;
   final bool runDone;
+
+  /// Run is at the store / delivering — Delivered and No-show are legal.
+  final bool canResolve;
+
+  /// Prepay run, accepted, no proof yet — the dasher's money is at risk.
+  final bool awaitingPrepay;
   final VoidCallback onMessage;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
   final VoidCallback onDelivered;
   final VoidCallback onNoShow;
   final VoidCallback onRate;
+
+  /// Drop an accepted-but-unpaid order on a prepay run (open/locked only).
+  final VoidCallback? onRemoveUnpaid;
 
   @override
   Widget build(BuildContext context) {
@@ -1487,9 +1587,40 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
           ),
+          // Payment state — one glance: green receipt panel when paid,
+          // loud amber strip while the dasher is still owed.
           if (order.paymentSubmittedAt != null) ...[
             SizedBox(height: tokens.space3),
             _PaymentProofReview(order: order),
+          ] else if (awaitingPrepay) ...[
+            SizedBox(height: tokens.space3),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(tokens.space3),
+              decoration: BoxDecoration(
+                color: tokens.warning.withValues(alpha: .12),
+                borderRadius: tokens.brXs,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.hourglass_top_rounded,
+                    size: 16,
+                    color: tokens.warning,
+                  ),
+                  SizedBox(width: tokens.space2),
+                  Expanded(
+                    child: Text(
+                      "Awaiting prepayment — hasn't sent proof yet.",
+                      style: context.text.bodySmall?.copyWith(
+                        color: tokens.warning,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
           SizedBox(height: tokens.space3),
           switch (order.status) {
@@ -1510,7 +1641,7 @@ class _OrderCard extends StatelessWidget {
                 ),
               ],
             ),
-            RunOrderStatus.accepted => Row(
+            RunOrderStatus.accepted when canResolve => Row(
               children: [
                 Expanded(
                   child: FilledButton.tonal(
@@ -1525,6 +1656,28 @@ class _OrderCard extends StatelessWidget {
                     child: const Text('No-show'),
                   ),
                 ),
+              ],
+            ),
+            // Accepted but not out yet: no Delivered/No-show (the server
+            // rejects them before at_store) — just the state, plus the
+            // drop-unpaid escape hatch on prepay runs.
+            RunOrderStatus.accepted => Row(
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _OrderStatusPill(status: order.status),
+                  ),
+                ),
+                if (onRemoveUnpaid != null)
+                  TextButton.icon(
+                    onPressed: onRemoveUnpaid,
+                    style: TextButton.styleFrom(
+                      foregroundColor: colors.error,
+                    ),
+                    icon: const Icon(Icons.person_remove_outlined, size: 18),
+                    label: const Text('Remove — unpaid'),
+                  ),
               ],
             ),
             _ => Row(
@@ -1586,6 +1739,7 @@ class _OrderStatusPill extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
     final color = switch (status) {
+      RunOrderStatus.accepted ||
       RunOrderStatus.delivered ||
       RunOrderStatus.received => tokens.success,
       RunOrderStatus.requested => tokens.warning,
