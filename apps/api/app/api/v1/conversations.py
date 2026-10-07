@@ -17,6 +17,7 @@ from app.schemas.conversation import (
     MessageCreateRequest,
     MessagePageResponse,
     MessageResponse,
+    RunChatContext,
 )
 from app.schemas.user import UserPublicResponse
 from app.services.messaging_service import MessagingService
@@ -28,7 +29,9 @@ def _service(session: AsyncSession = Depends(get_session)) -> MessagingService:
     return MessagingService(session)
 
 
-def _to_response(conversation: Conversation) -> ConversationResponse:
+def _to_response(
+    conversation: Conversation, run_context: RunChatContext | None = None
+) -> ConversationResponse:
     # participants relationship holds ConversationParticipant rows; the API
     # exposes the user profiles behind them.
     return ConversationResponse(
@@ -37,6 +40,23 @@ def _to_response(conversation: Conversation) -> ConversationResponse:
         context_id=conversation.context_id,
         participants=[UserPublicResponse.model_validate(p.user) for p in conversation.participants],
         created_at=conversation.created_at,
+        run_context=run_context,
+    )
+
+
+async def _run_context(svc: MessagingService, conversation: Conversation) -> RunChatContext | None:
+    found = await svc.get_run_context(conversation)
+    if found is None:
+        return None
+    order, run, spot = found
+    return RunChatContext(
+        run_id=run.id,
+        order_id=order.id,
+        spot_name=spot.name,
+        spot_image_url=spot.image_url,
+        order_text=order.order_text,
+        dropoff=order.dropoff,
+        fee_cents=run.fee_cents,
     )
 
 
@@ -76,7 +96,17 @@ async def create_conversation(
         context_type=body.context_type,
         context_id=body.context_id,
     )
-    return _to_response(conversation)
+    return _to_response(conversation, await _run_context(svc, conversation))
+
+
+@router.get("/{conversation_id}", response_model=ConversationResponse)
+async def get_conversation(
+    conversation_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    svc: MessagingService = Depends(_service),
+) -> ConversationResponse:
+    conversation = await svc.get_conversation(conversation_id=conversation_id, user=user)
+    return _to_response(conversation, await _run_context(svc, conversation))
 
 
 @router.get("/{conversation_id}/messages", response_model=MessagePageResponse)

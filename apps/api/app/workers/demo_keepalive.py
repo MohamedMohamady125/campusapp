@@ -42,9 +42,7 @@ _RUN_SHAPES = (
 
 async def demo_keepalive_tick(session: AsyncSession) -> int:
     """One idempotent tick: expire sweep + top up open runs. Returns created count."""
-    got_lock = (
-        await session.execute(select(func.pg_try_advisory_lock(_LOCK_KEY)))
-    ).scalar()
+    got_lock = (await session.execute(select(func.pg_try_advisory_lock(_LOCK_KEY)))).scalar()
     if not got_lock:
         return 0
     try:
@@ -63,17 +61,13 @@ async def demo_keepalive_tick(session: AsyncSession) -> int:
 
         runners = list(
             (
-                await session.execute(
-                    select(User).where(User.email.in_(_DEMO_RUNNER_EMAILS))
-                )
+                await session.execute(select(User).where(User.email.in_(_DEMO_RUNNER_EMAILS)))
             ).scalars()
         )
         spots = list(
             (
                 await session.execute(
-                    select(FoodSpot)
-                    .where(FoodSpot.active.is_(True))
-                    .order_by(FoodSpot.name)
+                    select(FoodSpot).where(FoodSpot.active.is_(True)).order_by(FoodSpot.name)
                 )
             ).scalars()
         )

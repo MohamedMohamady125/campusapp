@@ -105,6 +105,7 @@ export 'package:campus_api/src/model/report_target_type.dart';
 export 'package:campus_api/src/model/report_update_request.dart';
 export 'package:campus_api/src/model/resend_code_request.dart';
 export 'package:campus_api/src/model/reset_password_request.dart';
+export 'package:campus_api/src/model/run_chat_context.dart';
 export 'package:campus_api/src/model/run_create_request.dart';
 export 'package:campus_api/src/model/run_location.dart';
 export 'package:campus_api/src/model/run_location_update_request.dart';

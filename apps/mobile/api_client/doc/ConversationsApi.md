@@ -10,6 +10,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**createConversationApiV1ConversationsPost**](ConversationsApi.md#createconversationapiv1conversationspost) | **POST** /api/v1/conversations | Create Conversation
+[**getConversationApiV1ConversationsConversationIdGet**](ConversationsApi.md#getconversationapiv1conversationsconversationidget) | **GET** /api/v1/conversations/{conversation_id} | Get Conversation
 [**listConversationsApiV1ConversationsGet**](ConversationsApi.md#listconversationsapiv1conversationsget) | **GET** /api/v1/conversations | List Conversations
 [**listMessagesApiV1ConversationsConversationIdMessagesGet**](ConversationsApi.md#listmessagesapiv1conversationsconversationidmessagesget) | **GET** /api/v1/conversations/{conversation_id}/messages | List Messages
 [**markReadApiV1ConversationsConversationIdReadPost**](ConversationsApi.md#markreadapiv1conversationsconversationidreadpost) | **POST** /api/v1/conversations/{conversation_id}/read | Mark Read
@@ -53,6 +54,47 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **getConversationApiV1ConversationsConversationIdGet**
+> ConversationResponse getConversationApiV1ConversationsConversationIdGet(conversationId)
+
+Get Conversation
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getConversationsApi();
+final String conversationId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+
+try {
+    final response = api.getConversationApiV1ConversationsConversationIdGet(conversationId);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling ConversationsApi->getConversationApiV1ConversationsConversationIdGet: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **conversationId** | **String**|  | 
+
+### Return type
+
+[**ConversationResponse**](ConversationResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

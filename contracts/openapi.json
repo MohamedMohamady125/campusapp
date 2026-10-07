@@ -474,6 +474,16 @@
             },
             "title": "Participants",
             "type": "array"
+          },
+          "run_context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunChatContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -2174,6 +2184,59 @@
           "new_password"
         ],
         "title": "ResetPasswordRequest",
+        "type": "object"
+      },
+      "RunChatContext": {
+        "description": "Order + restaurant summary pinned atop a run chat (both parties).",
+        "properties": {
+          "dropoff": {
+            "title": "Dropoff",
+            "type": "string"
+          },
+          "fee_cents": {
+            "title": "Fee Cents",
+            "type": "integer"
+          },
+          "order_id": {
+            "format": "uuid",
+            "title": "Order Id",
+            "type": "string"
+          },
+          "order_text": {
+            "title": "Order Text",
+            "type": "string"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "spot_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spot Image Url"
+          },
+          "spot_name": {
+            "title": "Spot Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "order_id",
+          "spot_name",
+          "spot_image_url",
+          "order_text",
+          "dropoff",
+          "fee_cents"
+        ],
+        "title": "RunChatContext",
         "type": "object"
       },
       "RunCreateRequest": {
@@ -4397,6 +4460,54 @@
           }
         ],
         "summary": "Create Conversation",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/api/v1/conversations/{conversation_id}": {
+      "get": {
+        "operationId": "get_conversation_api_v1_conversations__conversation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Conversation",
         "tags": [
           "conversations"
         ]

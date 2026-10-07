@@ -87,6 +87,7 @@ Class | Method | HTTP request | Description
 [*ChatsApi*](doc/ChatsApi.md) | [**postChatMessageApiV1ChatsChatIdMessagesPost**](doc/ChatsApi.md#postchatmessageapiv1chatschatidmessagespost) | **POST** /api/v1/chats/{chat_id}/messages | Post Chat Message
 [*ChatsApi*](doc/ChatsApi.md) | [**promoteMemberApiV1ChatsChatIdMembersUserIdPromotePost**](doc/ChatsApi.md#promotememberapiv1chatschatidmembersuseridpromotepost) | **POST** /api/v1/chats/{chat_id}/members/{user_id}/promote | Promote Member
 [*ConversationsApi*](doc/ConversationsApi.md) | [**createConversationApiV1ConversationsPost**](doc/ConversationsApi.md#createconversationapiv1conversationspost) | **POST** /api/v1/conversations | Create Conversation
+[*ConversationsApi*](doc/ConversationsApi.md) | [**getConversationApiV1ConversationsConversationIdGet**](doc/ConversationsApi.md#getconversationapiv1conversationsconversationidget) | **GET** /api/v1/conversations/{conversation_id} | Get Conversation
 [*ConversationsApi*](doc/ConversationsApi.md) | [**listConversationsApiV1ConversationsGet**](doc/ConversationsApi.md#listconversationsapiv1conversationsget) | **GET** /api/v1/conversations | List Conversations
 [*ConversationsApi*](doc/ConversationsApi.md) | [**listMessagesApiV1ConversationsConversationIdMessagesGet**](doc/ConversationsApi.md#listmessagesapiv1conversationsconversationidmessagesget) | **GET** /api/v1/conversations/{conversation_id}/messages | List Messages
 [*ConversationsApi*](doc/ConversationsApi.md) | [**markReadApiV1ConversationsConversationIdReadPost**](doc/ConversationsApi.md#markreadapiv1conversationsconversationidreadpost) | **POST** /api/v1/conversations/{conversation_id}/read | Mark Read
@@ -227,6 +228,7 @@ Class | Method | HTTP request | Description
  - [ReportUpdateRequest](doc/ReportUpdateRequest.md)
  - [ResendCodeRequest](doc/ResendCodeRequest.md)
  - [ResetPasswordRequest](doc/ResetPasswordRequest.md)
+ - [RunChatContext](doc/RunChatContext.md)
  - [RunCreateRequest](doc/RunCreateRequest.md)
  - [RunLocation](doc/RunLocation.md)
  - [RunLocationUpdateRequest](doc/RunLocationUpdateRequest.md)

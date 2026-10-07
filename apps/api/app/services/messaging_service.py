@@ -14,7 +14,7 @@ from app.core.errors import BusinessRuleError, ForbiddenError, NotFoundError
 from app.core.rate_limit import enforce_rate_limit
 from app.integrations.analytics.base import EVENT_MESSAGE_SENT
 from app.integrations.analytics.provider import get_analytics_provider
-from app.models import Conversation, ConversationParticipant, Message, Run, RunOrder, User
+from app.models import Conversation, ConversationParticipant, FoodSpot, Message, Run, RunOrder, User
 from app.models.enums import ConversationContext
 from app.repositories.chat_repo import NotificationRepository
 from app.repositories.conversation_repo import ConversationRepository
@@ -90,6 +90,24 @@ class MessagingService:
                 "Run chats are between the runner and the orderer only.",
                 code="NOT_RUN_PARTY",
             )
+
+    async def get_run_context(
+        self, conversation: Conversation
+    ) -> tuple[RunOrder, Run, FoodSpot] | None:
+        """Order/run/spot behind a run conversation, for the pinned chat
+        sub-header. None for non-run threads or if the order was withdrawn."""
+        if conversation.context_type != ConversationContext.run or conversation.context_id is None:
+            return None
+        order = await self._session.get(RunOrder, conversation.context_id)
+        if order is None:
+            return None
+        run = await self._session.get(Run, order.run_id)
+        if run is None:  # pragma: no cover — FK guarantees the parent run
+            return None
+        spot = await self._session.get(FoodSpot, run.food_spot_id)
+        if spot is None:  # pragma: no cover — FK guarantees the spot
+            return None
+        return order, run, spot
 
     async def _get_or_404(self, conversation_id: uuid.UUID) -> Conversation:
         conversation = await self._repo.get(conversation_id)

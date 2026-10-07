@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **createdAt** | [**DateTime**](DateTime.md) |  | 
 **id** | **String** |  | 
 **participants** | [**BuiltList&lt;UserPublicResponse&gt;**](UserPublicResponse.md) |  | 
+**runContext** | [**RunChatContext**](RunChatContext.md) |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

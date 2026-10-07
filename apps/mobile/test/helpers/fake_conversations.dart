@@ -55,6 +55,11 @@ class FakeConversationsRepository implements ConversationsRepository {
       conversations;
 
   @override
+  Future<ConversationResponse> fetchConversation(
+    String conversationId,
+  ) async => fakeConversation();
+
+  @override
   Future<List<AppSchemasConversationMessageResponse>> fetchMessages(
     String conversationId,
   ) async => messages;

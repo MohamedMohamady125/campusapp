@@ -15,6 +15,16 @@ class ConversationsRepository {
     return res.data!.items.toList();
   }
 
+  /// One conversation with its run context (order + restaurant) when it's a
+  /// run chat — powers the pinned sub-header in the thread.
+  Future<ConversationResponse> fetchConversation(String conversationId) async {
+    final res = await _conversations
+        .getConversationApiV1ConversationsConversationIdGet(
+          conversationId: conversationId,
+        );
+    return res.data!;
+  }
+
   Future<List<AppSchemasConversationMessageResponse>> fetchMessages(
     String conversationId,
   ) async {

@@ -30,6 +30,18 @@ class MessageResponse(BaseModel):
     created_at: datetime
 
 
+class RunChatContext(BaseModel):
+    """Order + restaurant summary pinned atop a run chat (both parties)."""
+
+    run_id: uuid.UUID
+    order_id: uuid.UUID
+    spot_name: str
+    spot_image_url: str | None
+    order_text: str
+    dropoff: str
+    fee_cents: int
+
+
 class ConversationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -38,6 +50,9 @@ class ConversationResponse(BaseModel):
     context_id: uuid.UUID | None
     participants: list[UserPublicResponse]
     created_at: datetime
+    # Populated on GET-by-id / create for run conversations only; stays None
+    # on the list endpoint to keep it one query (no N+1, spec §7.2).
+    run_context: RunChatContext | None = None
 
 
 class ConversationPageResponse(BaseModel):

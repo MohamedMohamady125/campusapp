@@ -17,6 +17,8 @@ class _$ConversationResponse extends ConversationResponse {
   final String id;
   @override
   final BuiltList<UserPublicResponse> participants;
+  @override
+  final RunChatContext? runContext;
 
   factory _$ConversationResponse(
           [void Function(ConversationResponseBuilder)? updates]) =>
@@ -27,7 +29,8 @@ class _$ConversationResponse extends ConversationResponse {
       required this.contextType,
       required this.createdAt,
       required this.id,
-      required this.participants})
+      required this.participants,
+      this.runContext})
       : super._();
   @override
   ConversationResponse rebuild(
@@ -46,7 +49,8 @@ class _$ConversationResponse extends ConversationResponse {
         contextType == other.contextType &&
         createdAt == other.createdAt &&
         id == other.id &&
-        participants == other.participants;
+        participants == other.participants &&
+        runContext == other.runContext;
   }
 
   @override
@@ -57,6 +61,7 @@ class _$ConversationResponse extends ConversationResponse {
     _$hash = $jc(_$hash, createdAt.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, participants.hashCode);
+    _$hash = $jc(_$hash, runContext.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -68,7 +73,8 @@ class _$ConversationResponse extends ConversationResponse {
           ..add('contextType', contextType)
           ..add('createdAt', createdAt)
           ..add('id', id)
-          ..add('participants', participants))
+          ..add('participants', participants)
+          ..add('runContext', runContext))
         .toString();
   }
 }
@@ -100,6 +106,12 @@ class ConversationResponseBuilder
   set participants(ListBuilder<UserPublicResponse>? participants) =>
       _$this._participants = participants;
 
+  RunChatContextBuilder? _runContext;
+  RunChatContextBuilder get runContext =>
+      _$this._runContext ??= RunChatContextBuilder();
+  set runContext(RunChatContextBuilder? runContext) =>
+      _$this._runContext = runContext;
+
   ConversationResponseBuilder() {
     ConversationResponse._defaults(this);
   }
@@ -112,6 +124,7 @@ class ConversationResponseBuilder
       _createdAt = $v.createdAt;
       _id = $v.id;
       _participants = $v.participants.toBuilder();
+      _runContext = $v.runContext?.toBuilder();
       _$v = null;
     }
     return this;
@@ -143,12 +156,15 @@ class ConversationResponseBuilder
             id: BuiltValueNullFieldError.checkNotNull(
                 id, r'ConversationResponse', 'id'),
             participants: participants.build(),
+            runContext: _runContext?.build(),
           );
     } catch (_) {
       late String _$failedField;
       try {
         _$failedField = 'participants';
         participants.build();
+        _$failedField = 'runContext';
+        _runContext?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
             r'ConversationResponse', _$failedField, e.toString());

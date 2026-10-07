@@ -3,6 +3,7 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:campus_api/src/model/run_chat_context.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:campus_api/src/model/user_public_response.dart';
 import 'package:campus_api/src/model/conversation_context.dart';
@@ -19,6 +20,7 @@ part 'conversation_response.g.dart';
 /// * [createdAt] 
 /// * [id] 
 /// * [participants] 
+/// * [runContext] 
 @BuiltValue()
 abstract class ConversationResponse implements Built<ConversationResponse, ConversationResponseBuilder> {
   @BuiltValueField(wireName: r'context_id')
@@ -36,6 +38,9 @@ abstract class ConversationResponse implements Built<ConversationResponse, Conve
 
   @BuiltValueField(wireName: r'participants')
   BuiltList<UserPublicResponse> get participants;
+
+  @BuiltValueField(wireName: r'run_context')
+  RunChatContext? get runContext;
 
   ConversationResponse._();
 
@@ -85,6 +90,13 @@ class _$ConversationResponseSerializer implements PrimitiveSerializer<Conversati
       object.participants,
       specifiedType: const FullType(BuiltList, [FullType(UserPublicResponse)]),
     );
+    if (object.runContext != null) {
+      yield r'run_context';
+      yield serializers.serialize(
+        object.runContext,
+        specifiedType: const FullType.nullable(RunChatContext),
+      );
+    }
   }
 
   @override
@@ -143,6 +155,14 @@ class _$ConversationResponseSerializer implements PrimitiveSerializer<Conversati
             specifiedType: const FullType(BuiltList, [FullType(UserPublicResponse)]),
           ) as BuiltList<UserPublicResponse>;
           result.participants.replace(valueDes);
+          break;
+        case r'run_context':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(RunChatContext),
+          ) as RunChatContext?;
+          if (valueDes == null) continue;
+          result.runContext.replace(valueDes);
           break;
         default:
           unhandled.add(key);

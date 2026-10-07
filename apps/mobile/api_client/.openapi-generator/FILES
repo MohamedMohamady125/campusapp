@@ -92,6 +92,7 @@ doc/ReportUpdateRequest.md
 doc/ReportsApi.md
 doc/ResendCodeRequest.md
 doc/ResetPasswordRequest.md
+doc/RunChatContext.md
 doc/RunCreateRequest.md
 doc/RunLocation.md
 doc/RunLocationUpdateRequest.md
@@ -219,6 +220,7 @@ lib/src/model/report_target_type.dart
 lib/src/model/report_update_request.dart
 lib/src/model/resend_code_request.dart
 lib/src/model/reset_password_request.dart
+lib/src/model/run_chat_context.dart
 lib/src/model/run_create_request.dart
 lib/src/model/run_location.dart
 lib/src/model/run_location_update_request.dart
@@ -241,3 +243,4 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/run_chat_context_test.dart

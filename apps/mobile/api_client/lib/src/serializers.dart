@@ -95,6 +95,7 @@ import 'package:campus_api/src/model/report_target_type.dart';
 import 'package:campus_api/src/model/report_update_request.dart';
 import 'package:campus_api/src/model/resend_code_request.dart';
 import 'package:campus_api/src/model/reset_password_request.dart';
+import 'package:campus_api/src/model/run_chat_context.dart';
 import 'package:campus_api/src/model/run_create_request.dart';
 import 'package:campus_api/src/model/run_location.dart';
 import 'package:campus_api/src/model/run_location_update_request.dart';
@@ -200,6 +201,7 @@ part 'serializers.g.dart';
   ReportUpdateRequest,
   ResendCodeRequest,
   ResetPasswordRequest,
+  RunChatContext,
   RunCreateRequest,
   RunLocation,
   RunLocationUpdateRequest,

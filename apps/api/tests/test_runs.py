@@ -808,6 +808,21 @@ async def test_run_order_chat_is_runner_and_orderer_only(
     resp = await client.post("/api/v1/conversations", json=body, headers=requester)
     assert resp.status_code == 201, resp.text
     conv_id = resp.json()["id"]
+    # Create response carries the pinned order/restaurant context.
+    ctx = resp.json()["run_context"]
+    assert ctx is not None
+    assert ctx["spot_name"] == "Chat Spot"
+    assert ctx["order_text"] == "1 spicy deluxe"
+    assert ctx["order_id"] == order_id
+
+    # Both parties see the same context on GET-by-id; outsiders get 403.
+    for party in (runner, requester):
+        got = await client.get(f"/api/v1/conversations/{conv_id}", headers=party)
+        assert got.status_code == 200, got.text
+        assert got.json()["run_context"]["spot_name"] == "Chat Spot"
+    blocked = await client.get(f"/api/v1/conversations/{conv_id}", headers=outsider)
+    assert blocked.status_code == 403
+    assert blocked.json()["error"]["code"] == "NOT_PARTICIPANT"
 
     # Re-opening reuses the same thread.
     again = await client.post("/api/v1/conversations", json=body, headers=requester)
