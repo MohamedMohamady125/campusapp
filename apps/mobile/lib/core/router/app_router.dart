@@ -120,6 +120,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, state) =>
             _slidePage(state: state, child: const NotificationsScreen()),
       ),
+      // Standalone 1:1 thread, pushed over the shell. Lives OUTSIDE the
+      // flag-gated /chats prefix so run-order chats (and DM notification
+      // deep links) work while the Chats tab is hidden for launch.
+      GoRoute(
+        path: '/messages/:id',
+        pageBuilder: (_, state) => _slidePage(
+          state: state,
+          child: ThreadScreen(
+            conversationId: state.pathParameters['id']!,
+            title: state.extra as String?,
+          ),
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _AppShell(shell: shell),
         branches: [

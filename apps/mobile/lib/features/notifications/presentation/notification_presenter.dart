@@ -84,7 +84,9 @@ NotificationRoute? notificationRoute(NotificationResponse n) {
     case 'dm_message':
       final conversationId = _str(n, 'conversation_id');
       if (conversationId == null) return null;
-      return ('/chats/conversation/$conversationId', _str(n, 'sender_name'));
+      // /messages sits outside the flag-hidden /chats branch, so DM deep
+      // links (run chats included) work while the Chats tab is off.
+      return ('/messages/$conversationId', _str(n, 'sender_name'));
     case 'run_request' ||
         'run_request_accepted' ||
         'run_request_declined' ||

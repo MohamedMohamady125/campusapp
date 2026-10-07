@@ -136,7 +136,9 @@ class _RunDetailBody extends ConsumerWidget {
             contextId: orderId,
           );
       if (context.mounted) {
-        context.go('/chats/conversation/${convo.id}', extra: recipientName);
+        // push (not go): back returns to this run, and /messages sits outside
+        // the flag-hidden /chats branch so the redirect guard can't bounce it.
+        await context.push('/messages/${convo.id}', extra: recipientName);
       }
     } on Object catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
