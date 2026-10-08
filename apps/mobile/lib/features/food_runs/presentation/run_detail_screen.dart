@@ -45,7 +45,7 @@ class RunDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(run == null ? 'Run' : '${run.foodSpot.name} run'),
+        title: Text(run == null ? 'Run' : run.foodSpot.name),
       ),
       body: SafeArea(
         child: switch ((state.loading, run)) {
