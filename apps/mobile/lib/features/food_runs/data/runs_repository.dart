@@ -189,13 +189,6 @@ class RunsRepository {
     return res.data!;
   }
 
-  /// Uploads a payment-app QR code image and returns its storage key, so it
-  /// can be attached to a [PaymentMethod] via [savePaymentMethods].
-  Future<String> uploadPaymentQr({
-    required Uint8List bytes,
-    required String contentType,
-  }) => _uploadImage(bytes: bytes, contentType: contentType);
-
   /// Uploads a profile photo and saves it to the account (PATCH /users/me).
   /// Required before posting a run (AVATAR_REQUIRED gate).
   Future<UserMeResponse> uploadAvatar({

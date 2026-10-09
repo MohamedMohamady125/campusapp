@@ -30,6 +30,7 @@ import 'package:flutter/services.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Run detail — one screen, three viewers (visitor / requester / runner),
 /// driven purely by the response shape. Kept live by the 5s poll.
@@ -1138,7 +1139,7 @@ class _PaymentCard extends StatelessWidget {
           else
             for (final m in methods) ...[
               SizedBox(height: tokens.space3),
-              _PaymentMethodRow(method: m),
+              _PaymentMethodRow(method: m, amountCents: run.feeCents),
             ],
           if (run.prepayRequired) ...[
             SizedBox(height: tokens.space3),
@@ -1173,126 +1174,56 @@ class _PaymentCard extends StatelessWidget {
 }
 
 /// One revealed rail: icon + app label + handle (phone/email/username), with
-/// tap-to-copy and — if the runner attached one — a scannable QR code.
+/// tap-to-copy and — where the app has a public link scheme — a "Pay" button
+/// that opens Venmo/Cash App/PayPal with the handle + amount prefilled.
 class _PaymentMethodRow extends StatelessWidget {
-  const _PaymentMethodRow({required this.method});
+  const _PaymentMethodRow({required this.method, required this.amountCents});
 
   final PaymentMethod method;
-
-  void _showQr(BuildContext context, String url) {
-    unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (_) => Dialog(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Scan to pay with ${method.type.label}',
-                  style: context.text.titleSmall,
-                ),
-                const SizedBox(height: 12),
-                InteractiveViewer(
-                  child: Image.network(
-                    url,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('QR image unavailable.'),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  final int amountCents;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
-    final qrUrl = method.qrUrl;
-    final hasQr = qrUrl != null && qrUrl.isNotEmpty;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final payLink = payDeepLink(method, amountCents);
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(method.type.icon, size: 20, color: colors.onSurfaceVariant),
-            SizedBox(width: tokens.space3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(method.type.label, style: context.text.labelSmall),
-                  Text(method.handle, style: context.text.bodyMedium),
-                ],
-              ),
-            ),
-            IconButton(
-              tooltip: 'Copy',
-              visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.copy_outlined, size: 18),
-              onPressed: () {
-                unawaited(
-                  Clipboard.setData(ClipboardData(text: method.handle)),
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${method.type.label} handle copied'),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        // QR shows automatically when the runner attached one — the payer
-        // just scans; tap to enlarge.
-        if (hasQr)
-          Padding(
-            padding: EdgeInsets.only(
-              left: tokens.space3 + 20,
-              top: tokens.space2,
-            ),
-            child: GestureDetector(
-              onTap: () => _showQr(context, qrUrl),
-              child: ClipRRect(
-                borderRadius: tokens.brSm,
-                child: Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(6),
-                  child: Image.network(
-                    qrUrl,
-                    width: 132,
-                    height: 132,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.qr_code_2,
-                          size: 18,
-                          color: colors.onSurfaceVariant,
-                        ),
-                        SizedBox(width: tokens.space2),
-                        Text(
-                          'QR unavailable',
-                          style: context.text.bodySmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+        Icon(method.type.icon, size: 20, color: colors.onSurfaceVariant),
+        SizedBox(width: tokens.space3),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(method.type.label, style: context.text.labelSmall),
+              Text(method.handle, style: context.text.bodyMedium),
+            ],
           ),
+        ),
+        IconButton(
+          tooltip: 'Copy',
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.copy_outlined, size: 18),
+          onPressed: () {
+            unawaited(Clipboard.setData(ClipboardData(text: method.handle)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${method.type.label} handle copied')),
+            );
+          },
+        ),
+        if (payLink != null) ...[
+          SizedBox(width: tokens.space1),
+          FilledButton.tonal(
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.symmetric(horizontal: tokens.space3),
+            ),
+            onPressed: () => unawaited(
+              launchUrl(payLink, mode: LaunchMode.externalApplication),
+            ),
+            child: const Text('Pay'),
+          ),
+        ],
       ],
     );
   }
