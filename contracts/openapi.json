@@ -1,6 +1,46 @@
 {
   "components": {
     "schemas": {
+      "AvatarUploadUrlRequest": {
+        "description": "Signed-URL request for a profile photo (required to post a run).",
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_type"
+        ],
+        "title": "AvatarUploadUrlRequest",
+        "type": "object"
+      },
+      "AvatarUploadUrlResponse": {
+        "properties": {
+          "fields": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "upload_url": {
+            "title": "Upload Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_url",
+          "fields",
+          "key"
+        ],
+        "title": "AvatarUploadUrlResponse",
+        "type": "object"
+      },
       "BanRequest": {
         "properties": {
           "reason": {
@@ -2671,6 +2711,17 @@
       "RunUserSummary": {
         "description": "Trust card shown on every run/order: identity + portable reputation.",
         "properties": {
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -2792,6 +2843,17 @@
             ],
             "title": "Avatar Key"
           },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
           "bio": {
             "anyOf": [
               {
@@ -2893,6 +2955,17 @@
             ],
             "title": "Avatar Key"
           },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
           "bio": {
             "anyOf": [
               {
@@ -2974,6 +3047,18 @@
       },
       "UserUpdateRequest": {
         "properties": {
+          "avatar_key": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Key"
+          },
           "bio": {
             "anyOf": [
               {
@@ -7005,6 +7090,53 @@
           }
         ],
         "summary": "Update Me",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/avatar-upload-url": {
+      "post": {
+        "description": "Signed-URL direct upload for a profile photo (required to post a run \u2014\nUber-style runner transparency).",
+        "operationId": "avatar_upload_url_api_v1_users_me_avatar_upload_url_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvatarUploadUrlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvatarUploadUrlResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Avatar Upload Url",
         "tags": [
           "users"
         ]

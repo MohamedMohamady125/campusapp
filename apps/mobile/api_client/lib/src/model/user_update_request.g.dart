@@ -8,6 +8,8 @@ part of 'user_update_request.dart';
 
 class _$UserUpdateRequest extends UserUpdateRequest {
   @override
+  final String? avatarKey;
+  @override
   final String? bio;
   @override
   final String? displayName;
@@ -23,7 +25,12 @@ class _$UserUpdateRequest extends UserUpdateRequest {
       (UserUpdateRequestBuilder()..update(updates))._build();
 
   _$UserUpdateRequest._(
-      {this.bio, this.displayName, this.major, this.paymentMethods, this.year})
+      {this.avatarKey,
+      this.bio,
+      this.displayName,
+      this.major,
+      this.paymentMethods,
+      this.year})
       : super._();
   @override
   UserUpdateRequest rebuild(void Function(UserUpdateRequestBuilder) updates) =>
@@ -37,6 +44,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is UserUpdateRequest &&
+        avatarKey == other.avatarKey &&
         bio == other.bio &&
         displayName == other.displayName &&
         major == other.major &&
@@ -47,6 +55,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, avatarKey.hashCode);
     _$hash = $jc(_$hash, bio.hashCode);
     _$hash = $jc(_$hash, displayName.hashCode);
     _$hash = $jc(_$hash, major.hashCode);
@@ -59,6 +68,7 @@ class _$UserUpdateRequest extends UserUpdateRequest {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'UserUpdateRequest')
+          ..add('avatarKey', avatarKey)
           ..add('bio', bio)
           ..add('displayName', displayName)
           ..add('major', major)
@@ -71,6 +81,10 @@ class _$UserUpdateRequest extends UserUpdateRequest {
 class UserUpdateRequestBuilder
     implements Builder<UserUpdateRequest, UserUpdateRequestBuilder> {
   _$UserUpdateRequest? _$v;
+
+  String? _avatarKey;
+  String? get avatarKey => _$this._avatarKey;
+  set avatarKey(String? avatarKey) => _$this._avatarKey = avatarKey;
 
   String? _bio;
   String? get bio => _$this._bio;
@@ -101,6 +115,7 @@ class UserUpdateRequestBuilder
   UserUpdateRequestBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _avatarKey = $v.avatarKey;
       _bio = $v.bio;
       _displayName = $v.displayName;
       _major = $v.major;
@@ -129,6 +144,7 @@ class UserUpdateRequestBuilder
     try {
       _$result = _$v ??
           _$UserUpdateRequest._(
+            avatarKey: avatarKey,
             bio: bio,
             displayName: displayName,
             major: major,

@@ -140,6 +140,7 @@ Class | Method | HTTP request | Description
 [*TutoringApi*](doc/TutoringApi.md) | [**deleteOfferingApiV1TutoringOfferingsOfferingIdDelete**](doc/TutoringApi.md#deleteofferingapiv1tutoringofferingsofferingiddelete) | **DELETE** /api/v1/tutoring/offerings/{offering_id} | Delete Offering
 [*TutoringApi*](doc/TutoringApi.md) | [**rankedTutorsApiV1TutoringTutorsGet**](doc/TutoringApi.md#rankedtutorsapiv1tutoringtutorsget) | **GET** /api/v1/tutoring/tutors | Ranked Tutors
 [*TutoringApi*](doc/TutoringApi.md) | [**subscribeTutorPremiumApiV1TutoringPremiumSubscriptionPost**](doc/TutoringApi.md#subscribetutorpremiumapiv1tutoringpremiumsubscriptionpost) | **POST** /api/v1/tutoring/premium/subscription | Subscribe Tutor Premium
+[*UsersApi*](doc/UsersApi.md) | [**avatarUploadUrlApiV1UsersMeAvatarUploadUrlPost**](doc/UsersApi.md#avataruploadurlapiv1usersmeavataruploadurlpost) | **POST** /api/v1/users/me/avatar-upload-url | Avatar Upload Url
 [*UsersApi*](doc/UsersApi.md) | [**getMeApiV1UsersMeGet**](doc/UsersApi.md#getmeapiv1usersmeget) | **GET** /api/v1/users/me | Get Me
 [*UsersApi*](doc/UsersApi.md) | [**getPublicProfileApiV1UsersUserIdGet**](doc/UsersApi.md#getpublicprofileapiv1usersuseridget) | **GET** /api/v1/users/{user_id} | Get Public Profile
 [*UsersApi*](doc/UsersApi.md) | [**paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost**](doc/UsersApi.md#paymentqruploadurlapiv1usersmepaymentqruploadurlpost) | **POST** /api/v1/users/me/payment-qr-upload-url | Payment Qr Upload Url
@@ -150,6 +151,8 @@ Class | Method | HTTP request | Description
 
  - [AppSchemasAuthMessageResponse](doc/AppSchemasAuthMessageResponse.md)
  - [AppSchemasConversationMessageResponse](doc/AppSchemasConversationMessageResponse.md)
+ - [AvatarUploadUrlRequest](doc/AvatarUploadUrlRequest.md)
+ - [AvatarUploadUrlResponse](doc/AvatarUploadUrlResponse.md)
  - [BanRequest](doc/BanRequest.md)
  - [ChatCreateRequest](doc/ChatCreateRequest.md)
  - [ChatMembershipResponse](doc/ChatMembershipResponse.md)

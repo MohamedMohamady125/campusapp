@@ -10,6 +10,8 @@ class _$UserPublicResponse extends UserPublicResponse {
   @override
   final String? avatarKey;
   @override
+  final String? avatarUrl;
+  @override
   final String? bio;
   @override
   final DateTime createdAt;
@@ -32,6 +34,7 @@ class _$UserPublicResponse extends UserPublicResponse {
 
   _$UserPublicResponse._(
       {this.avatarKey,
+      this.avatarUrl,
       this.bio,
       required this.createdAt,
       required this.displayName,
@@ -55,6 +58,7 @@ class _$UserPublicResponse extends UserPublicResponse {
     if (identical(other, this)) return true;
     return other is UserPublicResponse &&
         avatarKey == other.avatarKey &&
+        avatarUrl == other.avatarUrl &&
         bio == other.bio &&
         createdAt == other.createdAt &&
         displayName == other.displayName &&
@@ -69,6 +73,7 @@ class _$UserPublicResponse extends UserPublicResponse {
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, avatarKey.hashCode);
+    _$hash = $jc(_$hash, avatarUrl.hashCode);
     _$hash = $jc(_$hash, bio.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
     _$hash = $jc(_$hash, displayName.hashCode);
@@ -85,6 +90,7 @@ class _$UserPublicResponse extends UserPublicResponse {
   String toString() {
     return (newBuiltValueToStringHelper(r'UserPublicResponse')
           ..add('avatarKey', avatarKey)
+          ..add('avatarUrl', avatarUrl)
           ..add('bio', bio)
           ..add('createdAt', createdAt)
           ..add('displayName', displayName)
@@ -104,6 +110,10 @@ class UserPublicResponseBuilder
   String? _avatarKey;
   String? get avatarKey => _$this._avatarKey;
   set avatarKey(String? avatarKey) => _$this._avatarKey = avatarKey;
+
+  String? _avatarUrl;
+  String? get avatarUrl => _$this._avatarUrl;
+  set avatarUrl(String? avatarUrl) => _$this._avatarUrl = avatarUrl;
 
   String? _bio;
   String? get bio => _$this._bio;
@@ -146,6 +156,7 @@ class UserPublicResponseBuilder
     final $v = _$v;
     if ($v != null) {
       _avatarKey = $v.avatarKey;
+      _avatarUrl = $v.avatarUrl;
       _bio = $v.bio;
       _createdAt = $v.createdAt;
       _displayName = $v.displayName;
@@ -176,6 +187,7 @@ class UserPublicResponseBuilder
     final _$result = _$v ??
         _$UserPublicResponse._(
           avatarKey: avatarKey,
+          avatarUrl: avatarUrl,
           bio: bio,
           createdAt: BuiltValueNullFieldError.checkNotNull(
               createdAt, r'UserPublicResponse', 'createdAt'),

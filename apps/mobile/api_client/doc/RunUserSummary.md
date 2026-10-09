@@ -8,6 +8,7 @@ import 'package:campus_api/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**avatarUrl** | **String** |  | [optional] 
 **displayName** | **String** |  | 
 **id** | **String** |  | 
 **paymentMethods** | [**BuiltList&lt;PaymentMethod&gt;**](PaymentMethod.md) |  | [optional] [default to ListBuilder()]

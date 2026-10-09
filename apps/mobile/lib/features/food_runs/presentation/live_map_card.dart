@@ -1,4 +1,5 @@
 import 'package:campus_api/campus_api.dart';
+import 'package:campusconnect/design_system/components/verified_avatar.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
@@ -127,10 +128,11 @@ class _LiveMapCardState extends State<LiveMapCard> {
             padding: EdgeInsets.all(tokens.space3),
             child: Row(
               children: [
-                Icon(
-                  Icons.navigation_outlined,
-                  size: 16,
-                  color: colors.primary,
+                // The dasher's face, so you know who to look for.
+                VerifiedAvatar(
+                  name: widget.run.runner.displayName,
+                  imageUrl: widget.run.runner.avatarUrl,
+                  showEmblem: false,
                 ),
                 SizedBox(width: tokens.space2),
                 Expanded(

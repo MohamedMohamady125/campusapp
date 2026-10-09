@@ -13,6 +13,7 @@ part 'run_user_summary.g.dart';
 /// Trust card shown on every run/order: identity + portable reputation.
 ///
 /// Properties:
+/// * [avatarUrl] 
 /// * [displayName] 
 /// * [id] 
 /// * [paymentMethods] 
@@ -20,6 +21,9 @@ part 'run_user_summary.g.dart';
 /// * [reputationScore] 
 @BuiltValue()
 abstract class RunUserSummary implements Built<RunUserSummary, RunUserSummaryBuilder> {
+  @BuiltValueField(wireName: r'avatar_url')
+  String? get avatarUrl;
+
   @BuiltValueField(wireName: r'display_name')
   String get displayName;
 
@@ -59,6 +63,13 @@ class _$RunUserSummarySerializer implements PrimitiveSerializer<RunUserSummary> 
     RunUserSummary object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    if (object.avatarUrl != null) {
+      yield r'avatar_url';
+      yield serializers.serialize(
+        object.avatarUrl,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
     yield r'display_name';
     yield serializers.serialize(
       object.displayName,
@@ -109,6 +120,14 @@ class _$RunUserSummarySerializer implements PrimitiveSerializer<RunUserSummary> 
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'avatar_url':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.avatarUrl = valueDes;
+          break;
         case r'display_name':
           final valueDes = serializers.deserialize(
             value,

@@ -196,6 +196,19 @@ class RunsRepository {
     required String contentType,
   }) => _uploadImage(bytes: bytes, contentType: contentType);
 
+  /// Uploads a profile photo and saves it to the account (PATCH /users/me).
+  /// Required before posting a run (AVATAR_REQUIRED gate).
+  Future<UserMeResponse> uploadAvatar({
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    final key = await _uploadImage(bytes: bytes, contentType: contentType);
+    final res = await _api.getUsersApi().updateMeApiV1UsersMePatch(
+      userUpdateRequest: UserUpdateRequest((b) => b..avatarKey = key),
+    );
+    return res.data!;
+  }
+
   Future<RunResponse> updateStatus(String runId, RunStatus status) async {
     final res = await _runs.updateStatusApiV1RunsRunIdStatusPost(
       runId: runId,

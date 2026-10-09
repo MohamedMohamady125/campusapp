@@ -177,6 +177,44 @@ async def test_create_validations(client: httpx.AsyncClient) -> None:
     assert run["fee_cents"] == 200
 
 
+async def test_avatar_required_to_post_run(client: httpx.AsyncClient) -> None:
+    """No profile photo → can't post a run; adding one unblocks it, and the
+    photo URL rides on the runner summary in the feed (transparency)."""
+    runner = await make_user(client, "runner@campus.edu", avatar=False)
+    spot_id = await _make_spot()
+
+    resp = await client.post("/api/v1/runs", json=_payload(spot_id), headers=runner)
+    assert resp.status_code == 422, resp.text
+    assert resp.json()["error"]["code"] == "AVATAR_REQUIRED"
+
+    # Mint a signed upload URL, save the key, and posting works.
+    upload = await client.post(
+        "/api/v1/users/me/avatar-upload-url",
+        json={"content_type": "image/jpeg"},
+        headers=runner,
+    )
+    assert upload.status_code == 200, upload.text
+    key = upload.json()["key"]
+    assert key.startswith("avatars/")
+    patched = await client.patch("/api/v1/users/me", json={"avatar_key": key}, headers=runner)
+    assert patched.status_code == 200, patched.text
+    assert patched.json()["avatar_url"]
+
+    run = await _create_run(client, runner, spot_id)
+    assert run["runner"]["avatar_url"]
+
+    # Keys outside our upload namespaces are rejected.
+    bad = await client.patch("/api/v1/users/me", json={"avatar_key": "etc/passwd"}, headers=runner)
+    assert bad.status_code == 400, bad.text
+
+    bad_type = await client.post(
+        "/api/v1/users/me/avatar-upload-url",
+        json={"content_type": "application/pdf"},
+        headers=runner,
+    )
+    assert bad_type.status_code == 400, bad_type.text
+
+
 async def test_payment_prefs_validation(client: httpx.AsyncClient) -> None:
     """Payment prefs: cash ok on handoff runs only; others must be saved
     rails; deduped. Prepay keeps rails, drops cash, defaults to all saved."""

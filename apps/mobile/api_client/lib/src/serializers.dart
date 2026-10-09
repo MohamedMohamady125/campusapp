@@ -16,6 +16,8 @@ import 'package:campus_api/src/model/date.dart';
 
 import 'package:campus_api/src/model/app_schemas_auth_message_response.dart';
 import 'package:campus_api/src/model/app_schemas_conversation_message_response.dart';
+import 'package:campus_api/src/model/avatar_upload_url_request.dart';
+import 'package:campus_api/src/model/avatar_upload_url_response.dart';
 import 'package:campus_api/src/model/ban_request.dart';
 import 'package:campus_api/src/model/chat_create_request.dart';
 import 'package:campus_api/src/model/chat_membership_response.dart';
@@ -122,6 +124,8 @@ part 'serializers.g.dart';
 @SerializersFor([
   AppSchemasAuthMessageResponse,
   AppSchemasConversationMessageResponse,
+  AvatarUploadUrlRequest,
+  AvatarUploadUrlResponse,
   BanRequest,
   ChatCreateRequest,
   ChatMembershipResponse,

@@ -70,11 +70,21 @@ class UserMeResponse(BaseModel):
     major: str | None
     bio: str | None
     avatar_key: str | None
+    # Read-only: public URL derived from avatar_key; never stored.
+    avatar_url: str | None = None
     payment_methods: list[PaymentMethod]
     reputation_score: float
     rating_count: int
     role: UserRole
     created_at: datetime
+
+    @model_validator(mode="after")
+    def _derive_avatar_url(self) -> "UserMeResponse":
+        if self.avatar_key:
+            from app.integrations.storage.resolve import image_public_url
+
+            self.avatar_url = image_public_url(self.avatar_key)
+        return self
 
 
 class UserPublicResponse(BaseModel):
@@ -88,9 +98,18 @@ class UserPublicResponse(BaseModel):
     major: str | None
     bio: str | None
     avatar_key: str | None
+    avatar_url: str | None = None
     reputation_score: float
     rating_count: int
     created_at: datetime
+
+    @model_validator(mode="after")
+    def _derive_avatar_url(self) -> "UserPublicResponse":
+        if self.avatar_key:
+            from app.integrations.storage.resolve import image_public_url
+
+            self.avatar_url = image_public_url(self.avatar_key)
+        return self
 
 
 class PaymentQrUploadUrlRequest(BaseModel):
@@ -105,13 +124,34 @@ class PaymentQrUploadUrlResponse(BaseModel):
     key: str
 
 
+class AvatarUploadUrlRequest(BaseModel):
+    """Signed-URL request for a profile photo (required to post a run)."""
+
+    content_type: str
+
+
+class AvatarUploadUrlResponse(BaseModel):
+    upload_url: str
+    fields: dict[str, str]
+    key: str
+
+
 class UserUpdateRequest(BaseModel):
     display_name: str | None = Field(default=None, min_length=2, max_length=80)
     year: str | None = Field(default=None, max_length=20)
     major: str | None = Field(default=None, max_length=120)
     bio: str | None = Field(default=None, max_length=1000)
+    avatar_key: str | None = Field(default=None, max_length=300)
     # Full replacement of the runner's payment rails (max 6, one per type).
     payment_methods: list[PaymentMethod] | None = Field(default=None, max_length=6)
+
+    @field_validator("avatar_key")
+    @classmethod
+    def _avatar_namespace(cls, value: str | None) -> str | None:
+        # Only keys minted by our upload endpoints are accepted.
+        if value is not None and not (value.startswith("avatars/") or value.startswith("db/")):
+            raise ValueError("Invalid avatar key.")
+        return value
 
     @field_validator("payment_methods")
     @classmethod

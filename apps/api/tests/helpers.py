@@ -5,8 +5,14 @@ import httpx
 PASSWORD = "Sup3rSecret!pw"
 
 
-async def make_user(client: httpx.AsyncClient, email: str) -> dict[str, str]:
-    """Register + verify + login; returns Authorization headers."""
+async def make_user(
+    client: httpx.AsyncClient, email: str, *, avatar: bool = True
+) -> dict[str, str]:
+    """Register + verify + login; returns Authorization headers.
+
+    Sets a profile photo by default (posting a run requires one —
+    AVATAR_REQUIRED gate); pass avatar=False to test the gate itself.
+    """
     from app.integrations.email.provider import get_email_provider
     from app.integrations.email.stub import StubEmailProvider
 
@@ -23,4 +29,12 @@ async def make_user(client: httpx.AsyncClient, email: str) -> dict[str, str]:
     ).status_code == 200
     login = await client.post("/api/v1/auth/login", json={"email": email, "password": PASSWORD})
     assert login.status_code == 200, login.text
-    return {"Authorization": f"Bearer {login.json()['access_token']}"}
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    if avatar:
+        patched = await client.patch(
+            "/api/v1/users/me",
+            json={"avatar_key": "avatars/test/selfie.png"},
+            headers=headers,
+        )
+        assert patched.status_code == 200, patched.text
+    return headers

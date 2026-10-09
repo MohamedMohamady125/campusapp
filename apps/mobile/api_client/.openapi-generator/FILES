@@ -5,6 +5,8 @@ doc/AdminApi.md
 doc/AppSchemasAuthMessageResponse.md
 doc/AppSchemasConversationMessageResponse.md
 doc/AuthApi.md
+doc/AvatarUploadUrlRequest.md
+doc/AvatarUploadUrlResponse.md
 doc/BanRequest.md
 doc/ChatCreateRequest.md
 doc/ChatMembershipResponse.md
@@ -140,6 +142,8 @@ lib/src/auth/oauth.dart
 lib/src/date_serializer.dart
 lib/src/model/app_schemas_auth_message_response.dart
 lib/src/model/app_schemas_conversation_message_response.dart
+lib/src/model/avatar_upload_url_request.dart
+lib/src/model/avatar_upload_url_response.dart
 lib/src/model/ban_request.dart
 lib/src/model/chat_create_request.dart
 lib/src/model/chat_membership_response.dart
@@ -243,3 +247,5 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/avatar_upload_url_request_test.dart
+test/avatar_upload_url_response_test.dart

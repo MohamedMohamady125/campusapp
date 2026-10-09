@@ -79,6 +79,8 @@ class RunUserSummary(BaseModel):
 
     id: uuid.UUID
     display_name: str
+    # Public profile-photo URL (derived from avatar_key at serialize time).
+    avatar_url: str | None = None
     reputation_score: float
     rating_count: int
     # Payment rails, revealed only to accepted requesters + the runner

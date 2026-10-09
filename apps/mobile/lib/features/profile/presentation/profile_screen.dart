@@ -36,6 +36,7 @@ class ProfileScreen extends ConsumerWidget {
               children: [
                 _ProfileHeaderCard(
                   displayName: user.displayName,
+                  avatarUrl: user.avatarUrl,
                   email: user.email,
                   reputationScore: user.reputationScore,
                   ratingCount: user.ratingCount,
@@ -200,12 +201,14 @@ void _pickThemeMode(BuildContext context, WidgetRef ref) {
 class _ProfileHeaderCard extends StatelessWidget {
   const _ProfileHeaderCard({
     required this.displayName,
+    required this.avatarUrl,
     required this.email,
     required this.reputationScore,
     required this.ratingCount,
   });
 
   final String displayName;
+  final String? avatarUrl;
   final String email;
   final num reputationScore;
   final int ratingCount;
@@ -224,7 +227,11 @@ class _ProfileHeaderCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          VerifiedAvatar(name: displayName, size: AvatarSize.xl),
+          VerifiedAvatar(
+            name: displayName,
+            imageUrl: avatarUrl,
+            size: AvatarSize.xl,
+          ),
           SizedBox(height: tokens.space3),
           Text(
             displayName,

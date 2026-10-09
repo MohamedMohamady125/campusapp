@@ -9,11 +9,55 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**avatarUploadUrlApiV1UsersMeAvatarUploadUrlPost**](UsersApi.md#avataruploadurlapiv1usersmeavataruploadurlpost) | **POST** /api/v1/users/me/avatar-upload-url | Avatar Upload Url
 [**getMeApiV1UsersMeGet**](UsersApi.md#getmeapiv1usersmeget) | **GET** /api/v1/users/me | Get Me
 [**getPublicProfileApiV1UsersUserIdGet**](UsersApi.md#getpublicprofileapiv1usersuseridget) | **GET** /api/v1/users/{user_id} | Get Public Profile
 [**paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost**](UsersApi.md#paymentqruploadurlapiv1usersmepaymentqruploadurlpost) | **POST** /api/v1/users/me/payment-qr-upload-url | Payment Qr Upload Url
 [**updateMeApiV1UsersMePatch**](UsersApi.md#updatemeapiv1usersmepatch) | **PATCH** /api/v1/users/me | Update Me
 
+
+# **avatarUploadUrlApiV1UsersMeAvatarUploadUrlPost**
+> AvatarUploadUrlResponse avatarUploadUrlApiV1UsersMeAvatarUploadUrlPost(avatarUploadUrlRequest)
+
+Avatar Upload Url
+
+Signed-URL direct upload for a profile photo (required to post a run — Uber-style runner transparency).
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getUsersApi();
+final AvatarUploadUrlRequest avatarUploadUrlRequest = ; // AvatarUploadUrlRequest | 
+
+try {
+    final response = api.avatarUploadUrlApiV1UsersMeAvatarUploadUrlPost(avatarUploadUrlRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling UsersApi->avatarUploadUrlApiV1UsersMeAvatarUploadUrlPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **avatarUploadUrlRequest** | [**AvatarUploadUrlRequest**](AvatarUploadUrlRequest.md)|  | 
+
+### Return type
+
+[**AvatarUploadUrlResponse**](AvatarUploadUrlResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getMeApiV1UsersMeGet**
 > UserMeResponse getMeApiV1UsersMeGet()

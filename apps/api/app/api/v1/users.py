@@ -13,6 +13,8 @@ from app.integrations.storage.provider import get_storage_provider
 from app.models import User
 from app.repositories.user_repo import UserRepository
 from app.schemas.user import (
+    AvatarUploadUrlRequest,
+    AvatarUploadUrlResponse,
     PaymentQrUploadUrlRequest,
     PaymentQrUploadUrlResponse,
     UserMeResponse,
@@ -66,6 +68,27 @@ async def payment_qr_upload_url(
         key=key, content_type=body.content_type
     )
     return PaymentQrUploadUrlResponse(upload_url=signed.url, fields=signed.fields, key=signed.key)
+
+
+@router.post("/me/avatar-upload-url", response_model=AvatarUploadUrlResponse)
+async def avatar_upload_url(
+    body: AvatarUploadUrlRequest,
+    user: User = Depends(get_current_user),
+) -> AvatarUploadUrlResponse:
+    """Signed-URL direct upload for a profile photo (required to post a run —
+    Uber-style runner transparency)."""
+    if body.content_type not in ALLOWED_CONTENT_TYPES:
+        raise ValidationAppError(
+            "Unsupported image type.",
+            code="UNSUPPORTED_CONTENT_TYPE",
+            details={"allowed": sorted(ALLOWED_CONTENT_TYPES)},
+        )
+    ext = body.content_type.split("/")[-1]
+    key = f"avatars/{user.id}/{uuid.uuid4()}.{ext}"
+    signed = await get_storage_provider().create_signed_upload(
+        key=key, content_type=body.content_type
+    )
+    return AvatarUploadUrlResponse(upload_url=signed.url, fields=signed.fields, key=signed.key)
 
 
 @router.get("/{user_id}", response_model=UserPublicResponse)

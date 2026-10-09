@@ -8,6 +8,8 @@ part of 'run_user_summary.dart';
 
 class _$RunUserSummary extends RunUserSummary {
   @override
+  final String? avatarUrl;
+  @override
   final String displayName;
   @override
   final String id;
@@ -22,7 +24,8 @@ class _$RunUserSummary extends RunUserSummary {
       (RunUserSummaryBuilder()..update(updates))._build();
 
   _$RunUserSummary._(
-      {required this.displayName,
+      {this.avatarUrl,
+      required this.displayName,
       required this.id,
       this.paymentMethods,
       required this.ratingCount,
@@ -39,6 +42,7 @@ class _$RunUserSummary extends RunUserSummary {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is RunUserSummary &&
+        avatarUrl == other.avatarUrl &&
         displayName == other.displayName &&
         id == other.id &&
         paymentMethods == other.paymentMethods &&
@@ -49,6 +53,7 @@ class _$RunUserSummary extends RunUserSummary {
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, avatarUrl.hashCode);
     _$hash = $jc(_$hash, displayName.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, paymentMethods.hashCode);
@@ -61,6 +66,7 @@ class _$RunUserSummary extends RunUserSummary {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'RunUserSummary')
+          ..add('avatarUrl', avatarUrl)
           ..add('displayName', displayName)
           ..add('id', id)
           ..add('paymentMethods', paymentMethods)
@@ -73,6 +79,10 @@ class _$RunUserSummary extends RunUserSummary {
 class RunUserSummaryBuilder
     implements Builder<RunUserSummary, RunUserSummaryBuilder> {
   _$RunUserSummary? _$v;
+
+  String? _avatarUrl;
+  String? get avatarUrl => _$this._avatarUrl;
+  set avatarUrl(String? avatarUrl) => _$this._avatarUrl = avatarUrl;
 
   String? _displayName;
   String? get displayName => _$this._displayName;
@@ -104,6 +114,7 @@ class RunUserSummaryBuilder
   RunUserSummaryBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _avatarUrl = $v.avatarUrl;
       _displayName = $v.displayName;
       _id = $v.id;
       _paymentMethods = $v.paymentMethods?.toBuilder();
@@ -132,6 +143,7 @@ class RunUserSummaryBuilder
     try {
       _$result = _$v ??
           _$RunUserSummary._(
+            avatarUrl: avatarUrl,
             displayName: BuiltValueNullFieldError.checkNotNull(
                 displayName, r'RunUserSummary', 'displayName'),
             id: BuiltValueNullFieldError.checkNotNull(

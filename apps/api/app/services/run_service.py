@@ -95,6 +95,7 @@ def _user_summary(user: User, *, include_payment: bool = False) -> RunUserSummar
     return RunUserSummary(
         id=user.id,
         display_name=user.display_name,
+        avatar_url=image_public_url(user.avatar_key) if user.avatar_key else None,
         reputation_score=float(user.reputation_score),
         rating_count=user.rating_count,
         # Reveal payment rails only when the caller is entitled (see gate below).
@@ -208,6 +209,12 @@ class RunService:
             raise NotFoundError("Food spot not found.", code="FOOD_SPOT_NOT_FOUND")
         if body.leaving_at <= datetime.now(UTC) - LEAVING_AT_GRACE:
             raise BusinessRuleError("Leaving time must be in the future.", code="LEAVING_AT_PAST")
+        # Uber-style transparency: requesters see who's bringing their food.
+        if not runner.avatar_key:
+            raise BusinessRuleError(
+                "Add a profile photo before posting a run.",
+                code="AVATAR_REQUIRED",
+            )
         if (body.fee_cents > 0 or body.prepay_required) and not runner.payment_methods:
             raise BusinessRuleError(
                 "Add a payment method before charging a fee.",

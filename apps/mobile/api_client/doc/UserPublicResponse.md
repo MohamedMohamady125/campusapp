@@ -9,6 +9,7 @@ import 'package:campus_api/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **avatarKey** | **String** |  | 
+**avatarUrl** | **String** |  | [optional] 
 **bio** | **String** |  | 
 **createdAt** | [**DateTime**](DateTime.md) |  | 
 **displayName** | **String** |  | 

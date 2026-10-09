@@ -9,6 +9,8 @@ part of 'serializers.dart';
 Serializers _$serializers = (Serializers().toBuilder()
       ..add(AppSchemasAuthMessageResponse.serializer)
       ..add(AppSchemasConversationMessageResponse.serializer)
+      ..add(AvatarUploadUrlRequest.serializer)
+      ..add(AvatarUploadUrlResponse.serializer)
       ..add(BanRequest.serializer)
       ..add(ChatCreateRequest.serializer)
       ..add(ChatMembershipResponse.serializer)
@@ -192,6 +194,10 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(ValidationError)]),
           () => ListBuilder<ValidationError>())
+      ..addBuilderFactory(
+          const FullType(
+              BuiltMap, const [const FullType(String), const FullType(String)]),
+          () => MapBuilder<String, String>())
       ..addBuilderFactory(
           const FullType(
               BuiltMap, const [const FullType(String), const FullType(String)]),

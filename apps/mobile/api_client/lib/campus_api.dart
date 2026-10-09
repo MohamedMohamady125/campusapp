@@ -26,6 +26,8 @@ export 'package:campus_api/src/api/users_api.dart';
 
 export 'package:campus_api/src/model/app_schemas_auth_message_response.dart';
 export 'package:campus_api/src/model/app_schemas_conversation_message_response.dart';
+export 'package:campus_api/src/model/avatar_upload_url_request.dart';
+export 'package:campus_api/src/model/avatar_upload_url_response.dart';
 export 'package:campus_api/src/model/ban_request.dart';
 export 'package:campus_api/src/model/chat_create_request.dart';
 export 'package:campus_api/src/model/chat_membership_response.dart';

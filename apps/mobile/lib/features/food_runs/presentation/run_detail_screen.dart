@@ -706,7 +706,11 @@ class _RunHeaderCard extends StatelessWidget {
         SizedBox(height: tokens.space4),
         Row(
           children: [
-            VerifiedAvatar(name: runner.displayName),
+            VerifiedAvatar(
+              name: runner.displayName,
+              imageUrl: runner.avatarUrl,
+              size: AvatarSize.lg,
+            ),
             SizedBox(width: tokens.space3),
             Expanded(
               child: Column(
@@ -1576,6 +1580,7 @@ class _OrderCard extends StatelessWidget {
             children: [
               VerifiedAvatar(
                 name: requester.displayName,
+                imageUrl: requester.avatarUrl,
                 size: AvatarSize.sm,
               ),
               SizedBox(width: tokens.space2),

@@ -12,6 +12,7 @@ part 'user_public_response.g.dart';
 ///
 /// Properties:
 /// * [avatarKey] 
+/// * [avatarUrl] 
 /// * [bio] 
 /// * [createdAt] 
 /// * [displayName] 
@@ -24,6 +25,9 @@ part 'user_public_response.g.dart';
 abstract class UserPublicResponse implements Built<UserPublicResponse, UserPublicResponseBuilder> {
   @BuiltValueField(wireName: r'avatar_key')
   String? get avatarKey;
+
+  @BuiltValueField(wireName: r'avatar_url')
+  String? get avatarUrl;
 
   @BuiltValueField(wireName: r'bio')
   String? get bio;
@@ -77,6 +81,13 @@ class _$UserPublicResponseSerializer implements PrimitiveSerializer<UserPublicRe
       object.avatarKey,
       specifiedType: const FullType.nullable(String),
     );
+    if (object.avatarUrl != null) {
+      yield r'avatar_url';
+      yield serializers.serialize(
+        object.avatarUrl,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
     yield r'bio';
     yield object.bio == null ? null : serializers.serialize(
       object.bio,
@@ -147,6 +158,14 @@ class _$UserPublicResponseSerializer implements PrimitiveSerializer<UserPublicRe
           ) as String?;
           if (valueDes == null) continue;
           result.avatarKey = valueDes;
+          break;
+        case r'avatar_url':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.avatarUrl = valueDes;
           break;
         case r'bio':
           final valueDes = serializers.deserialize(

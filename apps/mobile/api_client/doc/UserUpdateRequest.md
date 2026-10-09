@@ -8,6 +8,7 @@ import 'package:campus_api/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**avatarKey** | **String** |  | [optional] 
 **bio** | **String** |  | [optional] 
 **displayName** | **String** |  | [optional] 
 **major** | **String** |  | [optional] 

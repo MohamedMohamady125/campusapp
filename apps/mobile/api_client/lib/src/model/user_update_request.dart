@@ -13,6 +13,7 @@ part 'user_update_request.g.dart';
 /// UserUpdateRequest
 ///
 /// Properties:
+/// * [avatarKey] 
 /// * [bio] 
 /// * [displayName] 
 /// * [major] 
@@ -20,6 +21,9 @@ part 'user_update_request.g.dart';
 /// * [year] 
 @BuiltValue()
 abstract class UserUpdateRequest implements Built<UserUpdateRequest, UserUpdateRequestBuilder> {
+  @BuiltValueField(wireName: r'avatar_key')
+  String? get avatarKey;
+
   @BuiltValueField(wireName: r'bio')
   String? get bio;
 
@@ -58,6 +62,13 @@ class _$UserUpdateRequestSerializer implements PrimitiveSerializer<UserUpdateReq
     UserUpdateRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    if (object.avatarKey != null) {
+      yield r'avatar_key';
+      yield serializers.serialize(
+        object.avatarKey,
+        specifiedType: const FullType.nullable(String),
+      );
+    }
     if (object.bio != null) {
       yield r'bio';
       yield serializers.serialize(
@@ -116,6 +127,14 @@ class _$UserUpdateRequestSerializer implements PrimitiveSerializer<UserUpdateReq
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'avatar_key':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.avatarKey = valueDes;
+          break;
         case r'bio':
           final valueDes = serializers.deserialize(
             value,
