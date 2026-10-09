@@ -27,7 +27,7 @@ part 'run_response.g.dart';
 /// * [myOrder] 
 /// * [note] 
 /// * [orders] 
-/// * [paymentPref] 
+/// * [paymentPrefs] 
 /// * [pendingCount] 
 /// * [prepayRequired] 
 /// * [runner] 
@@ -66,8 +66,8 @@ abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
   @BuiltValueField(wireName: r'orders')
   BuiltList<RunOrderResponse>? get orders;
 
-  @BuiltValueField(wireName: r'payment_pref')
-  String? get paymentPref;
+  @BuiltValueField(wireName: r'payment_prefs')
+  BuiltList<String>? get paymentPrefs;
 
   @BuiltValueField(wireName: r'pending_count')
   int get pendingCount;
@@ -95,7 +95,8 @@ abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
   @BuiltValueHook(initializeBuilder: true)
   static void _defaults(RunResponseBuilder b) => b
       ..isMine = false
-      ..orders = ListBuilder();
+      ..orders = ListBuilder()
+      ..paymentPrefs = ListBuilder();
 
   @BuiltValueSerializer(custom: true)
   static Serializer<RunResponse> get serializer => _$RunResponseSerializer();
@@ -169,11 +170,11 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
         specifiedType: const FullType(BuiltList, [FullType(RunOrderResponse)]),
       );
     }
-    if (object.paymentPref != null) {
-      yield r'payment_pref';
+    if (object.paymentPrefs != null) {
+      yield r'payment_prefs';
       yield serializers.serialize(
-        object.paymentPref,
-        specifiedType: const FullType.nullable(String),
+        object.paymentPrefs,
+        specifiedType: const FullType(BuiltList, [FullType(String)]),
       );
     }
     yield r'pending_count';
@@ -303,13 +304,12 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
           ) as BuiltList<RunOrderResponse>;
           result.orders.replace(valueDes);
           break;
-        case r'payment_pref':
+        case r'payment_prefs':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType.nullable(String),
-          ) as String?;
-          if (valueDes == null) continue;
-          result.paymentPref = valueDes;
+            specifiedType: const FullType(BuiltList, [FullType(String)]),
+          ) as BuiltList<String>;
+          result.paymentPrefs.replace(valueDes);
           break;
         case r'pending_count':
           final valueDes = serializers.deserialize(

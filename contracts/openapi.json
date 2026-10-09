@@ -2270,17 +2270,13 @@
             ],
             "title": "Note"
           },
-          "payment_pref": {
-            "anyOf": [
-              {
-                "maxLength": 20,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Payment Pref"
+          "payment_prefs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Payment Prefs",
+            "type": "array"
           },
           "prepay_required": {
             "default": false,
@@ -2592,16 +2588,13 @@
             "title": "Orders",
             "type": "array"
           },
-          "payment_pref": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Payment Pref"
+          "payment_prefs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Payment Prefs",
+            "type": "array"
           },
           "pending_count": {
             "title": "Pending Count",

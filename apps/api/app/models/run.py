@@ -21,6 +21,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -83,10 +84,12 @@ class Run(TimestampedBase):
     fee_cents: Mapped[int] = mapped_column(Integer, default=0)
     spots_max: Mapped[int] = mapped_column(Integer, default=3)
     prepay_required: Mapped[bool] = mapped_column(Boolean, default=False)
-    # Pay-on-handoff preference for non-prepay runs: "cash" or one of the
-    # runner's saved PaymentMethodType values ("venmo", "zelle", …). Null on
+    # Pay-on-handoff methods for non-prepay runs: any mix of "cash" and the
+    # runner's saved PaymentMethodType values ("venmo", "zelle", …). Empty on
     # prepay runs (the prepay proof flow covers methods there).
-    payment_pref: Mapped[str | None] = mapped_column(String(20))
+    payment_prefs: Mapped[list[str]] = mapped_column(
+        JSONB, default=list, server_default="[]", nullable=False
+    )
     status: Mapped[RunStatus] = mapped_column(
         Enum(RunStatus, name="run_status"), default=RunStatus.open
     )

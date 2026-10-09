@@ -16,7 +16,7 @@ class _$RunCreateRequest extends RunCreateRequest {
   @override
   final String? note;
   @override
-  final String? paymentPref;
+  final BuiltList<String>? paymentPrefs;
   @override
   final bool? prepayRequired;
   @override
@@ -31,7 +31,7 @@ class _$RunCreateRequest extends RunCreateRequest {
       required this.foodSpotId,
       required this.leavingAt,
       this.note,
-      this.paymentPref,
+      this.paymentPrefs,
       this.prepayRequired,
       this.spotsMax})
       : super._();
@@ -51,7 +51,7 @@ class _$RunCreateRequest extends RunCreateRequest {
         foodSpotId == other.foodSpotId &&
         leavingAt == other.leavingAt &&
         note == other.note &&
-        paymentPref == other.paymentPref &&
+        paymentPrefs == other.paymentPrefs &&
         prepayRequired == other.prepayRequired &&
         spotsMax == other.spotsMax;
   }
@@ -63,7 +63,7 @@ class _$RunCreateRequest extends RunCreateRequest {
     _$hash = $jc(_$hash, foodSpotId.hashCode);
     _$hash = $jc(_$hash, leavingAt.hashCode);
     _$hash = $jc(_$hash, note.hashCode);
-    _$hash = $jc(_$hash, paymentPref.hashCode);
+    _$hash = $jc(_$hash, paymentPrefs.hashCode);
     _$hash = $jc(_$hash, prepayRequired.hashCode);
     _$hash = $jc(_$hash, spotsMax.hashCode);
     _$hash = $jf(_$hash);
@@ -77,7 +77,7 @@ class _$RunCreateRequest extends RunCreateRequest {
           ..add('foodSpotId', foodSpotId)
           ..add('leavingAt', leavingAt)
           ..add('note', note)
-          ..add('paymentPref', paymentPref)
+          ..add('paymentPrefs', paymentPrefs)
           ..add('prepayRequired', prepayRequired)
           ..add('spotsMax', spotsMax))
         .toString();
@@ -104,9 +104,11 @@ class RunCreateRequestBuilder
   String? get note => _$this._note;
   set note(String? note) => _$this._note = note;
 
-  String? _paymentPref;
-  String? get paymentPref => _$this._paymentPref;
-  set paymentPref(String? paymentPref) => _$this._paymentPref = paymentPref;
+  ListBuilder<String>? _paymentPrefs;
+  ListBuilder<String> get paymentPrefs =>
+      _$this._paymentPrefs ??= ListBuilder<String>();
+  set paymentPrefs(ListBuilder<String>? paymentPrefs) =>
+      _$this._paymentPrefs = paymentPrefs;
 
   bool? _prepayRequired;
   bool? get prepayRequired => _$this._prepayRequired;
@@ -128,7 +130,7 @@ class RunCreateRequestBuilder
       _foodSpotId = $v.foodSpotId;
       _leavingAt = $v.leavingAt;
       _note = $v.note;
-      _paymentPref = $v.paymentPref;
+      _paymentPrefs = $v.paymentPrefs?.toBuilder();
       _prepayRequired = $v.prepayRequired;
       _spotsMax = $v.spotsMax;
       _$v = null;
@@ -150,18 +152,31 @@ class RunCreateRequestBuilder
   RunCreateRequest build() => _build();
 
   _$RunCreateRequest _build() {
-    final _$result = _$v ??
-        _$RunCreateRequest._(
-          feeCents: feeCents,
-          foodSpotId: BuiltValueNullFieldError.checkNotNull(
-              foodSpotId, r'RunCreateRequest', 'foodSpotId'),
-          leavingAt: BuiltValueNullFieldError.checkNotNull(
-              leavingAt, r'RunCreateRequest', 'leavingAt'),
-          note: note,
-          paymentPref: paymentPref,
-          prepayRequired: prepayRequired,
-          spotsMax: spotsMax,
-        );
+    _$RunCreateRequest _$result;
+    try {
+      _$result = _$v ??
+          _$RunCreateRequest._(
+            feeCents: feeCents,
+            foodSpotId: BuiltValueNullFieldError.checkNotNull(
+                foodSpotId, r'RunCreateRequest', 'foodSpotId'),
+            leavingAt: BuiltValueNullFieldError.checkNotNull(
+                leavingAt, r'RunCreateRequest', 'leavingAt'),
+            note: note,
+            paymentPrefs: _paymentPrefs?.build(),
+            prepayRequired: prepayRequired,
+            spotsMax: spotsMax,
+          );
+    } catch (_) {
+      late String _$failedField;
+      try {
+        _$failedField = 'paymentPrefs';
+        _paymentPrefs?.build();
+      } catch (e) {
+        throw BuiltValueNestedFieldError(
+            r'RunCreateRequest', _$failedField, e.toString());
+      }
+      rethrow;
+    }
     replace(_$result);
     return _$result;
   }

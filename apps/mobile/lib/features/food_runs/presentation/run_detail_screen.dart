@@ -746,14 +746,14 @@ class _RunHeaderCard extends StatelessWidget {
           label: run.prepayRequired
               ? '${runFeeLabel(run.feeCents)} · prepay required'
               : switch (run.feeCents > 0
-                    ? paymentPrefLabel(run.paymentPref)
+                    ? paymentPrefsLabel(run.paymentPrefs ?? const [])
                     : null) {
-                  // Pay-on-handoff method the runner picked, so requesters
+                  // Pay-on-handoff methods the runner picked, so requesters
                   // know what to have ready at the drop-off.
-                  final String pref when pref == 'Cash' =>
+                  final String prefs when prefs == 'Cash' =>
                     '${runFeeLabel(run.feeCents)} · cash on handoff',
-                  final String pref =>
-                    '${runFeeLabel(run.feeCents)} · pay via $pref',
+                  final String prefs =>
+                    '${runFeeLabel(run.feeCents)} · pay with $prefs',
                   null => runFeeLabel(run.feeCents),
                 },
         ),

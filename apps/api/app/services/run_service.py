@@ -177,7 +177,7 @@ def run_response(
         fee_cents=run.fee_cents,
         spots_max=run.spots_max,
         prepay_required=run.prepay_required,
-        payment_pref=run.payment_pref,
+        payment_prefs=run.payment_prefs,
         status=run.status,
         accepted_count=len(accepted) + len(received),
         pending_count=len(pending),
@@ -213,17 +213,20 @@ class RunService:
                 "Add a payment method before charging a fee.",
                 code="PAYMENT_METHOD_REQUIRED",
             )
-        # Pay-on-handoff method only applies to non-prepay runs (prepay has its
+        # Pay-on-handoff methods only apply to non-prepay runs (prepay has its
         # own proof flow). "cash" is always allowed; anything else must be one
-        # of the runner's saved payment-method types.
-        payment_pref = None if body.prepay_required else body.payment_pref
-        if payment_pref is not None and payment_pref != "cash":
+        # of the runner's saved payment-method types. Order-preserving dedupe.
+        payment_prefs: list[str] = []
+        if not body.prepay_required:
             saved = {m.get("type") for m in (runner.payment_methods or [])}
-            if payment_pref not in saved:
-                raise BusinessRuleError(
-                    "Pick cash or one of your saved payment methods.",
-                    code="PAYMENT_PREF_INVALID",
-                )
+            for pref in body.payment_prefs:
+                if pref != "cash" and pref not in saved:
+                    raise BusinessRuleError(
+                        "Pick cash or one of your saved payment methods.",
+                        code="PAYMENT_PREF_INVALID",
+                    )
+                if pref not in payment_prefs:
+                    payment_prefs.append(pref)
         run = Run(
             runner_id=runner.id,
             food_spot_id=spot.id,
@@ -232,7 +235,7 @@ class RunService:
             fee_cents=body.fee_cents,
             spots_max=body.spots_max,
             prepay_required=body.prepay_required,
-            payment_pref=payment_pref,
+            payment_prefs=payment_prefs,
         )
         self._repo.add(run)
         await self._session.commit()

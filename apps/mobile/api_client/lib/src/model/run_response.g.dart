@@ -28,7 +28,7 @@ class _$RunResponse extends RunResponse {
   @override
   final BuiltList<RunOrderResponse>? orders;
   @override
-  final String? paymentPref;
+  final BuiltList<String>? paymentPrefs;
   @override
   final int pendingCount;
   @override
@@ -56,7 +56,7 @@ class _$RunResponse extends RunResponse {
       this.myOrder,
       this.note,
       this.orders,
-      this.paymentPref,
+      this.paymentPrefs,
       required this.pendingCount,
       required this.prepayRequired,
       required this.runner,
@@ -85,7 +85,7 @@ class _$RunResponse extends RunResponse {
         myOrder == other.myOrder &&
         note == other.note &&
         orders == other.orders &&
-        paymentPref == other.paymentPref &&
+        paymentPrefs == other.paymentPrefs &&
         pendingCount == other.pendingCount &&
         prepayRequired == other.prepayRequired &&
         runner == other.runner &&
@@ -107,7 +107,7 @@ class _$RunResponse extends RunResponse {
     _$hash = $jc(_$hash, myOrder.hashCode);
     _$hash = $jc(_$hash, note.hashCode);
     _$hash = $jc(_$hash, orders.hashCode);
-    _$hash = $jc(_$hash, paymentPref.hashCode);
+    _$hash = $jc(_$hash, paymentPrefs.hashCode);
     _$hash = $jc(_$hash, pendingCount.hashCode);
     _$hash = $jc(_$hash, prepayRequired.hashCode);
     _$hash = $jc(_$hash, runner.hashCode);
@@ -131,7 +131,7 @@ class _$RunResponse extends RunResponse {
           ..add('myOrder', myOrder)
           ..add('note', note)
           ..add('orders', orders)
-          ..add('paymentPref', paymentPref)
+          ..add('paymentPrefs', paymentPrefs)
           ..add('pendingCount', pendingCount)
           ..add('prepayRequired', prepayRequired)
           ..add('runner', runner)
@@ -190,9 +190,11 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
       _$this._orders ??= ListBuilder<RunOrderResponse>();
   set orders(ListBuilder<RunOrderResponse>? orders) => _$this._orders = orders;
 
-  String? _paymentPref;
-  String? get paymentPref => _$this._paymentPref;
-  set paymentPref(String? paymentPref) => _$this._paymentPref = paymentPref;
+  ListBuilder<String>? _paymentPrefs;
+  ListBuilder<String> get paymentPrefs =>
+      _$this._paymentPrefs ??= ListBuilder<String>();
+  set paymentPrefs(ListBuilder<String>? paymentPrefs) =>
+      _$this._paymentPrefs = paymentPrefs;
 
   int? _pendingCount;
   int? get pendingCount => _$this._pendingCount;
@@ -239,7 +241,7 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
       _myOrder = $v.myOrder?.toBuilder();
       _note = $v.note;
       _orders = $v.orders?.toBuilder();
-      _paymentPref = $v.paymentPref;
+      _paymentPrefs = $v.paymentPrefs?.toBuilder();
       _pendingCount = $v.pendingCount;
       _prepayRequired = $v.prepayRequired;
       _runner = $v.runner.toBuilder();
@@ -283,7 +285,7 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
             myOrder: _myOrder?.build(),
             note: note,
             orders: _orders?.build(),
-            paymentPref: paymentPref,
+            paymentPrefs: _paymentPrefs?.build(),
             pendingCount: BuiltValueNullFieldError.checkNotNull(
                 pendingCount, r'RunResponse', 'pendingCount'),
             prepayRequired: BuiltValueNullFieldError.checkNotNull(
@@ -306,6 +308,8 @@ class RunResponseBuilder implements Builder<RunResponse, RunResponseBuilder> {
 
         _$failedField = 'orders';
         _orders?.build();
+        _$failedField = 'paymentPrefs';
+        _paymentPrefs?.build();
 
         _$failedField = 'runner';
         runner.build();

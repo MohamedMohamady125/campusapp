@@ -40,15 +40,26 @@ extension PaymentMethodTypeDisplay on PaymentMethodType {
   };
 }
 
-/// Human label for a Run.paymentPref string ("cash" or a rail wire value).
-/// Null when the pref is unset/unknown — callers hide the line then.
-String? paymentPrefLabel(String? pref) {
-  if (pref == null) return null;
-  if (pref == 'cash') return 'Cash';
-  for (final t in kSelectablePaymentTypes) {
-    if (t.wireValue == pref) return t.label;
+/// Human label for Run.paymentPrefs ("cash" + rail wire values), e.g.
+/// "Cash or Venmo". Null when empty/unknown — callers hide the line then.
+String? paymentPrefsLabel(Iterable<String> prefs) {
+  final labels = <String>[];
+  for (final pref in prefs) {
+    if (pref == 'cash') {
+      labels.add('Cash');
+      continue;
+    }
+    for (final t in kSelectablePaymentTypes) {
+      if (t.wireValue == pref) {
+        labels.add(t.label);
+        break;
+      }
+    }
   }
-  return null;
+  if (labels.isEmpty) return null;
+  if (labels.length == 1) return labels.first;
+  return '${labels.sublist(0, labels.length - 1).join(', ')} '
+      'or ${labels.last}';
 }
 
 /// The types offered in pickers, in the order students expect them.

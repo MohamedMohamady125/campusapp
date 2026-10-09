@@ -164,7 +164,8 @@ class _MyRunsScreenState extends ConsumerState<MyRunsScreen> {
               ? EmptyState(
                   icon: Icons.directions_run,
                   title: 'Nothing active right now',
-                  body: 'Post a run or join one from the feed — live runs '
+                  body:
+                      'Post a run or join one from the feed — live runs '
                       'land here.',
                   actionLabel: 'Post a run',
                   onAction: () => context.go('/runs/create'),

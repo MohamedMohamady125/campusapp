@@ -3,6 +3,7 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -15,7 +16,7 @@ part 'run_create_request.g.dart';
 /// * [foodSpotId] 
 /// * [leavingAt] 
 /// * [note] 
-/// * [paymentPref] 
+/// * [paymentPrefs] 
 /// * [prepayRequired] 
 /// * [spotsMax] 
 @BuiltValue()
@@ -32,8 +33,8 @@ abstract class RunCreateRequest implements Built<RunCreateRequest, RunCreateRequ
   @BuiltValueField(wireName: r'note')
   String? get note;
 
-  @BuiltValueField(wireName: r'payment_pref')
-  String? get paymentPref;
+  @BuiltValueField(wireName: r'payment_prefs')
+  BuiltList<String>? get paymentPrefs;
 
   @BuiltValueField(wireName: r'prepay_required')
   bool? get prepayRequired;
@@ -91,11 +92,11 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
         specifiedType: const FullType.nullable(String),
       );
     }
-    if (object.paymentPref != null) {
-      yield r'payment_pref';
+    if (object.paymentPrefs != null) {
+      yield r'payment_prefs';
       yield serializers.serialize(
-        object.paymentPref,
-        specifiedType: const FullType.nullable(String),
+        object.paymentPrefs,
+        specifiedType: const FullType(BuiltList, [FullType(String)]),
       );
     }
     if (object.prepayRequired != null) {
@@ -164,13 +165,12 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
           if (valueDes == null) continue;
           result.note = valueDes;
           break;
-        case r'payment_pref':
+        case r'payment_prefs':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType.nullable(String),
-          ) as String?;
-          if (valueDes == null) continue;
-          result.paymentPref = valueDes;
+            specifiedType: const FullType(BuiltList, [FullType(String)]),
+          ) as BuiltList<String>;
+          result.paymentPrefs.replace(valueDes);
           break;
         case r'prepay_required':
           final valueDes = serializers.deserialize(
