@@ -178,8 +178,8 @@ async def test_create_validations(client: httpx.AsyncClient) -> None:
 
 
 async def test_payment_prefs_validation(client: httpx.AsyncClient) -> None:
-    """Pay-on-handoff methods: cash always ok; others must be saved rails;
-    deduped; emptied on prepay runs (the proof flow covers methods there)."""
+    """Payment prefs: cash ok on handoff runs only; others must be saved
+    rails; deduped. Prepay keeps rails, drops cash, defaults to all saved."""
     runner = await make_user(client, "runner@campus.edu")
     spot_id = await _make_spot()
 
@@ -199,9 +199,15 @@ async def test_payment_prefs_validation(client: httpx.AsyncClient) -> None:
     run = await _create_run(client, runner, spot_id, payment_prefs=["cash", "venmo", "cash"])
     assert run["payment_prefs"] == ["cash", "venmo"]
 
-    # Prepay runs ignore the prefs — the prepay proof flow handles methods.
-    run = await _create_run(client, runner, spot_id, prepay_required=True, payment_prefs=["venmo"])
-    assert run["payment_prefs"] == []
+    # Prepay keeps rails but silently drops cash (no cash before pickup).
+    run = await _create_run(
+        client, runner, spot_id, prepay_required=True, payment_prefs=["cash", "venmo"]
+    )
+    assert run["payment_prefs"] == ["venmo"]
+
+    # Prepay with no picks defaults to every saved rail (older clients).
+    run = await _create_run(client, runner, spot_id, prepay_required=True, payment_prefs=[])
+    assert run["payment_prefs"] == ["venmo"]
 
 
 async def test_create_spot_is_admin_only(client: httpx.AsyncClient) -> None:

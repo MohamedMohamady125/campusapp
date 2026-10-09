@@ -99,16 +99,23 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
         _savedMethods = me.paymentMethods.toList();
         _hasPaymentMethod = _savedMethods.isNotEmpty;
       }
-      // Pay-on-handoff only applies off prepay; drop any pref that no
-      // longer matches a saved rail (server rejects those). Never empty —
-      // falls back to cash so requesters always know how to pay.
-      final savedTypes = _savedMethods.map((m) => m.type.wireValue).toSet();
-      var prefs = _prepay
-          ? const <String>[]
-          : _paymentPrefs
-                .where((p) => p == 'cash' || savedTypes.contains(p))
-                .toList();
-      if (!_prepay && prefs.isEmpty) prefs = const ['cash'];
+      // Drop prefs that no longer match a saved rail (server rejects
+      // those). Cash is only valid off prepay. Never empty — falls back to
+      // cash (handoff) or every saved rail (prepay) so requesters always
+      // know how to pay.
+      final savedTypes = <String>[];
+      for (final m in _savedMethods) {
+        final v = m.type.wireValue;
+        if (!savedTypes.contains(v)) savedTypes.add(v);
+      }
+      var prefs = _paymentPrefs
+          .where(
+            (p) => _prepay
+                ? savedTypes.contains(p)
+                : (p == 'cash' || savedTypes.contains(p)),
+          )
+          .toList();
+      if (prefs.isEmpty) prefs = _prepay ? savedTypes : const ['cash'];
       final run = await repo.createRun(
         foodSpotId: _spot!.id,
         leavingAt: _leavingAt.toUtc(),
@@ -314,17 +321,32 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                   prepay: _prepay,
                   onFeeChanged: (v) => setState(() => _feeCentsValue = v),
                   onSpotsChanged: (v) => setState(() => _spotsMax = v),
-                  onPrepayChanged: (v) => setState(() => _prepay = v),
+                  onPrepayChanged: (v) => setState(() {
+                    _prepay = v;
+                    if (v) {
+                      // No cash before pickup — swap it for the saved rails.
+                      _paymentPrefs.remove('cash');
+                      if (_paymentPrefs.isEmpty) {
+                        for (final m in _savedMethods) {
+                          final w = m.type.wireValue;
+                          if (!_paymentPrefs.contains(w)) _paymentPrefs.add(w);
+                        }
+                      }
+                    } else if (_paymentPrefs.isEmpty) {
+                      _paymentPrefs.add('cash');
+                    }
+                  }),
                 ),
-                // Pay-on-handoff picker: only for non-prepay runs (prepay has
-                // its own proof flow). Cash always offered; saved rails add
-                // one pill each. Multi-select; the last pick can't be
-                // deselected so the run always advertises at least one way.
-                if (!_prepay && _feeCentsValue > 0) ...[
+                // How requesters pay: cash + saved rails at handoff, rails
+                // only on prepay (no cash before pickup). Multi-select; the
+                // last pick can't be deselected so the run always advertises
+                // at least one way to pay.
+                if (_feeCentsValue > 0 || _prepay) ...[
                   SizedBox(height: tokens.space3),
                   _PaymentPrefCard(
                     savedMethods: _savedMethods,
                     selected: _paymentPrefs,
+                    prepay: _prepay,
                     onToggled: (v) => setState(() {
                       if (_paymentPrefs.contains(v)) {
                         if (_paymentPrefs.length > 1) _paymentPrefs.remove(v);
@@ -709,11 +731,16 @@ class _PaymentPrefCard extends StatelessWidget {
   const _PaymentPrefCard({
     required this.savedMethods,
     required this.selected,
+    required this.prepay,
     required this.onToggled,
   });
 
   final List<PaymentMethod> savedMethods;
   final List<String> selected;
+
+  /// Prepay runs can't take cash (nothing changes hands before pickup),
+  /// so the Cash pill is hidden and only saved rails are offered.
+  final bool prepay;
   final ValueChanged<String> onToggled;
 
   @override
@@ -741,11 +768,12 @@ class _PaymentPrefCard extends StatelessWidget {
             spacing: tokens.space2,
             runSpacing: tokens.space2,
             children: [
-              _ChoicePill(
-                label: 'Cash',
-                selected: selected.contains('cash'),
-                onTap: () => onToggled('cash'),
-              ),
+              if (!prepay)
+                _ChoicePill(
+                  label: 'Cash',
+                  selected: selected.contains('cash'),
+                  onTap: () => onToggled('cash'),
+                ),
               for (final t in types)
                 _ChoicePill(
                   label: t.label,
@@ -759,7 +787,9 @@ class _PaymentPrefCard extends StatelessWidget {
           if (types.isEmpty) ...[
             SizedBox(height: tokens.space2),
             Text(
-              'Add payment methods in Profile to offer more than cash.',
+              prepay
+                  ? 'Prepay needs a saved payment method.'
+                  : 'Add payment methods in Profile to offer more than cash.',
               style: context.text.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
               ),

@@ -742,7 +742,13 @@ class _RunHeaderCard extends StatelessWidget {
         _InfoRow(
           icon: Icons.payments_outlined,
           label: run.prepayRequired
-              ? '${runFeeLabel(run.feeCents)} · prepay required'
+              ? switch (paymentPrefsLabel(run.paymentPrefs ?? const [])) {
+                  // Prepay runs carry rails only — show them so the
+                  // requester knows exactly how to send money up front.
+                  final String prefs =>
+                    '${runFeeLabel(run.feeCents)} · prepay via $prefs',
+                  null => '${runFeeLabel(run.feeCents)} · prepay required',
+                }
               : switch (run.feeCents > 0
                     ? paymentPrefsLabel(run.paymentPrefs ?? const [])
                     : null) {

@@ -213,20 +213,30 @@ class RunService:
                 "Add a payment method before charging a fee.",
                 code="PAYMENT_METHOD_REQUIRED",
             )
-        # Pay-on-handoff methods only apply to non-prepay runs (prepay has its
-        # own proof flow). "cash" is always allowed; anything else must be one
-        # of the runner's saved payment-method types. Order-preserving dedupe.
+        # Accepted ways to pay. "cash" is allowed only on pay-on-handoff runs
+        # (money can't change hands before pickup), silently dropped on
+        # prepay; every other pref must be a saved rail type. Order-preserving
+        # dedupe. Prepay with no picks defaults to ALL saved rails so
+        # requesters always see how to prepay (covers older clients too).
         payment_prefs: list[str] = []
-        if not body.prepay_required:
-            saved = {m.get("type") for m in (runner.payment_methods or [])}
-            for pref in body.payment_prefs:
-                if pref != "cash" and pref not in saved:
-                    raise BusinessRuleError(
-                        "Pick cash or one of your saved payment methods.",
-                        code="PAYMENT_PREF_INVALID",
-                    )
-                if pref not in payment_prefs:
-                    payment_prefs.append(pref)
+        saved = {m.get("type") for m in (runner.payment_methods or [])}
+        for pref in body.payment_prefs:
+            if pref == "cash":
+                if body.prepay_required:
+                    continue
+            elif pref not in saved:
+                raise BusinessRuleError(
+                    "Pick cash or one of your saved payment methods.",
+                    code="PAYMENT_PREF_INVALID",
+                )
+            if pref not in payment_prefs:
+                payment_prefs.append(pref)
+        if body.prepay_required and not payment_prefs:
+            payment_prefs = list(
+                dict.fromkeys(
+                    str(m["type"]) for m in (runner.payment_methods or []) if m.get("type")
+                )
+            )
         run = Run(
             runner_id=runner.id,
             food_spot_id=spot.id,
