@@ -1,19 +1,24 @@
 import 'package:latlong2/latlong.dart';
 
 /// One delivery stop the runner must reach: the order it belongs to, who to
-/// hand it to, the drop-off hall name, and its coordinates.
+/// hand it to, what the order is, the drop-off hall name, and coordinates.
 class RouteStop {
   const RouteStop({
     required this.orderId,
     required this.requesterName,
     required this.hall,
     required this.point,
+    this.orderText = '',
   });
 
   final String orderId;
   final String requesterName;
   final String hall;
   final LatLng point;
+
+  /// What to hand over at this stop — shown on the checklist row so the
+  /// dasher never has to open the order card mid-walk.
+  final String orderText;
 }
 
 const _distance = Distance();

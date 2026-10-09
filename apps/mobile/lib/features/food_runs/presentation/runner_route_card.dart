@@ -77,6 +77,7 @@ class _RunnerRouteCardState extends ConsumerState<RunnerRouteCard> {
             orderId: o.id,
             requesterName: o.requester.displayName,
             hall: o.dropoff,
+            orderText: o.orderText,
             point: LatLng(o.dropoffLat!.toDouble(), o.dropoffLng!.toDouble()),
           ),
     ];
@@ -293,7 +294,11 @@ class _RouteStopRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  stop.requesterName,
+                  stop.orderText.isEmpty
+                      ? stop.requesterName
+                      : '${stop.requesterName} · ${stop.orderText}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: context.text.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),

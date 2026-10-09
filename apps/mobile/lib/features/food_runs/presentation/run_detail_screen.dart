@@ -526,6 +526,7 @@ class _RunDetailBody extends ConsumerWidget {
       for (final order in group) ...[
         _OrderCard(
           order: order,
+          collectFeeCents: run.prepayRequired ? null : run.feeCents,
           runDone: run.status == RunStatus.done,
           // Delivered/No-show only make sense once the dasher is actually
           // out (server rejects them earlier anyway).
@@ -1518,10 +1519,15 @@ class _OrderCard extends StatelessWidget {
     required this.onNoShow,
     required this.onRate,
     this.onRemoveUnpaid,
+    this.collectFeeCents,
   });
 
   final RunOrderResponse order;
   final bool runDone;
+
+  /// Fee to collect from this requester at handoff (non-prepay runs only;
+  /// null on prepay — the proof panel covers money there).
+  final int? collectFeeCents;
 
   /// Run is at the store / delivering — Delivered and No-show are legal.
   final bool canResolve;
@@ -1597,8 +1603,9 @@ class _OrderCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: tokens.space3),
-          // What + where, boxed together so the card scans in one glance
-          // instead of loose lines of plain text.
+          // What + where + what to collect, labelled and boxed so the dasher
+          // reads the job in one glance — "vague order card" feedback: the
+          // order text and drop-off were easy to miss as loose plain lines.
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(tokens.space3),
@@ -1609,12 +1616,59 @@ class _OrderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(order.orderText, style: context.text.bodyMedium),
-                SizedBox(height: tokens.space2),
-                _InfoRow(
-                  icon: Icons.place_outlined,
-                  label: 'Drop at ${order.dropoff}',
+                Text('THEIR ORDER', style: AppTextStyles.label),
+                SizedBox(height: tokens.space1),
+                Text(
+                  order.orderText,
+                  style: context.text.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
                 ),
+                SizedBox(height: tokens.space3),
+                Text('DELIVER TO', style: AppTextStyles.label),
+                SizedBox(height: tokens.space1),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.place_outlined,
+                      size: 18,
+                      color: colors.primary,
+                    ),
+                    SizedBox(width: tokens.space2),
+                    Expanded(
+                      child: Text(
+                        order.dropoff,
+                        style: context.text.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (collectFeeCents != null && collectFeeCents! > 0) ...[
+                  SizedBox(height: tokens.space3),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.payments_outlined,
+                        size: 18,
+                        color: tokens.success,
+                      ),
+                      SizedBox(width: tokens.space2),
+                      Expanded(
+                        child: Text(
+                          'Collect ${runFeeAmount(collectFeeCents!)} '
+                          'at handoff',
+                          style: context.text.bodySmall?.copyWith(
+                            color: tokens.success,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
