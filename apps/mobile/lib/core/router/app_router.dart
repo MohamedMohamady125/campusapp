@@ -1,6 +1,5 @@
 import 'package:campusconnect/core/flags/flags_provider.dart';
 import 'package:campusconnect/design_system/material.dart';
-import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/auth/presentation/forgot_password_screen.dart';
 import 'package:campusconnect/features/auth/presentation/login_screen.dart';
@@ -26,34 +25,10 @@ import 'package:campusconnect/features/tutoring/presentation/tutor_search_screen
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Shared fade+slide-up transition for pushed screens (300ms, M3 decelerate).
-/// Respects reduce-motion — falls back to instant swap.
-CustomTransitionPage<void> _slidePage({
-  required Widget child,
-  required GoRouterState state,
-}) => CustomTransitionPage<void>(
-  key: state.pageKey,
-  child: child,
-  reverseTransitionDuration: AppMotion.micro,
-  transitionsBuilder: (context, animation, _, child) {
-    if (MediaQuery.of(context).disableAnimations) return child;
-    final curved = CurvedAnimation(
-      parent: animation,
-      curve: AppMotion.decelerate,
-      reverseCurve: AppMotion.accelerate,
-    );
-    return FadeTransition(
-      opacity: curved,
-      child: SlideTransition(
-        position: Tween(
-          begin: const Offset(0, 0.06),
-          end: Offset.zero,
-        ).animate(curved),
-        child: child,
-      ),
-    );
-  },
-);
+/// Pushed screens use plain MaterialPages so the theme's Cupertino
+/// transition applies — which also wires up the edge-swipe back gesture
+/// (drag from the left edge to pop) on every pushed page. A
+/// CustomTransitionPage here would silently kill that gesture.
 
 const _authLocations = {'/login', '/register', '/verify', '/forgot-password'};
 
@@ -117,20 +92,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Pushed over the shell from any tab's bell (Sprint 6).
       GoRoute(
         path: '/notifications',
-        pageBuilder: (_, state) =>
-            _slidePage(state: state, child: const NotificationsScreen()),
+        builder: (_, _) => const NotificationsScreen(),
       ),
       // Standalone 1:1 thread, pushed over the shell. Lives OUTSIDE the
       // flag-gated /chats prefix so run-order chats (and DM notification
       // deep links) work while the Chats tab is hidden for launch.
       GoRoute(
         path: '/messages/:id',
-        pageBuilder: (_, state) => _slidePage(
-          state: state,
-          child: ThreadScreen(
-            conversationId: state.pathParameters['id']!,
-            title: state.extra as String?,
-          ),
+        builder: (_, state) => ThreadScreen(
+          conversationId: state.pathParameters['id']!,
+          title: state.extra as String?,
         ),
       ),
       StatefulShellRoute.indexedStack(
@@ -144,18 +115,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'create',
-                    pageBuilder: (_, state) => _slidePage(
-                      state: state,
-                      child: const CreateRunScreen(),
-                    ),
+                    builder: (_, _) => const CreateRunScreen(),
                   ),
                   GoRoute(
                     path: 'run/:id',
-                    pageBuilder: (_, state) => _slidePage(
-                      state: state,
-                      child: RunDetailScreen(
-                        runId: state.pathParameters['id']!,
-                      ),
+                    builder: (_, state) => RunDetailScreen(
+                      runId: state.pathParameters['id']!,
                     ),
                   ),
                 ],
@@ -170,27 +135,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'sell',
-                    pageBuilder: (_, state) => _slidePage(
-                      state: state,
-                      child: const SellScreen(),
-                    ),
+                    builder: (_, _) => const SellScreen(),
                   ),
                   GoRoute(
                     path: 'listing/:id',
-                    pageBuilder: (_, state) => _slidePage(
-                      state: state,
-                      child: ListingDetailScreen(
-                        listingId: state.pathParameters['id']!,
-                      ),
+                    builder: (_, state) => ListingDetailScreen(
+                      listingId: state.pathParameters['id']!,
                     ),
                     routes: [
                       GoRoute(
                         path: 'edit',
-                        pageBuilder: (_, state) => _slidePage(
-                          state: state,
-                          child: EditListingScreen(
-                            listingId: state.pathParameters['id']!,
-                          ),
+                        builder: (_, state) => EditListingScreen(
+                          listingId: state.pathParameters['id']!,
                         ),
                       ),
                     ],
@@ -215,22 +171,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'conversation/:id',
-                    pageBuilder: (_, state) => _slidePage(
-                      state: state,
-                      child: ThreadScreen(
-                        conversationId: state.pathParameters['id']!,
-                        title: state.extra as String?,
-                      ),
+                    builder: (_, state) => ThreadScreen(
+                      conversationId: state.pathParameters['id']!,
+                      title: state.extra as String?,
                     ),
                   ),
                   GoRoute(
                     path: 'room/:id',
-                    pageBuilder: (_, state) => _slidePage(
-                      state: state,
-                      child: ChatRoomScreen(
-                        chatId: state.pathParameters['id']!,
-                        title: state.extra as String?,
-                      ),
+                    builder: (_, state) => ChatRoomScreen(
+                      chatId: state.pathParameters['id']!,
+                      title: state.extra as String?,
                     ),
                   ),
                 ],
@@ -249,17 +199,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: 'edit',
-                    pageBuilder: (_, state) => _slidePage(
-                      state: state,
-                      child: const EditProfileScreen(),
-                    ),
+                    builder: (_, _) => const EditProfileScreen(),
                   ),
                   GoRoute(
                     path: 'payment-methods',
-                    pageBuilder: (_, state) => _slidePage(
-                      state: state,
-                      child: const PaymentMethodsScreen(),
-                    ),
+                    builder: (_, _) => const PaymentMethodsScreen(),
                   ),
                 ],
               ),
