@@ -83,6 +83,10 @@ class Run(TimestampedBase):
     fee_cents: Mapped[int] = mapped_column(Integer, default=0)
     spots_max: Mapped[int] = mapped_column(Integer, default=3)
     prepay_required: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Pay-on-handoff preference for non-prepay runs: "cash" or one of the
+    # runner's saved PaymentMethodType values ("venmo", "zelle", …). Null on
+    # prepay runs (the prepay proof flow covers methods there).
+    payment_pref: Mapped[str | None] = mapped_column(String(20))
     status: Mapped[RunStatus] = mapped_column(
         Enum(RunStatus, name="run_status"), default=RunStatus.open
     )

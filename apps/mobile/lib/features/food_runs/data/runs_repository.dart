@@ -57,6 +57,7 @@ class RunsRepository {
     required int spotsMax,
     required bool prepayRequired,
     String? note,
+    String? paymentPref,
   }) async {
     final res = await _runs.createRunApiV1RunsPost(
       runCreateRequest: RunCreateRequest(
@@ -66,6 +67,7 @@ class RunsRepository {
           ..feeCents = feeCents
           ..spotsMax = spotsMax
           ..prepayRequired = prepayRequired
+          ..paymentPref = paymentPref
           ..note = note,
       ),
     );

@@ -69,6 +69,9 @@ class RunCreateRequest(BaseModel):
     fee_cents: int = Field(default=0, ge=0, le=2000)
     spots_max: int = Field(default=3, ge=1, le=10)
     prepay_required: bool = False
+    # Pay-on-handoff method for non-prepay runs: "cash" or one of the
+    # runner's saved PaymentMethodType values (validated in the service).
+    payment_pref: str | None = Field(default=None, max_length=20)
 
 
 class RunUserSummary(BaseModel):
@@ -125,6 +128,9 @@ class RunResponse(BaseModel):
     fee_cents: int
     spots_max: int
     prepay_required: bool
+    # How the runner wants to be paid on handoff (non-prepay runs):
+    # "cash" or a PaymentMethodType value; null on prepay runs.
+    payment_pref: str | None = None
     status: RunStatus
     accepted_count: int
     pending_count: int

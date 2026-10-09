@@ -27,6 +27,7 @@ part 'run_response.g.dart';
 /// * [myOrder] 
 /// * [note] 
 /// * [orders] 
+/// * [paymentPref] 
 /// * [pendingCount] 
 /// * [prepayRequired] 
 /// * [runner] 
@@ -64,6 +65,9 @@ abstract class RunResponse implements Built<RunResponse, RunResponseBuilder> {
 
   @BuiltValueField(wireName: r'orders')
   BuiltList<RunOrderResponse>? get orders;
+
+  @BuiltValueField(wireName: r'payment_pref')
+  String? get paymentPref;
 
   @BuiltValueField(wireName: r'pending_count')
   int get pendingCount;
@@ -163,6 +167,13 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
       yield serializers.serialize(
         object.orders,
         specifiedType: const FullType(BuiltList, [FullType(RunOrderResponse)]),
+      );
+    }
+    if (object.paymentPref != null) {
+      yield r'payment_pref';
+      yield serializers.serialize(
+        object.paymentPref,
+        specifiedType: const FullType.nullable(String),
       );
     }
     yield r'pending_count';
@@ -291,6 +302,14 @@ class _$RunResponseSerializer implements PrimitiveSerializer<RunResponse> {
             specifiedType: const FullType(BuiltList, [FullType(RunOrderResponse)]),
           ) as BuiltList<RunOrderResponse>;
           result.orders.replace(valueDes);
+          break;
+        case r'payment_pref':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.paymentPref = valueDes;
           break;
         case r'pending_count':
           final valueDes = serializers.deserialize(

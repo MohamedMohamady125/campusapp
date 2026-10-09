@@ -22,6 +22,13 @@ extension PaymentMethodTypeDisplay on PaymentMethodType {
     _ => Icons.payments_outlined,
   };
 
+  /// API wire value (the enum's Dart name differs for apple_cash). Used for
+  /// Run.paymentPref, which carries a raw string ("cash" or a rail type).
+  String get wireValue => switch (this) {
+    PaymentMethodType.appleCash => 'apple_cash',
+    _ => name,
+  };
+
   /// Hint text for the handle field — the shape each app expects.
   String get handleHint => switch (this) {
     PaymentMethodType.venmo => '@your-venmo',
@@ -31,6 +38,17 @@ extension PaymentMethodTypeDisplay on PaymentMethodType {
     PaymentMethodType.appleCash => 'Phone number',
     _ => 'Handle',
   };
+}
+
+/// Human label for a Run.paymentPref string ("cash" or a rail wire value).
+/// Null when the pref is unset/unknown — callers hide the line then.
+String? paymentPrefLabel(String? pref) {
+  if (pref == null) return null;
+  if (pref == 'cash') return 'Cash';
+  for (final t in kSelectablePaymentTypes) {
+    if (t.wireValue == pref) return t.label;
+  }
+  return null;
 }
 
 /// The types offered in pickers, in the order students expect them.

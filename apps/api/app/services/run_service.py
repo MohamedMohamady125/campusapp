@@ -177,6 +177,7 @@ def run_response(
         fee_cents=run.fee_cents,
         spots_max=run.spots_max,
         prepay_required=run.prepay_required,
+        payment_pref=run.payment_pref,
         status=run.status,
         accepted_count=len(accepted) + len(received),
         pending_count=len(pending),
@@ -212,6 +213,17 @@ class RunService:
                 "Add a payment method before charging a fee.",
                 code="PAYMENT_METHOD_REQUIRED",
             )
+        # Pay-on-handoff method only applies to non-prepay runs (prepay has its
+        # own proof flow). "cash" is always allowed; anything else must be one
+        # of the runner's saved payment-method types.
+        payment_pref = None if body.prepay_required else body.payment_pref
+        if payment_pref is not None and payment_pref != "cash":
+            saved = {m.get("type") for m in (runner.payment_methods or [])}
+            if payment_pref not in saved:
+                raise BusinessRuleError(
+                    "Pick cash or one of your saved payment methods.",
+                    code="PAYMENT_PREF_INVALID",
+                )
         run = Run(
             runner_id=runner.id,
             food_spot_id=spot.id,
@@ -220,6 +232,7 @@ class RunService:
             fee_cents=body.fee_cents,
             spots_max=body.spots_max,
             prepay_required=body.prepay_required,
+            payment_pref=payment_pref,
         )
         self._repo.add(run)
         await self._session.commit()

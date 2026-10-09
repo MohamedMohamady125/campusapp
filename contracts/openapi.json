@@ -2270,6 +2270,18 @@
             ],
             "title": "Note"
           },
+          "payment_pref": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Pref"
+          },
           "prepay_required": {
             "default": false,
             "title": "Prepay Required",
@@ -2579,6 +2591,17 @@
             },
             "title": "Orders",
             "type": "array"
+          },
+          "payment_pref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Pref"
           },
           "pending_count": {
             "title": "Pending Count",

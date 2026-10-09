@@ -18,6 +18,7 @@ Name | Type | Description | Notes
 **myOrder** | [**RunOrderResponse**](RunOrderResponse.md) |  | [optional] 
 **note** | **String** |  | 
 **orders** | [**BuiltList&lt;RunOrderResponse&gt;**](RunOrderResponse.md) |  | [optional] [default to ListBuilder()]
+**paymentPref** | **String** |  | [optional] 
 **pendingCount** | **int** |  | 
 **prepayRequired** | **bool** |  | 
 **runner** | [**RunUserSummary**](RunUserSummary.md) |  | 

@@ -38,6 +38,10 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
   bool _submitting = false;
   List<FoodSpotResponse> _spots = [];
   bool _hasPaymentMethod = false;
+  // Saved rails power the pay-on-handoff picker (non-prepay runs): cash is
+  // always offered; each saved method adds a pill. Server re-validates.
+  List<PaymentMethod> _savedMethods = [];
+  String _paymentPref = 'cash';
   PaymentMethodType _quickType = kSelectablePaymentTypes.first;
 
   @override
@@ -50,7 +54,10 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
     }).ignore();
     repo.fetchMe().then((me) {
       if (mounted) {
-        setState(() => _hasPaymentMethod = me.paymentMethods.isNotEmpty);
+        setState(() {
+          _savedMethods = me.paymentMethods.toList();
+          _hasPaymentMethod = _savedMethods.isNotEmpty;
+        });
       }
     }).ignore();
   }
@@ -88,14 +95,24 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
               ..handle = _quickHandle.text.trim(),
           ),
         ]);
-        _hasPaymentMethod = me.paymentMethods.isNotEmpty;
+        _savedMethods = me.paymentMethods.toList();
+        _hasPaymentMethod = _savedMethods.isNotEmpty;
       }
+      // Pay-on-handoff only applies off prepay; guard against a pref that
+      // no longer matches a saved rail (server rejects those).
+      final savedTypes = _savedMethods.map((m) => m.type.wireValue).toSet();
+      final pref = _prepay
+          ? null
+          : (_paymentPref == 'cash' || savedTypes.contains(_paymentPref))
+          ? _paymentPref
+          : 'cash';
       final run = await repo.createRun(
         foodSpotId: _spot!.id,
         leavingAt: _leavingAt.toUtc(),
         feeCents: _feeCentsValue,
         spotsMax: _spotsMax,
         prepayRequired: _prepay,
+        paymentPref: pref,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
       ref.read(runsFeedControllerProvider.notifier).pokeAfterMutation();
@@ -296,6 +313,17 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                   onSpotsChanged: (v) => setState(() => _spotsMax = v),
                   onPrepayChanged: (v) => setState(() => _prepay = v),
                 ),
+                // Pay-on-handoff picker: only for non-prepay runs (prepay has
+                // its own proof flow). Cash always offered; saved rails add
+                // one pill each.
+                if (!_prepay && _feeCentsValue > 0) ...[
+                  SizedBox(height: tokens.space3),
+                  _PaymentPrefCard(
+                    savedMethods: _savedMethods,
+                    selected: _paymentPref,
+                    onChanged: (v) => setState(() => _paymentPref = v),
+                  ),
+                ],
                 if (_needsPayment) ...[
                   SizedBox(height: tokens.space3),
                   _PaymentPromptCard(
@@ -670,6 +698,74 @@ class _ChoicePill extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "How do you want to get paid at handoff?" — non-prepay runs only.
+/// Cash is always on offer; every saved rail adds a pill. The pick is sent
+/// as Run.paymentPref so requesters know what to have ready.
+class _PaymentPrefCard extends StatelessWidget {
+  const _PaymentPrefCard({
+    required this.savedMethods,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<PaymentMethod> savedMethods;
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    // Dedupe by rail type — the pref is a type, not a specific handle.
+    final types = <PaymentMethodType>[];
+    for (final m in savedMethods) {
+      if (!types.contains(m.type)) types.add(m.type);
+    }
+    return Container(
+      padding: EdgeInsets.all(tokens.space4),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: tokens.brLg,
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('GET PAID BY', style: AppTextStyles.label),
+          SizedBox(height: tokens.space2),
+          Wrap(
+            spacing: tokens.space2,
+            runSpacing: tokens.space2,
+            children: [
+              _ChoicePill(
+                label: 'Cash',
+                selected: selected == 'cash',
+                onTap: () => onChanged('cash'),
+              ),
+              for (final t in types)
+                _ChoicePill(
+                  label: t.label,
+                  selected: selected == t.wireValue,
+                  onTap: () => onChanged(t.wireValue),
+                ),
+            ],
+          ),
+          SizedBox(height: tokens.space2),
+          Text(
+            types.isEmpty
+                ? 'Add payment methods in Profile to offer more '
+                      'than cash.'
+                : 'People pay you this way at handoff.',
+            style: context.text.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
