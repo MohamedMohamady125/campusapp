@@ -45,6 +45,21 @@ String? _dayPrefix(DateTime dt, DateTime now) {
   return weekdays[dt.weekday - 1];
 }
 
+/// Capacity label for the run detail info row, framed per viewer.
+///
+/// Requesters only care whether they can still get in, so they see remaining
+/// spots ("2 spots left" → "1 spot left" → "Run is full") — scarcity framing,
+/// never "1/3 taken" which reads as "nobody wants this" on a fresh run. The
+/// runner manages capacity, so they keep the taken/total fraction.
+String spotsLabel(RunResponse run) {
+  if (run.isMine ?? false) {
+    return '${run.acceptedCount}/${run.spotsMax} spots filled';
+  }
+  final left = run.spotsMax - run.acceptedCount;
+  if (left <= 0) return 'Run is full';
+  return left == 1 ? '1 spot left' : '$left spots left';
+}
+
 /// Human label per run status.
 String runStatusLabel(RunStatus status) => switch (status) {
   RunStatus.open => 'Open',

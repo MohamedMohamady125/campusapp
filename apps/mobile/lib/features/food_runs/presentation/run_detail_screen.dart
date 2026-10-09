@@ -750,7 +750,7 @@ class _RunHeaderCard extends StatelessWidget {
         SizedBox(height: tokens.space2),
         _InfoRow(
           icon: Icons.group_outlined,
-          label: '${run.acceptedCount}/${run.spotsMax} spots taken',
+          label: spotsLabel(run),
         ),
         if (run.note != null && run.note!.isNotEmpty) ...[
           SizedBox(height: tokens.space3),
