@@ -359,10 +359,10 @@ class _ReputationPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = ratingCount == 0 || currentRating == null
-        ? 'New peer — your rating starts their reputation.'
-        : '$ratedName is at '
+        ? "Your rating starts $ratedName's reputation."
+        : 'Counts toward '
               '${ReputationChip.formatRating(currentRating!.toDouble())} ★ '
-              'across $ratingCount ratings. Your rating counts.';
+              '($ratingCount)';
     return Row(
       children: [
         Icon(

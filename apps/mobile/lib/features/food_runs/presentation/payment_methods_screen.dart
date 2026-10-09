@@ -105,8 +105,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
         padding: EdgeInsets.all(tokens.space4),
         children: [
           Text(
-            'People you accept on a run see these so they can pay you in the '
-            'app of your choice. Payment always happens off-app.',
+            'Shown to people you accept, so they can pay you off-app.',
             style: context.text.bodyMedium?.copyWith(
               color: colors.onSurfaceVariant,
             ),

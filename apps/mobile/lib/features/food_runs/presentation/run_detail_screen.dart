@@ -199,9 +199,7 @@ class _RunDetailBody extends ConsumerWidget {
             border: Border.all(color: context.colors.outlineVariant),
           ),
           child: Text(
-            full
-                ? 'This run is full — keep an eye out for the next one.'
-                : 'This run is no longer taking orders.',
+            full ? 'This run is full.' : 'No longer taking orders.',
             style: context.text.bodyMedium?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
@@ -214,7 +212,7 @@ class _RunDetailBody extends ConsumerWidget {
   Future<void> _showRequestSheet(
     BuildContext context,
     RunDetailController controller, {
-    String success = "Request sent — you'll hear back soon.",
+    String success = 'Request sent.',
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -441,10 +439,7 @@ class _RunDetailBody extends ConsumerWidget {
           padding: EdgeInsets.symmetric(vertical: tokens.space4),
           child: Text(
             // QA S-07: a wrapped-up run must not promise future requests.
-            active
-                ? 'No requests yet — they show up here the moment '
-                      'someone wants in.'
-                : 'This run ended without any orders.',
+            active ? 'No requests yet.' : 'This run ended without orders.',
             style: context.text.bodyMedium?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
@@ -484,8 +479,10 @@ class _RunDetailBody extends ConsumerWidget {
               : "${unpaid.length} people haven't paid yet",
         ),
         content: Text(
-          '$names — prepay is required on this run. Drop them now, or '
-          'continue and collect at drop-off.',
+          // Payment terms stay explicit — this gate exists to prevent
+          // disputes, so name the choice plainly.
+          '$names. Prepay is required — drop them, or continue and '
+          'collect at drop-off.',
         ),
         actions: [
           TextButton(
@@ -1098,7 +1095,7 @@ class _PaymentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('SETTLE UP OUTSIDE THE APP', style: AppTextStyles.label),
+          Text('PAY THE RUNNER', style: AppTextStyles.label),
           SizedBox(height: tokens.space2),
           Row(
             children: [
@@ -1136,7 +1133,7 @@ class _PaymentCard extends StatelessWidget {
           if (run.prepayRequired) ...[
             SizedBox(height: tokens.space3),
             Text(
-              'This runner requires prepay — send it before pickup.',
+              'Prepay required — send it before pickup.',
               style: context.text.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -1149,9 +1146,9 @@ class _PaymentCard extends StatelessWidget {
               SizedBox(width: tokens.space2),
               Expanded(
                 child: Text(
-                  'CampusConnect never touches your money — pay the runner '
-                  'directly, and attach a screenshot so both sides are on '
-                  'the record.',
+                  // One-line trust note; the proof card below carries the
+                  // "attach a screenshot" nudge so it isn't said twice.
+                  'Paid directly to the runner — never through CampusConnect.',
                   style: context.text.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
@@ -1438,8 +1435,7 @@ class _RunnerStatusStepper extends StatelessWidget {
         if (blocked) ...[
           SizedBox(height: tokens.space2),
           Text(
-            'Mark every accepted order delivered or no-show before '
-            'wrapping up.',
+            'Mark each order delivered or no-show first.',
             style: context.text.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
@@ -2065,11 +2061,10 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
           ),
           SizedBox(height: tokens.space4),
           Text(
+            // Payment terms at the point of commitment — keep explicit.
             run.prepayRequired
-                ? '${runFeeLabel(run.feeCents)} · pay before '
-                      'pickup (runner requires prepay).'
-                : '${runFeeLabel(run.feeCents)} · pay the runner '
-                      'on delivery, off-app.',
+                ? '${runFeeLabel(run.feeCents)} · prepay before pickup'
+                : '${runFeeLabel(run.feeCents)} · pay at handoff',
             style: context.text.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),

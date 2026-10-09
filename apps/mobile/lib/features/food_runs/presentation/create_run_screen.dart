@@ -390,15 +390,6 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                     )
                   : const Text('Post run · takes orders now'),
             ),
-            SizedBox(height: tokens.space2),
-            Text(
-              'Payment stays off-app — accepted people see your '
-              'payment methods.',
-              style: context.text.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant.withValues(alpha: .8),
-              ),
-              textAlign: TextAlign.center,
-            ),
           ],
         ),
       ),
@@ -642,10 +633,8 @@ class _DealCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   potential > 0
-                      ? 'Earn up to ${runFeeAmount(potential)} if all '
-                            '$spotsMax '
-                            '${spotsMax == 1 ? 'spot fills' : 'spots fill'}'
-                      : 'Free run — pure good karma (and ratings)',
+                      ? 'Earn up to ${runFeeAmount(potential)}'
+                      : 'Free run — good karma',
                   style: context.text.bodySmall?.copyWith(
                     color: potential > 0
                         ? tokens.success
@@ -765,17 +754,17 @@ class _PaymentPrefCard extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(height: tokens.space2),
-          Text(
-            types.isEmpty
-                ? 'Add payment methods in Profile to offer more '
-                      'than cash.'
-                : 'Pick as many as you take — people pay one of '
-                      'these at handoff.',
-            style: context.text.bodySmall?.copyWith(
-              color: colors.onSurfaceVariant,
+          // The pills are self-explanatory once rails exist; only prompt
+          // when cash is the dasher's sole option.
+          if (types.isEmpty) ...[
+            SizedBox(height: tokens.space2),
+            Text(
+              'Add payment methods in Profile to offer more than cash.',
+              style: context.text.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
