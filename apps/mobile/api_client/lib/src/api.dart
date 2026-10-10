@@ -10,6 +10,7 @@ import 'package:campus_api/src/auth/basic_auth.dart';
 import 'package:campus_api/src/auth/bearer_auth.dart';
 import 'package:campus_api/src/auth/oauth.dart';
 import 'package:campus_api/src/api/admin_api.dart';
+import 'package:campus_api/src/api/analytics_api.dart';
 import 'package:campus_api/src/api/auth_api.dart';
 import 'package:campus_api/src/api/chats_api.dart';
 import 'package:campus_api/src/api/conversations_api.dart';
@@ -121,6 +122,12 @@ class CampusApi {
   /// by doing that all interceptors will not be executed
   AdminApi getAdminApi() {
     return AdminApi(dio, serializers);
+  }
+
+  /// Get AnalyticsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  AnalyticsApi getAnalyticsApi() {
+    return AnalyticsApi(dio, serializers);
   }
 
   /// Get AuthApi instance, base route and serializer can be overridden by a given but be careful,

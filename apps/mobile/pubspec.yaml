@@ -28,6 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  # Analytics batches are built from generated built_value models, which
+  # need BuiltList/AnyOf constructors from these two.
+  built_collection: ^5.1.1
   cached_network_image: ^3.4.1
   campus_api:
     path: api_client
@@ -53,6 +56,7 @@ dependencies:
   json_annotation: ^4.9.0
   latlong2: ^0.9.1
   live_activities: ^2.4.2
+  one_of: ^1.5.0
   riverpod_annotation: ^2.6.1
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2

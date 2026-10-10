@@ -19,6 +19,8 @@ import 'package:campus_api/src/model/app_schemas_conversation_message_response.d
 import 'package:campus_api/src/model/avatar_upload_url_request.dart';
 import 'package:campus_api/src/model/avatar_upload_url_response.dart';
 import 'package:campus_api/src/model/ban_request.dart';
+import 'package:campus_api/src/model/behavior_day.dart';
+import 'package:campus_api/src/model/behavior_response.dart';
 import 'package:campus_api/src/model/chat_create_request.dart';
 import 'package:campus_api/src/model/chat_membership_response.dart';
 import 'package:campus_api/src/model/chat_message_create_request.dart';
@@ -31,6 +33,8 @@ import 'package:campus_api/src/model/chat_role.dart';
 import 'package:campus_api/src/model/chat_visibility.dart';
 import 'package:campus_api/src/model/check_email_request.dart';
 import 'package:campus_api/src/model/check_email_response.dart';
+import 'package:campus_api/src/model/client_event_batch_request.dart';
+import 'package:campus_api/src/model/client_event_in.dart';
 import 'package:campus_api/src/model/conversation_context.dart';
 import 'package:campus_api/src/model/conversation_create_request.dart';
 import 'package:campus_api/src/model/conversation_page_response.dart';
@@ -41,6 +45,7 @@ import 'package:campus_api/src/model/device_register_request.dart';
 import 'package:campus_api/src/model/device_unregister_request.dart';
 import 'package:campus_api/src/model/dropoff_location_create_request.dart';
 import 'package:campus_api/src/model/dropoff_location_response.dart';
+import 'package:campus_api/src/model/event_stat.dart';
 import 'package:campus_api/src/model/flag_item.dart';
 import 'package:campus_api/src/model/food_spot_category.dart';
 import 'package:campus_api/src/model/food_spot_create_request.dart';
@@ -80,6 +85,7 @@ import 'package:campus_api/src/model/payment_method_type.dart';
 import 'package:campus_api/src/model/payment_proof_submit_request.dart';
 import 'package:campus_api/src/model/payment_qr_upload_url_request.dart';
 import 'package:campus_api/src/model/payment_qr_upload_url_response.dart';
+import 'package:campus_api/src/model/properties_value.dart';
 import 'package:campus_api/src/model/ranked_tutor_response.dart';
 import 'package:campus_api/src/model/rating_context.dart';
 import 'package:campus_api/src/model/rating_create_request.dart';
@@ -109,6 +115,7 @@ import 'package:campus_api/src/model/run_response.dart';
 import 'package:campus_api/src/model/run_status.dart';
 import 'package:campus_api/src/model/run_status_update_request.dart';
 import 'package:campus_api/src/model/run_user_summary.dart';
+import 'package:campus_api/src/model/screen_stat.dart';
 import 'package:campus_api/src/model/subscription_response.dart';
 import 'package:campus_api/src/model/token_response.dart';
 import 'package:campus_api/src/model/tutor_search_response.dart';
@@ -127,6 +134,8 @@ part 'serializers.g.dart';
   AvatarUploadUrlRequest,
   AvatarUploadUrlResponse,
   BanRequest,
+  BehaviorDay,
+  BehaviorResponse,
   ChatCreateRequest,
   ChatMembershipResponse,
   ChatMessageCreateRequest,
@@ -139,6 +148,8 @@ part 'serializers.g.dart';
   ChatVisibility,
   CheckEmailRequest,
   CheckEmailResponse,
+  ClientEventBatchRequest,
+  ClientEventIn,
   ConversationContext,
   ConversationCreateRequest,
   ConversationPageResponse,
@@ -149,6 +160,7 @@ part 'serializers.g.dart';
   DeviceUnregisterRequest,
   DropoffLocationCreateRequest,
   DropoffLocationResponse,
+  EventStat,
   FlagItem,
   FoodSpotCategory,
   FoodSpotCreateRequest,
@@ -188,6 +200,7 @@ part 'serializers.g.dart';
   PaymentProofSubmitRequest,
   PaymentQrUploadUrlRequest,
   PaymentQrUploadUrlResponse,
+  PropertiesValue,
   RankedTutorResponse,
   RatingContext,
   RatingCreateRequest,
@@ -217,6 +230,7 @@ part 'serializers.g.dart';
   RunStatus,
   RunStatusUpdateRequest,
   RunUserSummary,
+  ScreenStat,
   SubscriptionResponse,
   TokenResponse,
   TutorSearchResponse,

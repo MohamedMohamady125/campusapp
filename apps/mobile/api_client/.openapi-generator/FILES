@@ -2,12 +2,15 @@
 README.md
 analysis_options.yaml
 doc/AdminApi.md
+doc/AnalyticsApi.md
 doc/AppSchemasAuthMessageResponse.md
 doc/AppSchemasConversationMessageResponse.md
 doc/AuthApi.md
 doc/AvatarUploadUrlRequest.md
 doc/AvatarUploadUrlResponse.md
 doc/BanRequest.md
+doc/BehaviorDay.md
+doc/BehaviorResponse.md
 doc/ChatCreateRequest.md
 doc/ChatMembershipResponse.md
 doc/ChatMessageCreateRequest.md
@@ -21,6 +24,8 @@ doc/ChatVisibility.md
 doc/ChatsApi.md
 doc/CheckEmailRequest.md
 doc/CheckEmailResponse.md
+doc/ClientEventBatchRequest.md
+doc/ClientEventIn.md
 doc/ConversationContext.md
 doc/ConversationCreateRequest.md
 doc/ConversationPageResponse.md
@@ -32,6 +37,7 @@ doc/DeviceRegisterRequest.md
 doc/DeviceUnregisterRequest.md
 doc/DropoffLocationCreateRequest.md
 doc/DropoffLocationResponse.md
+doc/EventStat.md
 doc/FlagItem.md
 doc/FoodSpotCategory.md
 doc/FoodSpotCreateRequest.md
@@ -75,6 +81,7 @@ doc/PaymentMethodType.md
 doc/PaymentProofSubmitRequest.md
 doc/PaymentQrUploadUrlRequest.md
 doc/PaymentQrUploadUrlResponse.md
+doc/PropertiesValue.md
 doc/RankedTutorResponse.md
 doc/RatingContext.md
 doc/RatingCreateRequest.md
@@ -107,6 +114,7 @@ doc/RunStatus.md
 doc/RunStatusUpdateRequest.md
 doc/RunUserSummary.md
 doc/RunsApi.md
+doc/ScreenStat.md
 doc/SubscriptionResponse.md
 doc/TokenResponse.md
 doc/TutorSearchResponse.md
@@ -121,6 +129,7 @@ doc/VerifyRequest.md
 lib/campus_api.dart
 lib/src/api.dart
 lib/src/api/admin_api.dart
+lib/src/api/analytics_api.dart
 lib/src/api/auth_api.dart
 lib/src/api/chats_api.dart
 lib/src/api/conversations_api.dart
@@ -145,6 +154,8 @@ lib/src/model/app_schemas_conversation_message_response.dart
 lib/src/model/avatar_upload_url_request.dart
 lib/src/model/avatar_upload_url_response.dart
 lib/src/model/ban_request.dart
+lib/src/model/behavior_day.dart
+lib/src/model/behavior_response.dart
 lib/src/model/chat_create_request.dart
 lib/src/model/chat_membership_response.dart
 lib/src/model/chat_message_create_request.dart
@@ -157,6 +168,8 @@ lib/src/model/chat_role.dart
 lib/src/model/chat_visibility.dart
 lib/src/model/check_email_request.dart
 lib/src/model/check_email_response.dart
+lib/src/model/client_event_batch_request.dart
+lib/src/model/client_event_in.dart
 lib/src/model/conversation_context.dart
 lib/src/model/conversation_create_request.dart
 lib/src/model/conversation_page_response.dart
@@ -168,6 +181,7 @@ lib/src/model/device_register_request.dart
 lib/src/model/device_unregister_request.dart
 lib/src/model/dropoff_location_create_request.dart
 lib/src/model/dropoff_location_response.dart
+lib/src/model/event_stat.dart
 lib/src/model/flag_item.dart
 lib/src/model/food_spot_category.dart
 lib/src/model/food_spot_create_request.dart
@@ -207,6 +221,7 @@ lib/src/model/payment_method_type.dart
 lib/src/model/payment_proof_submit_request.dart
 lib/src/model/payment_qr_upload_url_request.dart
 lib/src/model/payment_qr_upload_url_response.dart
+lib/src/model/properties_value.dart
 lib/src/model/ranked_tutor_response.dart
 lib/src/model/rating_context.dart
 lib/src/model/rating_create_request.dart
@@ -236,6 +251,7 @@ lib/src/model/run_response.dart
 lib/src/model/run_status.dart
 lib/src/model/run_status_update_request.dart
 lib/src/model/run_user_summary.dart
+lib/src/model/screen_stat.dart
 lib/src/model/subscription_response.dart
 lib/src/model/token_response.dart
 lib/src/model/tutor_search_response.dart
@@ -247,3 +263,11 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/analytics_api_test.dart
+test/behavior_day_test.dart
+test/behavior_response_test.dart
+test/client_event_batch_request_test.dart
+test/client_event_in_test.dart
+test/event_stat_test.dart
+test/properties_value_test.dart
+test/screen_stat_test.dart

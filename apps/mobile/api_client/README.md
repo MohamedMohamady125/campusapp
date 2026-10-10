@@ -66,6 +66,8 @@ All URIs are relative to *http://localhost*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 [*AdminApi*](doc/AdminApi.md) | [**adminMetricsApiV1AdminMetricsGet**](doc/AdminApi.md#adminmetricsapiv1adminmetricsget) | **GET** /api/v1/admin/metrics | Admin Metrics
+[*AnalyticsApi*](doc/AnalyticsApi.md) | [**adminBehaviorApiV1AdminBehaviorGet**](doc/AnalyticsApi.md#adminbehaviorapiv1adminbehaviorget) | **GET** /api/v1/admin/behavior | Admin Behavior
+[*AnalyticsApi*](doc/AnalyticsApi.md) | [**ingestEventsApiV1AnalyticsEventsPost**](doc/AnalyticsApi.md#ingesteventsapiv1analyticseventspost) | **POST** /api/v1/analytics/events | Ingest Events
 [*AuthApi*](doc/AuthApi.md) | [**checkEmailApiV1AuthCheckEmailPost**](doc/AuthApi.md#checkemailapiv1authcheckemailpost) | **POST** /api/v1/auth/check-email | Check Email
 [*AuthApi*](doc/AuthApi.md) | [**forgotPasswordApiV1AuthForgotPasswordPost**](doc/AuthApi.md#forgotpasswordapiv1authforgotpasswordpost) | **POST** /api/v1/auth/forgot-password | Forgot Password
 [*AuthApi*](doc/AuthApi.md) | [**loginApiV1AuthLoginPost**](doc/AuthApi.md#loginapiv1authloginpost) | **POST** /api/v1/auth/login | Login
@@ -156,6 +158,8 @@ Class | Method | HTTP request | Description
  - [AvatarUploadUrlRequest](doc/AvatarUploadUrlRequest.md)
  - [AvatarUploadUrlResponse](doc/AvatarUploadUrlResponse.md)
  - [BanRequest](doc/BanRequest.md)
+ - [BehaviorDay](doc/BehaviorDay.md)
+ - [BehaviorResponse](doc/BehaviorResponse.md)
  - [ChatCreateRequest](doc/ChatCreateRequest.md)
  - [ChatMembershipResponse](doc/ChatMembershipResponse.md)
  - [ChatMessageCreateRequest](doc/ChatMessageCreateRequest.md)
@@ -168,6 +172,8 @@ Class | Method | HTTP request | Description
  - [ChatVisibility](doc/ChatVisibility.md)
  - [CheckEmailRequest](doc/CheckEmailRequest.md)
  - [CheckEmailResponse](doc/CheckEmailResponse.md)
+ - [ClientEventBatchRequest](doc/ClientEventBatchRequest.md)
+ - [ClientEventIn](doc/ClientEventIn.md)
  - [ConversationContext](doc/ConversationContext.md)
  - [ConversationCreateRequest](doc/ConversationCreateRequest.md)
  - [ConversationPageResponse](doc/ConversationPageResponse.md)
@@ -178,6 +184,7 @@ Class | Method | HTTP request | Description
  - [DeviceUnregisterRequest](doc/DeviceUnregisterRequest.md)
  - [DropoffLocationCreateRequest](doc/DropoffLocationCreateRequest.md)
  - [DropoffLocationResponse](doc/DropoffLocationResponse.md)
+ - [EventStat](doc/EventStat.md)
  - [FlagItem](doc/FlagItem.md)
  - [FoodSpotCategory](doc/FoodSpotCategory.md)
  - [FoodSpotCreateRequest](doc/FoodSpotCreateRequest.md)
@@ -217,6 +224,7 @@ Class | Method | HTTP request | Description
  - [PaymentProofSubmitRequest](doc/PaymentProofSubmitRequest.md)
  - [PaymentQrUploadUrlRequest](doc/PaymentQrUploadUrlRequest.md)
  - [PaymentQrUploadUrlResponse](doc/PaymentQrUploadUrlResponse.md)
+ - [PropertiesValue](doc/PropertiesValue.md)
  - [RankedTutorResponse](doc/RankedTutorResponse.md)
  - [RatingContext](doc/RatingContext.md)
  - [RatingCreateRequest](doc/RatingCreateRequest.md)
@@ -246,6 +254,7 @@ Class | Method | HTTP request | Description
  - [RunStatus](doc/RunStatus.md)
  - [RunStatusUpdateRequest](doc/RunStatusUpdateRequest.md)
  - [RunUserSummary](doc/RunUserSummary.md)
+ - [ScreenStat](doc/ScreenStat.md)
  - [SubscriptionResponse](doc/SubscriptionResponse.md)
  - [TokenResponse](doc/TokenResponse.md)
  - [TutorSearchResponse](doc/TutorSearchResponse.md)

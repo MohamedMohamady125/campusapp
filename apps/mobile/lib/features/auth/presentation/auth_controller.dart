@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:campus_api/campus_api.dart';
+import 'package:campusconnect/core/analytics/analytics_service.dart';
 import 'package:campusconnect/core/push/push_service.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -47,6 +48,7 @@ class AuthController extends Notifier<AuthState> {
       final me = await _repo.fetchMe();
       state = AuthState(status: AuthStatus.authenticated, user: me);
       unawaited(ref.read(pushServiceProvider).syncToken());
+      ref.read(analyticsServiceProvider).start();
     } on Object {
       // Stored tokens rejected, storage unreadable, or network dead —
       // treat as signed out and let the user log back in.
@@ -59,11 +61,14 @@ class AuthController extends Notifier<AuthState> {
     final me = await _repo.fetchMe();
     state = AuthState(status: AuthStatus.authenticated, user: me);
     unawaited(ref.read(pushServiceProvider).syncToken());
+    ref.read(analyticsServiceProvider).start();
   }
 
   Future<void> logOut() async {
     // Unregister the push token while the session is still valid, so a
-    // shared phone stops getting this account's pushes.
+    // shared phone stops getting this account's pushes. Same for the last
+    // analytics batch — flushed before the token dies.
+    await ref.read(analyticsServiceProvider).stop();
     await ref.read(pushServiceProvider).clearToken();
     await _repo.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);

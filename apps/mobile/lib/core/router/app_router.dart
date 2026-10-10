@@ -1,3 +1,4 @@
+import 'package:campusconnect/core/analytics/analytics_service.dart';
 import 'package:campusconnect/core/flags/flags_provider.dart';
 import 'package:campusconnect/core/push/push_service.dart';
 import 'package:campusconnect/design_system/material.dart';
@@ -231,6 +232,16 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
   // A tapped push banner deep-links straight to its run/chat/thread.
   ref.read(pushServiceProvider).onOpenRoute = router.go;
+  // Behaviour analytics: every navigation feeds the screen-dwell tracker.
+  final analytics = ref.read(analyticsServiceProvider);
+  void reportLocation() {
+    analytics.onLocationChanged(
+      router.routerDelegate.currentConfiguration.uri.toString(),
+    );
+  }
+
+  router.routerDelegate.addListener(reportLocation);
+  ref.onDispose(() => router.routerDelegate.removeListener(reportLocation));
   return router;
 });
 

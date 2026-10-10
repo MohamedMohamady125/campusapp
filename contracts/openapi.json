@@ -60,6 +60,72 @@
         "title": "BanRequest",
         "type": "object"
       },
+      "BehaviorDay": {
+        "properties": {
+          "active_users": {
+            "title": "Active Users",
+            "type": "integer"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "sessions": {
+            "title": "Sessions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day",
+          "active_users",
+          "sessions",
+          "events"
+        ],
+        "title": "BehaviorDay",
+        "type": "object"
+      },
+      "BehaviorResponse": {
+        "properties": {
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/BehaviorDay"
+            },
+            "title": "Daily",
+            "type": "array"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "screens": {
+            "items": {
+              "$ref": "#/components/schemas/ScreenStat"
+            },
+            "title": "Screens",
+            "type": "array"
+          },
+          "top_events": {
+            "items": {
+              "$ref": "#/components/schemas/EventStat"
+            },
+            "title": "Top Events",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "screens",
+          "top_events",
+          "daily"
+        ],
+        "title": "BehaviorResponse",
+        "type": "object"
+      },
       "ChatCreateRequest": {
         "properties": {
           "description": {
@@ -413,6 +479,113 @@
         "title": "CheckEmailResponse",
         "type": "object"
       },
+      "ClientEventBatchRequest": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ClientEventIn"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Events",
+            "type": "array"
+          },
+          "platform": {
+            "enum": [
+              "ios",
+              "android",
+              "web"
+            ],
+            "title": "Platform",
+            "type": "string"
+          },
+          "session_id": {
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "platform",
+          "events"
+        ],
+        "title": "ClientEventBatchRequest",
+        "type": "object"
+      },
+      "ClientEventIn": {
+        "description": "A single client-side event (screen_view or a named action).",
+        "properties": {
+          "duration_ms": {
+            "anyOf": [
+              {
+                "maximum": 86400000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_.]+$",
+            "title": "Name",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "properties": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "maxProperties": 10,
+            "title": "Properties",
+            "type": "object"
+          },
+          "screen": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screen"
+          }
+        },
+        "required": [
+          "name",
+          "occurred_at"
+        ],
+        "title": "ClientEventIn",
+        "type": "object"
+      },
       "ConversationContext": {
         "enum": [
           "listing",
@@ -734,6 +907,29 @@
           "description"
         ],
         "title": "DropoffLocationResponse",
+        "type": "object"
+      },
+      "EventStat": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "unique_users": {
+            "title": "Unique Users",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "count",
+          "unique_users"
+        ],
+        "title": "EventStat",
         "type": "object"
       },
       "FlagItem": {
@@ -2781,6 +2977,39 @@
         "title": "RunUserSummary",
         "type": "object"
       },
+      "ScreenStat": {
+        "properties": {
+          "avg_seconds": {
+            "title": "Avg Seconds",
+            "type": "number"
+          },
+          "screen": {
+            "title": "Screen",
+            "type": "string"
+          },
+          "total_minutes": {
+            "title": "Total Minutes",
+            "type": "number"
+          },
+          "unique_users": {
+            "title": "Unique Users",
+            "type": "integer"
+          },
+          "views": {
+            "title": "Views",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "screen",
+          "views",
+          "unique_users",
+          "avg_seconds",
+          "total_minutes"
+        ],
+        "title": "ScreenStat",
+        "type": "object"
+      },
       "SubscriptionResponse": {
         "properties": {
           "current_period_end": {
@@ -3288,6 +3517,56 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/behavior": {
+      "get": {
+        "operationId": "admin_behavior_api_v1_admin_behavior_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 14,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehaviorResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Behavior",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
     "/api/v1/admin/metrics": {
       "get": {
         "operationId": "admin_metrics_api_v1_admin_metrics_get",
@@ -3459,6 +3738,45 @@
         "summary": "Update Report",
         "tags": [
           "reports"
+        ]
+      }
+    },
+    "/api/v1/analytics/events": {
+      "post": {
+        "operationId": "ingest_events_api_v1_analytics_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientEventBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ingest Events",
+        "tags": [
+          "analytics"
         ]
       }
     },

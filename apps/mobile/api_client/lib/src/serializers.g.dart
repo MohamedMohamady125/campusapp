@@ -12,6 +12,8 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(AvatarUploadUrlRequest.serializer)
       ..add(AvatarUploadUrlResponse.serializer)
       ..add(BanRequest.serializer)
+      ..add(BehaviorDay.serializer)
+      ..add(BehaviorResponse.serializer)
       ..add(ChatCreateRequest.serializer)
       ..add(ChatMembershipResponse.serializer)
       ..add(ChatMessageCreateRequest.serializer)
@@ -24,6 +26,9 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(ChatVisibility.serializer)
       ..add(CheckEmailRequest.serializer)
       ..add(CheckEmailResponse.serializer)
+      ..add(ClientEventBatchRequest.serializer)
+      ..add(ClientEventBatchRequestPlatformEnum.serializer)
+      ..add(ClientEventIn.serializer)
       ..add(ConversationContext.serializer)
       ..add(ConversationCreateRequest.serializer)
       ..add(ConversationPageResponse.serializer)
@@ -35,6 +40,7 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(DeviceUnregisterRequest.serializer)
       ..add(DropoffLocationCreateRequest.serializer)
       ..add(DropoffLocationResponse.serializer)
+      ..add(EventStat.serializer)
       ..add(FlagItem.serializer)
       ..add(FoodSpotCategory.serializer)
       ..add(FoodSpotCreateRequest.serializer)
@@ -76,6 +82,7 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(PaymentProofSubmitRequest.serializer)
       ..add(PaymentQrUploadUrlRequest.serializer)
       ..add(PaymentQrUploadUrlResponse.serializer)
+      ..add(PropertiesValue.serializer)
       ..add(RankedTutorResponse.serializer)
       ..add(RatingContext.serializer)
       ..add(RatingCreateRequest.serializer)
@@ -106,6 +113,7 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(RunStatus.serializer)
       ..add(RunStatusUpdateRequest.serializer)
       ..add(RunUserSummary.serializer)
+      ..add(ScreenStat.serializer)
       ..add(SubscriptionResponse.serializer)
       ..add(TokenResponse.serializer)
       ..add(TutorSearchResponse.serializer)
@@ -120,12 +128,24 @@ Serializers _$serializers = (Serializers().toBuilder()
               const [const FullType(AppSchemasConversationMessageResponse)]),
           () => ListBuilder<AppSchemasConversationMessageResponse>())
       ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(BehaviorDay)]),
+          () => ListBuilder<BehaviorDay>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(ScreenStat)]),
+          () => ListBuilder<ScreenStat>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(EventStat)]),
+          () => ListBuilder<EventStat>())
+      ..addBuilderFactory(
           const FullType(
               BuiltList, const [const FullType(ChatMessageResponse)]),
           () => ListBuilder<ChatMessageResponse>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(ChatResponse)]),
           () => ListBuilder<ChatResponse>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(ClientEventIn)]),
+          () => ListBuilder<ClientEventIn>())
       ..addBuilderFactory(
           const FullType(
               BuiltList, const [const FullType(ConversationResponse)]),
@@ -212,7 +232,13 @@ Serializers _$serializers = (Serializers().toBuilder()
             const FullType(String),
             const FullType.nullable(JsonObject)
           ]),
-          () => MapBuilder<String, JsonObject?>()))
+          () => MapBuilder<String, JsonObject?>())
+      ..addBuilderFactory(
+          const FullType(BuiltMap, const [
+            const FullType(String),
+            const FullType.nullable(PropertiesValue)
+          ]),
+          () => MapBuilder<String, PropertiesValue?>()))
     .build();
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint
