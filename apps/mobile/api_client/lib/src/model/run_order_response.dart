@@ -13,22 +13,24 @@ part 'run_order_response.g.dart';
 /// RunOrderResponse
 ///
 /// Properties:
-/// * [arrivedAt] 
-/// * [createdAt] 
-/// * [dropoff] 
-/// * [dropoffLat] 
-/// * [dropoffLng] 
-/// * [id] 
-/// * [orderText] 
-/// * [paymentNote] 
-/// * [paymentProofUrl] 
-/// * [paymentSubmittedAt] 
-/// * [ratedByMe] 
-/// * [requester] 
-/// * [runId] 
-/// * [status] 
+/// * [arrivedAt]
+/// * [createdAt]
+/// * [dropoff]
+/// * [dropoffLat]
+/// * [dropoffLng]
+/// * [id]
+/// * [orderText]
+/// * [paymentConfirmedAt]
+/// * [paymentNote]
+/// * [paymentProofUrl]
+/// * [paymentSubmittedAt]
+/// * [ratedByMe]
+/// * [requester]
+/// * [runId]
+/// * [status]
 @BuiltValue()
-abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderResponseBuilder> {
+abstract class RunOrderResponse
+    implements Built<RunOrderResponse, RunOrderResponseBuilder> {
   @BuiltValueField(wireName: r'arrived_at')
   DateTime? get arrivedAt;
 
@@ -49,6 +51,9 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
 
   @BuiltValueField(wireName: r'order_text')
   String get orderText;
+
+  @BuiltValueField(wireName: r'payment_confirmed_at')
+  DateTime? get paymentConfirmedAt;
 
   @BuiltValueField(wireName: r'payment_note')
   String? get paymentNote;
@@ -74,17 +79,19 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
 
   RunOrderResponse._();
 
-  factory RunOrderResponse([void updates(RunOrderResponseBuilder b)]) = _$RunOrderResponse;
+  factory RunOrderResponse([void updates(RunOrderResponseBuilder b)]) =
+      _$RunOrderResponse;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(RunOrderResponseBuilder b) => b
-      ..ratedByMe = false;
+  static void _defaults(RunOrderResponseBuilder b) => b..ratedByMe = false;
 
   @BuiltValueSerializer(custom: true)
-  static Serializer<RunOrderResponse> get serializer => _$RunOrderResponseSerializer();
+  static Serializer<RunOrderResponse> get serializer =>
+      _$RunOrderResponseSerializer();
 }
 
-class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderResponse> {
+class _$RunOrderResponseSerializer
+    implements PrimitiveSerializer<RunOrderResponse> {
   @override
   final Iterable<Type> types = const [RunOrderResponse, _$RunOrderResponse];
 
@@ -137,6 +144,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       object.orderText,
       specifiedType: const FullType(String),
     );
+    if (object.paymentConfirmedAt != null) {
+      yield r'payment_confirmed_at';
+      yield serializers.serialize(
+        object.paymentConfirmedAt,
+        specifiedType: const FullType.nullable(DateTime),
+      );
+    }
     if (object.paymentNote != null) {
       yield r'payment_note';
       yield serializers.serialize(
@@ -188,7 +202,9 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
     RunOrderResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) {
-    return _serializeProperties(serializers, object, specifiedType: specifiedType).toList();
+    return _serializeProperties(serializers, object,
+            specifiedType: specifiedType)
+        .toList();
   }
 
   void _deserializeProperties(
@@ -254,6 +270,14 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
             specifiedType: const FullType(String),
           ) as String;
           result.orderText = valueDes;
+          break;
+        case r'payment_confirmed_at':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
+          result.paymentConfirmedAt = valueDes;
           break;
         case r'payment_note':
           final valueDes = serializers.deserialize(
@@ -335,4 +359,3 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
     return result.build();
   }
 }
-

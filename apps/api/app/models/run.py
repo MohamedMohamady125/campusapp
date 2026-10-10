@@ -137,6 +137,10 @@ class RunOrder(TimestampedBase):
     payment_proof_key: Mapped[str | None] = mapped_column(String(300))
     payment_note: Mapped[str | None] = mapped_column(String(300))
     payment_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Runner-side confirmation: the dasher marks payment as received even when
+    # the requester paid honestly but never attached a screenshot. Either stamp
+    # (requester proof OR runner confirm) counts as paid for the prepay gate.
+    payment_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # No-show counter (DoorDash-style): the runner taps "I'm here" at the
     # drop-off, stamping this and notifying the requester. No-show is only
     # legal NO_SHOW_WAIT after this stamp — never an instant surprise.

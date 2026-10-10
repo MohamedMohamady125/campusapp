@@ -238,6 +238,18 @@ async def submit_payment_proof(
     return run_response(run, viewer_id=user.id)
 
 
+@router.post("/{run_id}/orders/{order_id}/confirm-payment", response_model=RunResponse)
+async def confirm_payment(
+    run_id: uuid.UUID,
+    order_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    svc: RunService = Depends(_service),
+) -> RunResponse:
+    """Runner marks an order paid — covers payment sent without a screenshot."""
+    run = await svc.confirm_payment(run_id=run_id, order_id=order_id, actor=user)
+    return run_response(run, viewer_id=user.id)
+
+
 @router.post("/{run_id}/status", response_model=RunResponse)
 async def update_status(
     run_id: uuid.UUID,

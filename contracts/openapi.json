@@ -2461,6 +2461,18 @@
             "title": "Order Text",
             "type": "string"
           },
+          "payment_confirmed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Confirmed At"
+          },
           "payment_note": {
             "anyOf": [
               {
@@ -6405,6 +6417,65 @@
           }
         ],
         "summary": "Mark Arrived",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}/confirm-payment": {
+      "post": {
+        "description": "Runner marks an order paid \u2014 covers payment sent without a screenshot.",
+        "operationId": "confirm_payment_api_v1_runs__run_id__orders__order_id__confirm_payment_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm Payment",
         "tags": [
           "runs"
         ]

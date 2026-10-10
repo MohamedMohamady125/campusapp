@@ -592,6 +592,59 @@ async def test_prepay_runner_can_drop_accepted_unpaid_order(client: httpx.AsyncC
     assert statuses[paid_oid] == "accepted"
 
 
+async def test_runner_confirms_payment_without_proof(client: httpx.AsyncClient) -> None:
+    """Runner-side 'payment received': an honest requester who paid off-app but
+    never attached a screenshot gets marked paid by the runner — and that stamp
+    protects them from being dropped as unpaid."""
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    other = await make_user(client, "other@campus.edu")
+    spot_id = await _make_spot()
+    dropoff_id = await _make_dropoff()
+    await _set_payment(client, runner)
+    run = await _create_run(client, runner, spot_id, fee_cents=200, prepay_required=True)
+
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("bowl", dropoff_id=dropoff_id),
+        headers=req,
+    )
+    oid = resp.json()["my_order"]["id"]
+    base = f"/api/v1/runs/{run['id']}/orders/{oid}"
+
+    # Only legal on an accepted order.
+    early = await client.post(f"{base}/confirm-payment", headers=runner)
+    assert early.json()["error"]["code"] == "ORDER_NOT_ACCEPTED"
+
+    await client.post(f"{base}/accept", headers=runner)
+
+    # Only the runner may confirm.
+    forbidden = await client.post(f"{base}/confirm-payment", headers=other)
+    assert forbidden.status_code == 403
+    assert forbidden.json()["error"]["code"] == "NOT_RUNNER"
+
+    confirm = await client.post(f"{base}/confirm-payment", headers=runner)
+    assert confirm.status_code == 200, confirm.text
+    order = confirm.json()["orders"][0]
+    assert order["payment_confirmed_at"] is not None
+    assert order["payment_submitted_at"] is None
+
+    # Idempotent: a second confirm keeps the original stamp.
+    again = await client.post(f"{base}/confirm-payment", headers=runner)
+    assert again.status_code == 200
+    assert again.json()["orders"][0]["payment_confirmed_at"] == order["payment_confirmed_at"]
+
+    # Confirmed counts as paid — the runner can no longer drop it as unpaid.
+    drop = await client.post(f"{base}/decline", headers=runner)
+    assert drop.status_code == 409
+    assert drop.json()["error"]["code"] == "ORDER_NOT_PENDING"
+
+    # The requester was told their payment is confirmed.
+    async with async_session_factory() as session:
+        types = (await session.execute(select(Notification.type))).scalars().all()
+    assert "run_payment_confirmed" in types
+
+
 async def _accepted_run(
     client: httpx.AsyncClient, runner: dict[str, str], req: dict[str, str], spot_id: str
 ) -> tuple[dict, str]:

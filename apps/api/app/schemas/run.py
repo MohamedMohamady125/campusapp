@@ -107,6 +107,9 @@ class RunOrderResponse(BaseModel):
     payment_proof_url: str | None = None
     payment_note: str | None = None
     payment_submitted_at: datetime | None = None
+    # Runner's "payment received" stamp — covers the honest payer who forgot
+    # the screenshot. Either this or payment_submitted_at counts as paid.
+    payment_confirmed_at: datetime | None = None
     # No-show counter: set when the runner taps "I'm here" at this drop-off.
     # Both apps render a live 5-minute countdown from this stamp; the server
     # refuses no-show until NO_SHOW_WAIT has elapsed past it.

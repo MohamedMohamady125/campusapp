@@ -132,6 +132,17 @@ class RunsRepository {
     return res.data!;
   }
 
+  /// Runner marks an order as paid — covers the honest requester who sent
+  /// money off-app but never attached a screenshot.
+  Future<RunResponse> confirmPayment(String runId, String orderId) async {
+    final res = await _runs
+        .confirmPaymentApiV1RunsRunIdOrdersOrderIdConfirmPaymentPost(
+          runId: runId,
+          orderId: orderId,
+        );
+    return res.data!;
+  }
+
   Future<RunResponse> markNoShow(String runId, String orderId) async {
     final res = await _runs.markNoShowApiV1RunsRunIdOrdersOrderIdNoShowPost(
       runId: runId,

@@ -407,7 +407,12 @@ class _RunDetailBody extends ConsumerWidget {
             // because payment happens off-app and only a human can judge it.
             if (next == RunStatus.atStore && run.prepayRequired) {
               final unpaid = deliveries
-                  .where((o) => o.paymentSubmittedAt == null)
+                  // Paid = requester proof OR the runner's own confirm stamp.
+                  .where(
+                    (o) =>
+                        o.paymentSubmittedAt == null &&
+                        o.paymentConfirmedAt == null,
+                  )
                   .toList();
               if (unpaid.isNotEmpty) {
                 final choice = await _confirmUnpaid(context, unpaid);
@@ -550,11 +555,27 @@ class _RunDetailBody extends ConsumerWidget {
           awaitingPrepay:
               run.prepayRequired &&
               order.status == RunOrderStatus.accepted &&
-              order.paymentSubmittedAt == null,
+              order.paymentSubmittedAt == null &&
+              order.paymentConfirmedAt == null,
+          // The honest-payer escape hatch: they Venmo'd but forgot the
+          // screenshot — the runner vouches and the order stops looking
+          // unpaid (and can no longer be dropped at the prepay gate).
+          onConfirmPaid:
+              run.prepayRequired &&
+                  order.status == RunOrderStatus.accepted &&
+                  order.paymentSubmittedAt == null &&
+                  order.paymentConfirmedAt == null
+              ? () => _act(
+                  context,
+                  () => controller.confirmPayment(order.id),
+                  success: '${order.requester.displayName} marked as paid.',
+                )
+              : null,
           onRemoveUnpaid:
               run.prepayRequired &&
                   order.status == RunOrderStatus.accepted &&
                   order.paymentSubmittedAt == null &&
+                  order.paymentConfirmedAt == null &&
                   const {
                     RunStatus.open,
                     RunStatus.locked,
@@ -1186,23 +1207,6 @@ class _PaymentCard extends StatelessWidget {
               ),
             ),
           ],
-          SizedBox(height: tokens.space3),
-          Row(
-            children: [
-              Icon(Icons.lock_outline, size: 14, color: tokens.verified),
-              SizedBox(width: tokens.space2),
-              Expanded(
-                child: Text(
-                  // One-line trust note; the proof card below carries the
-                  // "attach a screenshot" nudge so it isn't said twice.
-                  'Paid directly to the runner — never through CampusConnect.',
-                  style: context.text.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -1291,7 +1295,12 @@ class _RunSummaryCard extends StatelessWidget {
     final declined = orders
         .where((o) => o.status == RunOrderStatus.declined)
         .length;
-    final proofs = orders.where((o) => o.paymentSubmittedAt != null).length;
+    // Paid = requester proof OR the runner's own "payment received" stamp.
+    final proofs = orders
+        .where(
+          (o) => o.paymentSubmittedAt != null || o.paymentConfirmedAt != null,
+        )
+        .length;
     final collectedCents = delivered * run.feeCents;
 
     return Container(
@@ -1617,6 +1626,7 @@ class _OrderCard extends StatelessWidget {
     required this.onNoShow,
     required this.onRate,
     this.onRemoveUnpaid,
+    this.onConfirmPaid,
     this.collectFeeCents,
   });
 
@@ -1644,6 +1654,10 @@ class _OrderCard extends StatelessWidget {
 
   /// Drop an accepted-but-unpaid order on a prepay run (open/locked only).
   final VoidCallback? onRemoveUnpaid;
+
+  /// Runner vouches "I got the money" for a prepay order with no proof —
+  /// the honest payer who forgot the screenshot stops looking unpaid.
+  final VoidCallback? onConfirmPaid;
 
   @override
   Widget build(BuildContext context) {
@@ -1772,10 +1786,28 @@ class _OrderCard extends StatelessWidget {
             ),
           ),
           // Payment state — one glance: green receipt panel when paid,
-          // loud amber strip while the dasher is still owed.
+          // green "you confirmed it" row when the runner vouched, loud
+          // amber strip while the dasher is still owed.
           if (order.paymentSubmittedAt != null) ...[
             SizedBox(height: tokens.space3),
             _PaymentProofReview(order: order),
+          ] else if (order.paymentConfirmedAt != null) ...[
+            SizedBox(height: tokens.space3),
+            Row(
+              children: [
+                Icon(Icons.check_circle, size: 16, color: tokens.success),
+                SizedBox(width: tokens.space2),
+                Expanded(
+                  child: Text(
+                    'Paid — you confirmed receiving it.',
+                    style: context.text.bodySmall?.copyWith(
+                      color: tokens.success,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ] else if (awaitingPrepay) ...[
             SizedBox(height: tokens.space3),
             Container(
@@ -1785,23 +1817,39 @@ class _OrderCard extends StatelessWidget {
                 color: colors.surfaceContainerLow,
                 borderRadius: tokens.brXs,
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.hourglass_top_rounded,
-                    size: 16,
-                    color: tokens.warning,
-                  ),
-                  SizedBox(width: tokens.space2),
-                  Expanded(
-                    child: Text(
-                      "Awaiting prepayment — hasn't sent proof yet.",
-                      style: context.text.bodySmall?.copyWith(
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.hourglass_top_rounded,
+                        size: 16,
                         color: tokens.warning,
-                        fontWeight: FontWeight.w600,
+                      ),
+                      SizedBox(width: tokens.space2),
+                      Expanded(
+                        child: Text(
+                          "Awaiting prepayment — hasn't sent proof yet.",
+                          style: context.text.bodySmall?.copyWith(
+                            color: tokens.warning,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Honest-payer escape hatch: the money arrived but no
+                  // screenshot — the runner settles it with one tap.
+                  if (onConfirmPaid != null)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: onConfirmPaid,
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: const Text('Payment received'),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -2270,8 +2318,11 @@ class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
     final tokens = context.tokens;
     final colors = context.colors;
     final submitted = widget.order.paymentSubmittedAt != null;
+    // The runner can also vouch directly ("Payment received") — that settles
+    // the money question with no screenshot needed from this side.
+    final runnerConfirmed = widget.order.paymentConfirmedAt != null;
 
-    if (submitted) {
+    if (submitted || runnerConfirmed) {
       return Container(
         padding: EdgeInsets.all(tokens.space4),
         decoration: BoxDecoration(
@@ -2285,7 +2336,9 @@ class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
             SizedBox(width: tokens.space3),
             Expanded(
               child: Text(
-                'Payment proof sent — the runner can confirm it.',
+                submitted
+                    ? 'Payment proof sent — the runner can confirm it.'
+                    : "Runner confirmed your payment — you're all set.",
                 style: context.text.bodyMedium,
               ),
             ),
@@ -2304,14 +2357,8 @@ class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Copy diet: the label + button say it all — no explainer line.
           Text('SEND PAYMENT PROOF', style: AppTextStyles.label),
-          SizedBox(height: tokens.space2),
-          Text(
-            'Paid off-app? Attach a screenshot so the runner can confirm.',
-            style: context.text.bodySmall?.copyWith(
-              color: colors.onSurfaceVariant,
-            ),
-          ),
           SizedBox(height: tokens.space3),
           if (_bytes != null)
             ClipRRect(
@@ -2331,27 +2378,31 @@ class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
               _bytes == null ? 'Add screenshot' : 'Change screenshot',
             ),
           ),
-          SizedBox(height: tokens.space3),
-          TextField(
-            controller: _note,
-            maxLines: 2,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              hintText: 'Add a note (optional)',
+          // Note + send only appear once there's a screenshot — until then
+          // the card is just one button (QA: requester side felt crowded).
+          if (_bytes != null) ...[
+            SizedBox(height: tokens.space3),
+            TextField(
+              controller: _note,
+              maxLines: 2,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Add a note (optional)',
+              ),
             ),
-          ),
-          SizedBox(height: tokens.space3),
-          FilledButton.icon(
-            onPressed: (_bytes == null || _submitting) ? null : _submit,
-            icon: _submitting
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.send_outlined),
-            label: const Text('Send to runner'),
-          ),
+            SizedBox(height: tokens.space3),
+            FilledButton.icon(
+              onPressed: _submitting ? null : _submit,
+              icon: _submitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_outlined),
+              label: const Text('Send to runner'),
+            ),
+          ],
         ],
       ),
     );

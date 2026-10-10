@@ -61,6 +61,7 @@ NOTIFICATION_TYPE_RUN_DECLINED = "run_request_declined"
 NOTIFICATION_TYPE_RUN_STATUS = "run_status"
 NOTIFICATION_TYPE_RUN_COMPLETED = "run_completed"
 NOTIFICATION_TYPE_RUN_PAYMENT = "run_payment_submitted"
+NOTIFICATION_TYPE_RUN_PAYMENT_CONFIRMED = "run_payment_confirmed"
 NOTIFICATION_TYPE_RUN_ARRIVED = "run_runner_arrived"
 
 # Runner ghost protection: any active run hard-expires this long after leaving.
@@ -121,6 +122,7 @@ def _order_response(order: RunOrder, *, rated_by_me: bool = False) -> RunOrderRe
         payment_proof_url=proof_url,
         payment_note=order.payment_note,
         payment_submitted_at=order.payment_submitted_at,
+        payment_confirmed_at=order.payment_confirmed_at,
         arrived_at=order.arrived_at,
     )
 
@@ -412,6 +414,9 @@ class RunService:
             order.status == RunOrderStatus.accepted
             and run.prepay_required
             and order.payment_submitted_at is None
+            # Runner-confirmed payment counts as paid — once they said "I got
+            # the money" they cannot turn around and drop the order as unpaid.
+            and order.payment_confirmed_at is None
             and run.status in (RunStatus.open, RunStatus.locked)
         )
         if order.status != RunOrderStatus.requested and not droppable_unpaid:
@@ -496,6 +501,31 @@ class RunService:
             extra={"order_id": str(order.id), "requester_name": user.display_name},
         )
         await self._session.commit()
+        return await self._get_or_404(run_id)
+
+    async def confirm_payment(self, *, run_id: uuid.UUID, order_id: uuid.UUID, actor: User) -> Run:
+        """Runner marks an order as paid. Covers the honest requester who paid
+        off-app but never attached a screenshot — their order must not look
+        unpaid at the prepay gate. Runner-only, idempotent."""
+        run = await self._get_or_404(run_id)
+        self._assert_runner(run, actor)
+        order = self._order_in(run, order_id)
+        if order.status not in self._PAYABLE_STATUSES:
+            raise ConflictError(
+                "You can only confirm payment on an accepted order.",
+                code="ORDER_NOT_ACCEPTED",
+            )
+        if order.payment_confirmed_at is None:
+            order.payment_confirmed_at = datetime.now(UTC)
+            await self._notify(
+                order.requester_id,
+                NOTIFICATION_TYPE_RUN_PAYMENT_CONFIRMED,
+                run=run,
+                dedup_key="order_id",
+                dedup_value=str(order.id),
+                extra={"order_id": str(order.id)},
+            )
+            await self._session.commit()
         return await self._get_or_404(run_id)
 
     # -- status ------------------------------------------------------------

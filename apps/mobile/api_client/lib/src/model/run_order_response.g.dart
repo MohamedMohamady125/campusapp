@@ -22,6 +22,8 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   final String orderText;
   @override
+  final DateTime? paymentConfirmedAt;
+  @override
   final String? paymentNote;
   @override
   final String? paymentProofUrl;
@@ -48,6 +50,7 @@ class _$RunOrderResponse extends RunOrderResponse {
       this.dropoffLng,
       required this.id,
       required this.orderText,
+      this.paymentConfirmedAt,
       this.paymentNote,
       this.paymentProofUrl,
       this.paymentSubmittedAt,
@@ -75,6 +78,7 @@ class _$RunOrderResponse extends RunOrderResponse {
         dropoffLng == other.dropoffLng &&
         id == other.id &&
         orderText == other.orderText &&
+        paymentConfirmedAt == other.paymentConfirmedAt &&
         paymentNote == other.paymentNote &&
         paymentProofUrl == other.paymentProofUrl &&
         paymentSubmittedAt == other.paymentSubmittedAt &&
@@ -94,6 +98,7 @@ class _$RunOrderResponse extends RunOrderResponse {
     _$hash = $jc(_$hash, dropoffLng.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
+    _$hash = $jc(_$hash, paymentConfirmedAt.hashCode);
     _$hash = $jc(_$hash, paymentNote.hashCode);
     _$hash = $jc(_$hash, paymentProofUrl.hashCode);
     _$hash = $jc(_$hash, paymentSubmittedAt.hashCode);
@@ -115,6 +120,7 @@ class _$RunOrderResponse extends RunOrderResponse {
           ..add('dropoffLng', dropoffLng)
           ..add('id', id)
           ..add('orderText', orderText)
+          ..add('paymentConfirmedAt', paymentConfirmedAt)
           ..add('paymentNote', paymentNote)
           ..add('paymentProofUrl', paymentProofUrl)
           ..add('paymentSubmittedAt', paymentSubmittedAt)
@@ -157,6 +163,11 @@ class RunOrderResponseBuilder
   String? _orderText;
   String? get orderText => _$this._orderText;
   set orderText(String? orderText) => _$this._orderText = orderText;
+
+  DateTime? _paymentConfirmedAt;
+  DateTime? get paymentConfirmedAt => _$this._paymentConfirmedAt;
+  set paymentConfirmedAt(DateTime? paymentConfirmedAt) =>
+      _$this._paymentConfirmedAt = paymentConfirmedAt;
 
   String? _paymentNote;
   String? get paymentNote => _$this._paymentNote;
@@ -204,6 +215,7 @@ class RunOrderResponseBuilder
       _dropoffLng = $v.dropoffLng;
       _id = $v.id;
       _orderText = $v.orderText;
+      _paymentConfirmedAt = $v.paymentConfirmedAt;
       _paymentNote = $v.paymentNote;
       _paymentProofUrl = $v.paymentProofUrl;
       _paymentSubmittedAt = $v.paymentSubmittedAt;
@@ -245,6 +257,7 @@ class RunOrderResponseBuilder
                 id, r'RunOrderResponse', 'id'),
             orderText: BuiltValueNullFieldError.checkNotNull(
                 orderText, r'RunOrderResponse', 'orderText'),
+            paymentConfirmedAt: paymentConfirmedAt,
             paymentNote: paymentNote,
             paymentProofUrl: paymentProofUrl,
             paymentSubmittedAt: paymentSubmittedAt,
