@@ -11,6 +11,13 @@ import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
 import 'package:campusconnect/features/profile/presentation/avatar_sheet.dart';
+import 'package:flutter/cupertino.dart'
+    show
+        CupertinoDatePicker,
+        CupertinoDatePickerMode,
+        CupertinoTextThemeData,
+        CupertinoTheme,
+        CupertinoThemeData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -187,13 +194,17 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
     return '${_leavingAt.month}/${_leavingAt.day} $time';
   }
 
-  /// Opens the native clock picker for an exact departure time. A time that has
-  /// already passed today rolls to tomorrow so it's never in the past.
+  /// Opens a scroll-wheel time picker (delivery-app style, 5-min steps) for
+  /// an exact departure time. A time that has already passed today rolls to
+  /// tomorrow so it's never in the past.
   Future<void> _pickLeavingTime() async {
-    final picked = await showTimePicker(
+    // CupertinoDatePicker requires the initial minute to sit on the interval.
+    final base = _leavingAt.add(
+      Duration(minutes: (5 - _leavingAt.minute % 5) % 5),
+    );
+    final picked = await showModalBottomSheet<DateTime>(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_leavingAt),
-      helpText: 'What time are you leaving?',
+      builder: (_) => _LeavingTimeSheet(initial: base),
     );
     if (picked == null || !mounted) return;
     final now = DateTime.now();
@@ -990,6 +1001,72 @@ class _SpotPickerSheetState extends State<_SpotPickerSheet> {
       title: Text(spot.name),
       subtitle: spot.description == null ? null : Text(spot.description!),
       onTap: () => Navigator.of(context).pop(spot),
+    );
+  }
+}
+
+/// Scroll-wheel departure-time sheet — the modern delivery-app pattern
+/// (Uber/DoorDash) replacing the Material clock dial. 5-minute steps.
+class _LeavingTimeSheet extends StatefulWidget {
+  const _LeavingTimeSheet({required this.initial});
+
+  final DateTime initial;
+
+  @override
+  State<_LeavingTimeSheet> createState() => _LeavingTimeSheetState();
+}
+
+class _LeavingTimeSheetState extends State<_LeavingTimeSheet> {
+  late DateTime _value = widget.initial;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          tokens.space4,
+          0,
+          tokens.space4,
+          tokens.space4,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'What time are you leaving?',
+              textAlign: TextAlign.center,
+              style: context.text.titleLarge,
+            ),
+            SizedBox(height: tokens.space2),
+            SizedBox(
+              height: 200,
+              child: CupertinoTheme(
+                data: CupertinoThemeData(
+                  textTheme: CupertinoTextThemeData(
+                    dateTimePickerTextStyle: AppTextStyles.titleLarge.copyWith(
+                      color: colors.onSurface,
+                    ),
+                  ),
+                ),
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  initialDateTime: widget.initial,
+                  minuteInterval: 5,
+                  onDateTimeChanged: (v) => _value = v,
+                ),
+              ),
+            ),
+            SizedBox(height: tokens.space3),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(_value),
+              child: const Text('Set time'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
