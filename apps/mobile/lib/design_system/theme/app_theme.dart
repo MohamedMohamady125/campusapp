@@ -161,10 +161,11 @@ abstract final class AppTheme {
       // while staying quieter than Filled/Outlined.
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          // Palette tokens only — primaryBg/primary, never ad-hoc alpha mixes.
           foregroundColor: scheme.primary,
-          backgroundColor: scheme.primary.withValues(alpha: 0.08),
-          disabledForegroundColor: scheme.onSurface.withValues(alpha: 0.35),
-          disabledBackgroundColor: scheme.onSurface.withValues(alpha: 0.05),
+          backgroundColor: scheme.primaryContainer,
+          disabledForegroundColor: AppColors.textTertiary,
+          disabledBackgroundColor: AppColors.surfaceAlt,
           minimumSize: const Size(64, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           textStyle: AppTextStyles.buttonSmall,

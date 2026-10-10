@@ -300,8 +300,8 @@ class _RunDetailBody extends ConsumerWidget {
         SizedBox(height: tokens.space3),
         TextButton(
           style: TextButton.styleFrom(
-            foregroundColor: context.colors.error,
-            backgroundColor: context.colors.error.withValues(alpha: 0.08),
+            foregroundColor: context.colors.onErrorContainer,
+            backgroundColor: context.colors.errorContainer,
           ),
           onPressed: () => _act(
             context,
@@ -479,8 +479,8 @@ class _RunDetailBody extends ConsumerWidget {
         SizedBox(height: tokens.space2),
         TextButton(
           style: TextButton.styleFrom(
-            foregroundColor: context.colors.error,
-            backgroundColor: context.colors.error.withValues(alpha: 0.08),
+            foregroundColor: context.colors.onErrorContainer,
+            backgroundColor: context.colors.errorContainer,
           ),
           onPressed: () => _confirmCancel(context, controller),
           child: const Text('Cancel run'),
@@ -1153,10 +1153,10 @@ class _PaymentCard extends StatelessWidget {
     final methods = run.runner.paymentMethods ?? const <PaymentMethod>[];
     return Container(
       padding: EdgeInsets.all(tokens.space4),
+      // Neutral panel like every other card — amber is reserved for the one
+      // prepay warning line below, never a whole surface (palette discipline).
       decoration: BoxDecoration(
-        color: run.prepayRequired
-            ? tokens.warningContainer
-            : colors.surfaceContainerLow,
+        color: colors.surfaceContainerLow,
         borderRadius: tokens.brSm,
         border: Border.all(color: colors.outlineVariant),
       ),
@@ -1170,9 +1170,7 @@ class _PaymentCard extends StatelessWidget {
               Icon(
                 Icons.account_balance_wallet_outlined,
                 size: 18,
-                color: run.prepayRequired
-                    ? tokens.warning
-                    : colors.onSurfaceVariant,
+                color: colors.onSurfaceVariant,
               ),
               SizedBox(width: tokens.space2),
               Expanded(
@@ -1925,8 +1923,8 @@ class _OrderCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onRemoveUnpaid,
                     style: TextButton.styleFrom(
-                      foregroundColor: colors.error,
-                      backgroundColor: colors.error.withValues(alpha: 0.08),
+                      foregroundColor: colors.onErrorContainer,
+                      backgroundColor: colors.errorContainer,
                     ),
                     icon: const Icon(Icons.person_remove_outlined, size: 18),
                     label: const Text('Remove — unpaid'),
