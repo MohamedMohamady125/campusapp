@@ -156,18 +156,14 @@ abstract final class AppTheme {
           textStyle: AppTextStyles.button,
         ),
       ),
-      // Tertiary action: soft tonal pill — never a bare word floating in the
-      // layout. Brand-tinted fill + stadium frame reads "tappable" at a glance
-      // while staying quieter than Filled/Outlined.
+      // TextButton = inline LINK (Forgot password?, Create an account,
+      // dialog dismissals): plain brand-blue text, no fill. Buttons that are
+      // real actions style an explicit tonal frame at the call site.
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          // Palette tokens only — primaryBg/primary, never ad-hoc alpha mixes.
-          foregroundColor: scheme.primary,
-          backgroundColor: scheme.primaryContainer,
+          foregroundColor: scheme.onPrimaryContainer,
           disabledForegroundColor: AppColors.textTertiary,
-          disabledBackgroundColor: AppColors.surfaceAlt,
-          minimumSize: const Size(64, 44),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          minimumSize: const Size(64, 48),
           textStyle: AppTextStyles.buttonSmall,
           shape: const StadiumBorder(),
         ),

@@ -1850,6 +1850,10 @@ class _OrderCard extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: onConfirmPaid,
+                        style: TextButton.styleFrom(
+                          foregroundColor: colors.primary,
+                          backgroundColor: colors.primaryContainer,
+                        ),
                         icon: const Icon(Icons.check_rounded, size: 18),
                         label: const Text('Payment received'),
                       ),
@@ -1942,6 +1946,10 @@ class _OrderCard extends StatelessWidget {
                 if (canRate)
                   TextButton.icon(
                     onPressed: onRate,
+                    style: TextButton.styleFrom(
+                      foregroundColor: colors.primary,
+                      backgroundColor: colors.primaryContainer,
+                    ),
                     icon: const Icon(Icons.star_outline, size: 18),
                     label: const Text('Rate'),
                   )
