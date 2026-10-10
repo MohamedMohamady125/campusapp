@@ -703,6 +703,22 @@ class _RunHeaderCard extends StatelessWidget {
     final tokens = context.tokens;
     final colors = context.colors;
     final runner = run.runner;
+    // The requester's reality beats the run-level status: once the dasher
+    // taps "I'm here" for *their* order, "At the store"/"Delivering" is
+    // stale — the header must track their own handoff, live.
+    final myOrder = run.myOrder;
+    final statusLabel = switch (myOrder) {
+      RunOrderResponse(
+        status: RunOrderStatus.accepted,
+        arrivedAt: DateTime(),
+        :final dropoff,
+      ) =>
+        'Runner at $dropoff — meet them',
+      RunOrderResponse(status: RunOrderStatus.delivered) =>
+        'Dropped off — confirm below',
+      RunOrderResponse(status: RunOrderStatus.received) => 'Delivered',
+      _ => runStatusLabel(run.status),
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -756,7 +772,7 @@ class _RunHeaderCard extends StatelessWidget {
           icon: Icons.schedule,
           label: run.status == RunStatus.open
               ? leavingLabel(run.leavingAt)
-              : runStatusLabel(run.status),
+              : statusLabel,
         ),
         SizedBox(height: tokens.space2),
         _InfoRow(
