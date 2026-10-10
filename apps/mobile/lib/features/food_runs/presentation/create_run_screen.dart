@@ -10,10 +10,9 @@ import 'package:campusconnect/features/food_runs/presentation/payment_method_dis
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
-import 'package:flutter/foundation.dart';
+import 'package:campusconnect/features/profile/presentation/avatar_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 /// Start-a-run form: where you're going, when you're leaving, what it
 /// costs to tag along. Paid/prepay runs require a payment method —
@@ -47,11 +46,9 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
   final List<String> _paymentPrefs = ['cash'];
   PaymentMethodType _quickType = kSelectablePaymentTypes.first;
   // Uber-style transparency: a profile photo is required to post a run
-  // (server enforces AVATAR_REQUIRED). Camera-first selfie, uploaded inline.
-  final _picker = ImagePicker();
+  // (server enforces AVATAR_REQUIRED). Gated via a bottom sheet — shown on
+  // open and again at Post if skipped — so the form itself stays clean.
   bool _hasAvatar = true; // optimistic until /users/me answers
-  Uint8List? _avatarBytes;
-  bool _uploadingAvatar = false;
 
   @override
   void initState() {
@@ -62,12 +59,18 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
       if (mounted) setState(() => _spots = spots);
     }).ignore();
     repo.fetchMe().then((me) {
-      if (mounted) {
-        setState(() {
-          _savedMethods = me.paymentMethods.toList();
-          _hasPaymentMethod = _savedMethods.isNotEmpty;
-          _hasAvatar = me.avatarUrl != null;
-        });
+      if (!mounted) return;
+      setState(() {
+        _savedMethods = me.paymentMethods.toList();
+        _hasPaymentMethod = _savedMethods.isNotEmpty;
+        _hasAvatar = me.avatarUrl != null;
+      });
+      // No photo yet: raise the gate sheet right away (dismissible — they
+      // can fill the form first and get re-prompted at Post).
+      if (!_hasAvatar) {
+        showAvatarSheet(context, gate: true).then((added) {
+          if (mounted && added) setState(() => _hasAvatar = true);
+        }).ignore();
       }
     }).ignore();
   }
@@ -84,40 +87,6 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
     return !_hasPaymentMethod;
   }
 
-  /// Camera-first selfie → upload → PATCH /users/me (avatar_key).
-  Future<void> _pickAvatar(ImageSource source) async {
-    final file = await _picker.pickImage(
-      source: source,
-      maxWidth: 1200,
-      imageQuality: 90,
-      preferredCameraDevice: CameraDevice.front,
-    );
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    if (!mounted) return;
-    setState(() => _uploadingAvatar = true);
-    try {
-      final lower = file.path.toLowerCase();
-      final contentType = lower.endsWith('.png')
-          ? 'image/png'
-          : lower.endsWith('.webp')
-          ? 'image/webp'
-          : 'image/jpeg';
-      await ref
-          .read(runsRepositoryProvider)
-          .uploadAvatar(bytes: bytes, contentType: contentType);
-      if (!mounted) return;
-      setState(() {
-        _hasAvatar = true;
-        _avatarBytes = bytes;
-      });
-    } on Object catch (e) {
-      if (mounted) _snack(apiErrorMessage(e));
-    } finally {
-      if (mounted) setState(() => _uploadingAvatar = false);
-    }
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_spot == null) {
@@ -125,8 +94,11 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
       return;
     }
     if (!_hasAvatar) {
-      _snack('Add a profile photo first.');
-      return;
+      // They dismissed the gate earlier — re-raise it at the moment of
+      // intent, then carry straight on with the post.
+      final added = await showAvatarSheet(context, gate: true);
+      if (!mounted || !added) return;
+      setState(() => _hasAvatar = true);
     }
     if (_needsPayment && _quickHandle.text.trim().length < 2) {
       _snack('Add a payment handle so people can pay you.');
@@ -254,20 +226,6 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Profile-photo gate (Uber-style): required before posting.
-                if (!_hasAvatar || _avatarBytes != null) ...[
-                  _AvatarGateCard(
-                    bytes: _avatarBytes,
-                    uploading: _uploadingAvatar,
-                    onCamera: _uploadingAvatar
-                        ? null
-                        : () => _pickAvatar(ImageSource.camera),
-                    onGallery: _uploadingAvatar
-                        ? null
-                        : () => _pickAvatar(ImageSource.gallery),
-                  ),
-                  SizedBox(height: tokens.space6),
-                ],
                 const _SectionLabel(label: 'Where are you headed?'),
                 SizedBox(height: tokens.space2),
                 // Once a spot is picked the selector becomes an image-led
@@ -617,94 +575,6 @@ class _TimePill extends StatelessWidget {
 }
 
 // -- Eyebrow micro-label (Fifty Free: Inter 11/w700, ls 1, UPPERCASE) --
-/// Profile-photo gate: posting a run requires a face (Uber-style trust).
-/// Camera-first; flips to a confirmation row once the photo is up.
-class _AvatarGateCard extends StatelessWidget {
-  const _AvatarGateCard({
-    required this.bytes,
-    required this.uploading,
-    required this.onCamera,
-    required this.onGallery,
-  });
-
-  final Uint8List? bytes;
-  final bool uploading;
-  final VoidCallback? onCamera;
-  final VoidCallback? onGallery;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final colors = context.colors;
-    final done = bytes != null;
-    return Container(
-      padding: EdgeInsets.all(tokens.space4),
-      decoration: BoxDecoration(
-        borderRadius: tokens.brSm,
-        border: Border.all(
-          color: done ? colors.outlineVariant : colors.primary,
-        ),
-      ),
-      child: Row(
-        children: [
-          if (done)
-            CircleAvatar(radius: 24, backgroundImage: MemoryImage(bytes!))
-          else
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: colors.surfaceContainerHighest,
-              child: uploading
-                  ? const SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(Icons.person_outline, color: colors.onSurfaceVariant),
-            ),
-          SizedBox(width: tokens.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  done ? 'Photo added' : 'Add a profile photo',
-                  style: context.text.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  done
-                      ? 'This is what requesters see.'
-                      : 'Required — people see who brings their food.',
-                  style: context.text.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (!done) ...[
-            IconButton(
-              onPressed: onCamera,
-              icon: const Icon(Icons.photo_camera_outlined),
-              tooltip: 'Take a selfie',
-            ),
-            IconButton(
-              onPressed: onGallery,
-              icon: const Icon(Icons.photo_library_outlined),
-              tooltip: 'Choose from photos',
-            ),
-          ] else
-            IconButton(
-              onPressed: onCamera,
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Retake',
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel({required this.label});
 

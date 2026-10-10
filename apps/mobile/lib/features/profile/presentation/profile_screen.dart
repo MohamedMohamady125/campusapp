@@ -9,6 +9,7 @@ import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/notifications/presentation/notification_bell.dart';
+import 'package:campusconnect/features/profile/presentation/avatar_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -40,6 +41,9 @@ class ProfileScreen extends ConsumerWidget {
                   email: user.email,
                   reputationScore: user.reputationScore,
                   ratingCount: user.ratingCount,
+                  // Sheet refreshes the profile itself; the watched user
+                  // rebuilds this card with the new photo.
+                  onChangePhoto: () => unawaited(showAvatarSheet(context)),
                 ),
                 SizedBox(height: tokens.space5),
                 Card(
@@ -205,6 +209,7 @@ class _ProfileHeaderCard extends StatelessWidget {
     required this.email,
     required this.reputationScore,
     required this.ratingCount,
+    required this.onChangePhoto,
   });
 
   final String displayName;
@@ -212,6 +217,7 @@ class _ProfileHeaderCard extends StatelessWidget {
   final String email;
   final num reputationScore;
   final int ratingCount;
+  final VoidCallback onChangePhoto;
 
   @override
   Widget build(BuildContext context) {
@@ -227,10 +233,40 @@ class _ProfileHeaderCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          VerifiedAvatar(
-            name: displayName,
-            imageUrl: avatarUrl,
-            size: AvatarSize.xl,
+          // Tap the avatar (or its camera badge) to change the photo.
+          Semantics(
+            button: true,
+            label: 'Change profile photo',
+            child: GestureDetector(
+              onTap: onChangePhoto,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  VerifiedAvatar(
+                    name: displayName,
+                    imageUrl: avatarUrl,
+                    size: AvatarSize.xl,
+                  ),
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.outlineVariant),
+                      ),
+                      child: Icon(
+                        Icons.photo_camera_outlined,
+                        size: 14,
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           SizedBox(height: tokens.space3),
           Text(
