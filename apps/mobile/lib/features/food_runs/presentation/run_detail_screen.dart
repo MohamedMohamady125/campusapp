@@ -1174,10 +1174,15 @@ class _PaymentCard extends StatelessWidget {
             ],
           if (run.prepayRequired) ...[
             SizedBox(height: tokens.space3),
+            // Money copy stays loud: the consequence is real (the runner can
+            // drop unpaid orders at the "heading to the store" gate), so say
+            // it plainly instead of a polite nudge.
             Text(
-              'Prepay required — send it before pickup.',
+              'Prepay required — pay before the runner heads to the store, '
+              'or they can drop your order.',
               style: context.text.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
+                color: tokens.warning,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
