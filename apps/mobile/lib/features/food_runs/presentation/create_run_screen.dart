@@ -895,7 +895,7 @@ class _PaymentPromptCard extends StatelessWidget {
   }
 }
 
-/// Searchable, grouped (campus / off-campus) food-spot picker sheet.
+/// Searchable on-campus food-spot picker sheet (launch is campus-only).
 class _SpotPickerSheet extends StatefulWidget {
   const _SpotPickerSheet({required this.spots});
 
@@ -912,14 +912,10 @@ class _SpotPickerSheetState extends State<_SpotPickerSheet> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
+    // Launch is campus-only — off-campus spots never surface in the picker.
     final filtered = widget.spots
-        .where((s) => s.name.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
-    final campus = filtered
         .where((s) => s.category == FoodSpotCategory.campus)
-        .toList();
-    final offCampus = filtered
-        .where((s) => s.category == FoodSpotCategory.offCampus)
+        .where((s) => s.name.toLowerCase().contains(_query.toLowerCase()))
         .toList();
 
     return DraggableScrollableSheet(
@@ -951,14 +947,7 @@ class _SpotPickerSheetState extends State<_SpotPickerSheet> {
                   : ListView(
                       controller: scroll,
                       children: [
-                        if (campus.isNotEmpty) ...[
-                          _groupHeader(context, 'On campus'),
-                          for (final s in campus) _spotTile(context, s),
-                        ],
-                        if (offCampus.isNotEmpty) ...[
-                          _groupHeader(context, 'Off campus'),
-                          for (final s in offCampus) _spotTile(context, s),
-                        ],
+                        for (final s in filtered) _spotTile(context, s),
                         if (filtered.isEmpty)
                           Padding(
                             padding: EdgeInsets.all(tokens.space6),
@@ -977,14 +966,6 @@ class _SpotPickerSheetState extends State<_SpotPickerSheet> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _groupHeader(BuildContext context, String label) {
-    final tokens = context.tokens;
-    return Padding(
-      padding: EdgeInsets.only(top: tokens.space3, bottom: tokens.space1),
-      child: Text(label.toUpperCase(), style: AppTextStyles.label),
     );
   }
 

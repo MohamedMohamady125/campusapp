@@ -4,7 +4,6 @@ import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/design_system/components/content_width.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/fade_slide_in.dart';
-import 'package:campusconnect/design_system/components/live_dot.dart';
 import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
@@ -84,11 +83,8 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
             controller: _scroll,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(
-                child: SafeArea(
-                  bottom: false,
-                  child: _Header(liveCount: liveCount),
-                ),
+              const SliverToBoxAdapter(
+                child: SafeArea(bottom: false, child: _Header()),
               ),
               ..._liveSlivers(state),
             ],
@@ -160,7 +156,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
               tokens.space4,
               tokens.space3,
             ),
-            child: Text('OPEN NOW · ON CAMPUS', style: AppTextStyles.labelWide),
+            child: Text('OPEN NOW', style: AppTextStyles.labelWide),
           ),
         ),
       SliverPadding(
@@ -192,11 +188,9 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   }
 }
 
-/// Screen header: date eyebrow, title + live pill + bell.
+/// Screen header: date eyebrow, title + bell.
 class _Header extends StatelessWidget {
-  const _Header({required this.liveCount});
-
-  final int liveCount;
+  const _Header();
 
   @override
   Widget build(BuildContext context) {
@@ -224,8 +218,6 @@ class _Header extends StatelessWidget {
               Row(
                 children: [
                   Text('Food Runs', style: AppTextStyles.displayMedium),
-                  SizedBox(width: tokens.space3),
-                  if (liveCount > 0) _LivePill(count: liveCount),
                   const Spacer(),
                   const NotificationBell(),
                 ],
@@ -257,42 +249,6 @@ class _Header extends StatelessWidget {
       _ => 'GOOD EVENING',
     };
     return '$greeting · ${days[now.weekday - 1]} ${clockTime(now)}';
-  }
-}
-
-/// Green "N live" pill with a pulsing dot — signals a live, breathing feed.
-class _LivePill extends StatelessWidget {
-  const _LivePill({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: tokens.space2,
-        vertical: tokens.space1,
-      ),
-      decoration: ShapeDecoration(
-        color: tokens.success.withValues(alpha: .12),
-        shape: const StadiumBorder(),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          LiveDot(color: tokens.success),
-          SizedBox(width: tokens.space1),
-          Text(
-            '$count live',
-            style: context.text.labelSmall?.copyWith(
-              color: tokens.success,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
