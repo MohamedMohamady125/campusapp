@@ -54,31 +54,39 @@ class RunRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Photo banner — the card leads with food, not text.
-            SizedBox(
-              height: 132,
-              width: double.infinity,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  SpotImage(
-                    name: run.foodSpot.name,
-                    imageUrl: run.foodSpot.imageUrl,
+            // Photo banner — the card leads with food, not text. Tracks the
+            // catalog's 2:1 crop (so cover-fit shows the whole frame instead
+            // of zooming into a sliver), clamped so wide layouts don't blow
+            // the card up into a billboard.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final height = (constraints.maxWidth / 2).clamp(132.0, 200.0);
+                return SizedBox(
+                  height: height,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      SpotImage(
+                        name: run.foodSpot.name,
+                        imageUrl: run.foodSpot.imageUrl,
+                      ),
+                      // Fee pill floats on the photo, top-right.
+                      Positioned(
+                        top: tokens.space2,
+                        right: tokens.space2,
+                        child: _FeePill(feeCents: run.feeCents),
+                      ),
+                      // Live meta pill (status or closing time), bottom-left.
+                      Positioned(
+                        left: tokens.space2,
+                        bottom: tokens.space2,
+                        child: _MetaPill(label: metaLabel, accent: accent),
+                      ),
+                    ],
                   ),
-                  // Fee pill floats on the photo, top-right.
-                  Positioned(
-                    top: tokens.space2,
-                    right: tokens.space2,
-                    child: _FeePill(feeCents: run.feeCents),
-                  ),
-                  // Live meta pill (status or closing time), bottom-left.
-                  Positioned(
-                    left: tokens.space2,
-                    bottom: tokens.space2,
-                    child: _MetaPill(label: metaLabel, accent: accent),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             Padding(
               padding: EdgeInsets.all(tokens.space3),

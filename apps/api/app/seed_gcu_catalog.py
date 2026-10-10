@@ -26,7 +26,13 @@ from app.models.enums import FoodSpotCategory
 
 log = structlog.get_logger()
 
-_UNSPLASH = "https://images.unsplash.com/photo-{pid}?auto=format&fit=crop&w=800&q=60"
+# 2:1 banner crop with entropy framing — Unsplash pre-crops to the exact
+# aspect the feed-card banner renders at, so BoxFit.cover never has to zoom
+# into a macro close-up (the raw portrait/square originals looked terrible
+# squeezed into a wide strip).
+_UNSPLASH = (
+    "https://images.unsplash.com/photo-{pid}?auto=format&fit=crop&crop=entropy&w=1000&h=500&q=70"
+)
 _IMG_CHICKEN = _UNSPLASH.format(pid="1606755962773-d324e0a13086")
 _IMG_ASIAN = _UNSPLASH.format(pid="1512058564366-18510be2db19")
 _IMG_BOWL = _UNSPLASH.format(pid="1546069901-ba9599a7e63c")
@@ -374,8 +380,9 @@ async def _seed(session: AsyncSession) -> None:
             row.description = description
             row.lat = lat
             row.lng = lng
-            if not row.image_url:
-                row.image_url = image
+            # Catalog images are curated here — always sync so crop/quality
+            # fixes to the URL template reach existing rows on redeploy.
+            row.image_url = image
             updated += 1
     log.info("seed_gcu_catalog.spots", created=created, updated=updated)
 
