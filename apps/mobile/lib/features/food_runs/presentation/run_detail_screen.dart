@@ -374,13 +374,19 @@ class _RunDetailBody extends ConsumerWidget {
     }.contains(run.status);
 
     return [
-      // Glanceable dashboard: how many need an answer, how many are riding,
-      // what the fee is — replaces three scattered plain-text lines.
-      _RunnerDashboard(
-        run: run,
-        pendingCount: pending.length,
-        deliveryCount: deliveries.length,
-      ),
+      if (active)
+        // Glanceable dashboard: how many need an answer, how many are
+        // riding, what the fee is — replaces three scattered text lines.
+        _RunnerDashboard(
+          run: run,
+          pendingCount: pending.length,
+          deliveryCount: deliveries.length,
+        )
+      else
+        // Terminal run: the dashboard's live counts are all zero, so swap
+        // it for a receipt — what happened, to whom, and the money total.
+        // Full per-order detail stays below in the WRAPPED UP cards.
+        _RunSummaryCard(run: run, orders: orders),
       SizedBox(height: tokens.space3),
       if (active) ...[
         _RunnerStatusStepper(
@@ -1226,6 +1232,131 @@ class _PaymentMethodRow extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Receipt card for a finished/cancelled/expired run (runner view): outcome
+/// counts and the money total, so the history entry stands on its own.
+/// Money copy stays explicit — totals prevent "you still owe me" disputes.
+class _RunSummaryCard extends StatelessWidget {
+  const _RunSummaryCard({required this.run, required this.orders});
+
+  final RunResponse run;
+  final List<RunOrderResponse> orders;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final delivered = orders
+        .where(
+          (o) =>
+              o.status == RunOrderStatus.delivered ||
+              o.status == RunOrderStatus.received,
+        )
+        .length;
+    final noShows = orders
+        .where((o) => o.status == RunOrderStatus.noShow)
+        .length;
+    final declined = orders
+        .where((o) => o.status == RunOrderStatus.declined)
+        .length;
+    final proofs = orders.where((o) => o.paymentSubmittedAt != null).length;
+    final collectedCents = delivered * run.feeCents;
+
+    return Container(
+      padding: EdgeInsets.all(tokens.space4),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: tokens.brMd,
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('RUN SUMMARY', style: AppTextStyles.label),
+              ),
+              Text(
+                runDayTimeLabel(run.leavingAt),
+                style: context.text.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: tokens.space3),
+          _summaryRow(
+            context,
+            Icons.check_circle_outline,
+            delivered == 1
+                ? '1 order delivered'
+                : '$delivered'
+                      ' orders delivered',
+          ),
+          if (noShows > 0)
+            _summaryRow(
+              context,
+              Icons.person_off_outlined,
+              noShows == 1 ? '1 no-show' : '$noShows no-shows',
+            ),
+          if (declined > 0)
+            _summaryRow(
+              context,
+              Icons.block_outlined,
+              declined == 1
+                  ? '1 request declined'
+                  : '$declined'
+                        ' requests declined',
+            ),
+          if (run.prepayRequired && orders.isNotEmpty)
+            _summaryRow(
+              context,
+              Icons.receipt_long_outlined,
+              'Payment proofs: $proofs of ${orders.length}',
+            ),
+          if (run.feeCents > 0 && delivered > 0) ...[
+            SizedBox(height: tokens.space2),
+            Divider(height: 1, color: colors.outlineVariant),
+            SizedBox(height: tokens.space3),
+            Row(
+              children: [
+                Icon(Icons.payments_outlined, size: 18, color: tokens.success),
+                SizedBox(width: tokens.space2),
+                Expanded(
+                  child: Text(
+                    'Total fees: ${runFeeAmount(collectedCents)} '
+                    '(${runFeeAmount(run.feeCents)} × $delivered) — '
+                    'collected off-app.',
+                    style: context.text.bodyMedium?.copyWith(
+                      color: tokens.success,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(BuildContext context, IconData icon, String label) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    return Padding(
+      padding: EdgeInsets.only(bottom: tokens.space2),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: colors.onSurfaceVariant),
+          SizedBox(width: tokens.space2),
+          Expanded(child: Text(label, style: context.text.bodyMedium)),
+        ],
+      ),
     );
   }
 }

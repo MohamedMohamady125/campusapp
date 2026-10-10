@@ -45,6 +45,28 @@ String? _dayPrefix(DateTime dt, DateTime now) {
   return weekdays[dt.weekday - 1];
 }
 
+/// Absolute day + time for history/receipts, e.g. `Oct 9 · 3:45 PM`.
+/// Past runs need a real date — relative labels ("Leaving 3:45 PM") read
+/// as live commitments.
+String runDayTimeLabel(DateTime dt) {
+  final local = dt.toLocal();
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${months[local.month - 1]} ${local.day} · ${clockTime(local)}';
+}
+
 /// Capacity label for the run detail info row, framed per viewer.
 ///
 /// Requesters only care whether they can still get in, so they see remaining

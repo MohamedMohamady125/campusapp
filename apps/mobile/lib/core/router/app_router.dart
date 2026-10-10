@@ -20,6 +20,7 @@ import 'package:campusconnect/features/marketplace/presentation/sell_screen.dart
 import 'package:campusconnect/features/messaging/presentation/thread_screen.dart';
 import 'package:campusconnect/features/notifications/presentation/notifications_screen.dart';
 import 'package:campusconnect/features/profile/presentation/edit_profile_screen.dart';
+import 'package:campusconnect/features/profile/presentation/orders_screen.dart';
 import 'package:campusconnect/features/profile/presentation/profile_screen.dart';
 import 'package:campusconnect/features/tutoring/presentation/tutor_search_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -204,6 +205,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'payment-methods',
                     builder: (_, _) => const PaymentMethodsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'orders',
+                    builder: (_, _) => const OrdersScreen(),
                   ),
                 ],
               ),
