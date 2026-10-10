@@ -5,6 +5,7 @@ import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/confetti_burst.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
+import 'package:campusconnect/design_system/components/roll_text.dart';
 import 'package:campusconnect/design_system/components/skeletons/skeletons.dart';
 import 'package:campusconnect/design_system/components/slide_to_confirm.dart';
 import 'package:campusconnect/design_system/components/swipe_action.dart';
@@ -1484,8 +1485,9 @@ class _DashboardStat extends StatelessWidget {
             SizedBox(height: tokens.space1),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                value,
+              // Live dashboard values roll instead of snapping on refresh.
+              child: RollText(
+                text: value,
                 style: context.text.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: color ?? colors.onSurface,

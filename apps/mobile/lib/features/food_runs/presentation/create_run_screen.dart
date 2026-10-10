@@ -1,6 +1,8 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/pressable.dart';
+import 'package:campusconnect/design_system/components/roll_text.dart';
+import 'package:campusconnect/design_system/components/success_check.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
@@ -152,6 +154,9 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
       ref.read(runsFeedControllerProvider.notifier).pokeAfterMutation();
+      if (!mounted) return;
+      // Check-draw moment, then land on the run dashboard.
+      await showSuccessCheck(context);
       if (!mounted) return;
       _snack('Run posted. Orders incoming!');
       context.go('/runs/run/${run.id}');
@@ -647,6 +652,21 @@ class _DealCard extends StatelessWidget {
                   selected: feeCents == cents,
                   onTap: () => onFeeChanged(cents),
                 ),
+              // Any other amount — opens the stepper sheet. Once a custom
+              // value is set, the pill wears it so the choice stays visible.
+              _ChoicePill(
+                label: _feeOptions.contains(feeCents)
+                    ? 'Custom'
+                    : runFeeAmount(feeCents),
+                selected: !_feeOptions.contains(feeCents),
+                onTap: () async {
+                  final cents = await showModalBottomSheet<int>(
+                    context: context,
+                    builder: (context) => _CustomFeeSheet(initial: feeCents),
+                  );
+                  if (cents != null) onFeeChanged(cents);
+                },
+              ),
             ],
           ),
           SizedBox(height: tokens.space4),
@@ -683,8 +703,10 @@ class _DealCard extends StatelessWidget {
               ),
               SizedBox(width: tokens.space2),
               Expanded(
-                child: Text(
-                  potential > 0
+                // Rolls to the new amount as fee/spot chips change.
+                child: RollText(
+                  alignment: Alignment.centerLeft,
+                  text: potential > 0
                       ? 'Earn up to ${runFeeAmount(potential)}'
                       : 'Free run — good karma',
                   style: context.text.bodySmall?.copyWith(
@@ -1065,6 +1087,125 @@ class _LeavingTimeSheetState extends State<_LeavingTimeSheet> {
               child: const Text('Set time'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Custom fee sheet — one big rolling amount with round ± steppers.
+/// Steps \$0.25, floor \$0 (free), cap \$20. Pops the chosen cents.
+class _CustomFeeSheet extends StatefulWidget {
+  const _CustomFeeSheet({required this.initial});
+
+  final int initial;
+
+  @override
+  State<_CustomFeeSheet> createState() => _CustomFeeSheetState();
+}
+
+class _CustomFeeSheetState extends State<_CustomFeeSheet> {
+  static const _step = 25;
+  static const _max = 2000;
+
+  late int _cents = widget.initial.clamp(0, _max);
+
+  void _bump(int delta) {
+    setState(() => _cents = (_cents + delta).clamp(0, _max));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          tokens.space4,
+          0,
+          tokens.space4,
+          tokens.space4,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Fee per order',
+              textAlign: TextAlign.center,
+              style: context.text.titleLarge,
+            ),
+            SizedBox(height: tokens.space4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _FeeStepButton(
+                  icon: Icons.remove,
+                  enabled: _cents > 0,
+                  onTap: () => _bump(-_step),
+                ),
+                SizedBox(
+                  width: 148,
+                  child: RollText(
+                    text: _cents == 0 ? 'Free' : runFeeAmount(_cents),
+                    textAlign: TextAlign.center,
+                    style: context.text.displayMedium,
+                  ),
+                ),
+                _FeeStepButton(
+                  icon: Icons.add,
+                  enabled: _cents < _max,
+                  onTap: () => _bump(_step),
+                ),
+              ],
+            ),
+            SizedBox(height: tokens.space2),
+            Text(
+              'What each person pays you for the trip',
+              textAlign: TextAlign.center,
+              style: context.text.bodySmall?.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
+            ),
+            SizedBox(height: tokens.space4),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(_cents),
+              child: const Text('Set fee'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Round hairline stepper button for the fee sheet.
+class _FeeStepButton extends StatelessWidget {
+  const _FeeStepButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Pressable(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: ShapeDecoration(
+          color: colors.surface,
+          shape: StadiumBorder(side: BorderSide(color: colors.outline)),
+        ),
+        child: Icon(
+          icon,
+          size: 24,
+          color: enabled ? colors.onSurface : AppColors.textTertiary,
         ),
       ),
     );

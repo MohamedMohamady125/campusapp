@@ -5,9 +5,9 @@ import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
 /// Shimmering placeholder box (spec §13.1).
 ///
-/// Skeletons must match the final layout's exact geometry; shimmer runs at
-/// `Durations.long2` with `Easing.linear`, and is disabled when the OS asks
-/// for reduced motion.
+/// Skeletons must match the final layout's exact geometry. A light band
+/// sweeps left→right across the box (the modern skeleton treatment, vs the
+/// old opacity pulse); disabled when the OS asks for reduced motion.
 class SkeletonBox extends StatefulWidget {
   const SkeletonBox({
     super.key,
@@ -30,7 +30,7 @@ class _SkeletonBoxState extends State<SkeletonBox>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: Durations.long2,
+    duration: const Duration(milliseconds: 1200),
   );
 
   @override
@@ -39,7 +39,7 @@ class _SkeletonBoxState extends State<SkeletonBox>
     if (MediaQuery.disableAnimationsOf(context)) {
       _controller.stop();
     } else if (!_controller.isAnimating) {
-      unawaited(_controller.repeat(reverse: true));
+      unawaited(_controller.repeat());
     }
   }
 
@@ -52,9 +52,10 @@ class _SkeletonBoxState extends State<SkeletonBox>
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) => Container(
+    final base = colors.surfaceContainer;
+    final highlight = colors.surfaceContainerLow;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return Container(
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(
@@ -62,14 +63,35 @@ class _SkeletonBoxState extends State<SkeletonBox>
           borderRadius: widget.shape == BoxShape.circle
               ? null
               : widget.borderRadius,
-          // Shimmer: base surfaceAlt, highlight surfaceLight (Fifty Free §6).
-          color: Color.lerp(
-            colors.surfaceContainer,
-            colors.surfaceContainerLow,
-            _controller.value,
-          ),
+          color: base,
         ),
-      ),
+      );
+    }
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        // Sweep center travels past both edges so the band fully enters and
+        // exits; stops stay clamped to the gradient's 0..1 domain.
+        final t = -0.4 + 1.8 * _controller.value;
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            shape: widget.shape,
+            borderRadius: widget.shape == BoxShape.circle
+                ? null
+                : widget.borderRadius,
+            gradient: LinearGradient(
+              colors: [base, highlight, base],
+              stops: [
+                (t - 0.25).clamp(0.0, 1.0),
+                t.clamp(0.0, 1.0),
+                (t + 0.25).clamp(0.0, 1.0),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
