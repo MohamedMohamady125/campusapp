@@ -159,10 +159,11 @@ class _RunDetailBody extends ConsumerWidget {
       children: [
         _RunHeaderCard(run: run),
         SizedBox(height: tokens.space4),
-        // Live "where's my runner" map — requester/visitor only. The runner
-        // gets their own RunnerRouteCard map below; rendering both stacked
-        // two maps on the dasher's screen.
-        if (!isRunner && run.runnerLocation != null) ...[
+        // Live "where's my runner" map — visitor placement only. The runner
+        // gets their own RunnerRouteCard map below, and a requester's map
+        // renders inside _requesterSection *after* the payment widgets —
+        // settling up outranks watching the dot move.
+        if (!isRunner && myOrder == null && run.runnerLocation != null) ...[
           LiveMapCard(run: run),
           SizedBox(height: tokens.space4),
         ],
@@ -269,6 +270,13 @@ class _RunDetailBody extends ConsumerWidget {
         _PaymentCard(run: run),
         SizedBox(height: tokens.space3),
         _PaymentProofCard(order: order, controller: controller),
+      ],
+      // Live "where's my runner" map — below the money widgets on purpose:
+      // once accepted, paying the runner is the requester's job; tracking
+      // the dot is entertainment.
+      if (run.runnerLocation != null) ...[
+        SizedBox(height: tokens.space3),
+        LiveMapCard(run: run),
       ],
       if (order.status == RunOrderStatus.delivered) ...[
         SizedBox(height: tokens.space3),
