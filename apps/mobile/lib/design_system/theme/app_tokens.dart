@@ -62,8 +62,8 @@ class AppTokens extends ThemeExtension<AppTokens> {
   BorderRadius get brFull => BorderRadius.circular(radiusFull);
 
   static const darkTokens = AppTokens(
-    verified: Color(0xFF4A84B8),
-    onVerified: Color(0xFFFFFFFF),
+    verified: Color(0xFFFF8268),
+    onVerified: Color(0xFF1C1B19),
     success: Color(0xFF10B981),
     warning: Color(0xFFFFB700),
     warningContainer: Color(0xFF5C3D00),
@@ -71,12 +71,13 @@ class AppTokens extends ThemeExtension<AppTokens> {
     online: Color(0xFF10B981),
   );
 
-  // Fifty Free status/accent tokens.
+  // Trot status/accent tokens. Verified badge rides the coral brand accent;
+  // warning is a text-grade amber that passes AA on its tinted container.
   static const lightTokens = AppTokens(
-    verified: Color(0xFF144F86),
-    onVerified: Color(0xFFFFFFFF),
+    verified: Color(0xFFFF5A3C),
+    onVerified: Color(0xFF1C1B19),
     success: Color(0xFF059669),
-    warning: Color(0xFFF59E0B),
+    warning: Color(0xFFB45309),
     warningContainer: Color(0xFFFFF6E0),
     ratingStar: Color(0xFFF5A623),
     online: Color(0xFF10B981),

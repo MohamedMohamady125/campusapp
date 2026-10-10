@@ -4,11 +4,12 @@ import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Theme assembly — Fifty Free.
+/// Theme assembly — Trot.
 ///
-/// Flat, white, airy. Hairline borders instead of shadows; zero elevation
-/// and zero surface tint everywhere. One accent color (brand blue) for CTAs,
-/// links and selected states; ink (near-black) for snackbars and contrast
+/// Warm cream canvas, white cards, hairline borders instead of shadows;
+/// zero elevation and zero surface tint everywhere. One accent color
+/// (coral #FF5A3C) for CTAs and selected states — with INK labels, since
+/// white-on-coral fails WCAG AA; ink (charcoal) for snackbars and contrast
 /// moments. Manrope w800 display type, Inter body. Cupertino slide page
 /// transitions on all platforms.
 abstract final class AppTheme {
@@ -16,8 +17,8 @@ abstract final class AppTheme {
   static ThemeData dark() => _build(AppColors.dark, AppTokens.darkTokens);
 
   static ThemeData _build(ColorScheme scheme, AppTokens tokens) {
-    // Light mode sits on a blue-tinted canvas so white cards visibly float —
-    // the app reads branded, not blank-white.
+    // Light mode sits on the warm cream canvas so white cards visibly
+    // float — the app reads branded, not blank-white.
     final canvas = scheme.brightness == Brightness.light
         ? AppColors.canvas
         : scheme.surface;
@@ -98,7 +99,7 @@ abstract final class AppTheme {
         shadowColor: Colors.transparent,
         elevation: 0,
         height: 64,
-        // Selected tab is brand blue (delivery-app convention) — no pill
+        // Selected tab is brand coral (delivery-app convention) — no pill
         // indicator, color alone carries the state.
         indicatorColor: Colors.transparent,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -119,13 +120,14 @@ abstract final class AppTheme {
           );
         }),
       ),
-      // Primary CTA: solid blue stadium pill, ≥52px tall, zero elevation.
+      // Primary CTA: solid coral stadium pill with INK label (white fails
+      // AA on coral), ≥52px tall, zero elevation.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: scheme.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: scheme.onPrimary,
           disabledBackgroundColor: AppColors.primaryDisabled,
-          disabledForegroundColor: Colors.white,
+          disabledForegroundColor: AppColors.inkSoft,
           elevation: 0,
           minimumSize: const Size(64, 52),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -136,9 +138,9 @@ abstract final class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: scheme.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: scheme.onPrimary,
           disabledBackgroundColor: AppColors.primaryDisabled,
-          disabledForegroundColor: Colors.white,
+          disabledForegroundColor: AppColors.inkSoft,
           elevation: 0,
           shadowColor: Colors.transparent,
           minimumSize: const Size(64, 52),
@@ -157,7 +159,7 @@ abstract final class AppTheme {
         ),
       ),
       // TextButton = inline LINK (Forgot password?, Create an account,
-      // dialog dismissals): plain brand-blue text, no fill. Buttons that are
+      // dialog dismissals): plain brand-colored text, no fill. Buttons that are
       // real actions style an explicit tonal frame at the call site.
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -170,7 +172,7 @@ abstract final class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: scheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: scheme.onPrimary,
         elevation: 0,
         focusElevation: 0,
         hoverElevation: 0,
