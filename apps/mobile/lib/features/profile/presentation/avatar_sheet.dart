@@ -3,6 +3,7 @@ import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
+import 'package:campusconnect/shared/image_normalizer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -50,16 +51,14 @@ class _AvatarSheetState extends ConsumerState<_AvatarSheet> {
       _error = null;
     });
     try {
-      final bytes = await file.readAsBytes();
-      final lower = file.path.toLowerCase();
-      final contentType = lower.endsWith('.png')
-          ? 'image/png'
-          : lower.endsWith('.webp')
-          ? 'image/webp'
-          : 'image/jpeg';
+      // Any photo, any size: EXIF-rotate, square-crop, downscale, compress.
+      final normalized = await normalizeAvatar(await file.readAsBytes());
       await ref
           .read(runsRepositoryProvider)
-          .uploadAvatar(bytes: bytes, contentType: contentType);
+          .uploadAvatar(
+            bytes: normalized.bytes,
+            contentType: normalized.contentType,
+          );
       await ref.read(authControllerProvider.notifier).refreshProfile();
       if (mounted) Navigator.of(context).pop(true);
     } on Object catch (e) {

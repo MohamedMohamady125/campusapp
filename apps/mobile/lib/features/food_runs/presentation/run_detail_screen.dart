@@ -24,6 +24,7 @@ import 'package:campusconnect/features/food_runs/presentation/runner_location_br
 import 'package:campusconnect/features/food_runs/presentation/runner_route_card.dart';
 import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
 import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
+import 'package:campusconnect/shared/image_normalizer.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/services.dart'
     show Clipboard, ClipboardData, HapticFeedback;
@@ -2054,19 +2055,13 @@ class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
   final _picker = ImagePicker();
   XFile? _picked;
   Uint8List? _bytes;
+  String _uploadContentType = 'image/jpeg';
   bool _submitting = false;
 
   @override
   void dispose() {
     _note.dispose();
     super.dispose();
-  }
-
-  String _contentType(String path) {
-    final lower = path.toLowerCase();
-    if (lower.endsWith('.png')) return 'image/png';
-    if (lower.endsWith('.webp')) return 'image/webp';
-    return 'image/jpeg';
   }
 
   Future<void> _pick() async {
@@ -2076,11 +2071,13 @@ class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
       imageQuality: 85,
     );
     if (file == null) return;
-    final bytes = await file.readAsBytes();
+    // Any screenshot, any size: EXIF-rotate, downscale, compress ≤5MB cap.
+    final normalized = await normalizePhoto(await file.readAsBytes());
     if (!mounted) return;
     setState(() {
       _picked = file;
-      _bytes = bytes;
+      _bytes = normalized.bytes;
+      _uploadContentType = normalized.contentType;
     });
   }
 
@@ -2094,7 +2091,7 @@ class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
       await widget.controller.submitPaymentProof(
         widget.order.id,
         bytes: bytes,
-        contentType: _contentType(file.path),
+        contentType: _uploadContentType,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
       unawaited(HapticFeedback.mediumImpact());
