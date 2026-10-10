@@ -52,7 +52,7 @@ class ProfileScreen extends ConsumerWidget {
                       ListTile(
                         leading: const Icon(Icons.receipt_long_outlined),
                         title: const Text('Orders'),
-                        subtitle: const Text('Every run, full details'),
+                        subtitle: const Text('Every order, full details'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.go('/profile/orders'),
                       ),

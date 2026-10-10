@@ -14,10 +14,10 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Orders — the profile's complete run history: every run posted and every
-/// order joined, active first, then the full past. Each row opens the run
-/// detail with the complete record (order text, drop-off, payment proof,
-/// totals) — the paper trail both sides can point at.
+/// Orders — runs the user *joined as a requester*, active first, then the
+/// full past. Runs they dashed live in My Runs (Past) instead — this screen
+/// is strictly the customer-side paper trail. Each row opens the run detail
+/// with the complete record (order text, drop-off, payment proof).
 class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key});
 
@@ -78,14 +78,17 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         ),
       ];
     }
-    if (state.myRuns.isEmpty) {
+    // Requester-side only: runs the user dashed belong in My Runs (Past),
+    // not here — Orders is strictly what *they ordered* from someone else.
+    final orders = state.myRuns.where((r) => !(r.isMine ?? false)).toList();
+    if (orders.isEmpty) {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
           child: EmptyState(
             icon: Icons.receipt_long_outlined,
             title: 'No orders yet',
-            body: 'Runs you post and orders you join will show up here.',
+            body: 'Runs you join as a requester will show up here.',
             actionLabel: 'Browse runs',
             onAction: () => context.go('/runs'),
           ),
@@ -98,10 +101,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       RunStatus.atStore,
       RunStatus.delivering,
     };
-    final active = state.myRuns
+    final active = orders
         .where((r) => activeStatuses.contains(r.status))
         .toList();
-    final past = state.myRuns
+    final past = orders
         .where((r) => !activeStatuses.contains(r.status))
         .toList();
     return [
