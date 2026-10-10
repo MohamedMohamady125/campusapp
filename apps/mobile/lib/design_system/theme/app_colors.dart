@@ -27,10 +27,11 @@ abstract final class AppColors {
   static const inkSoft = Color(0xFF2A2825);
 
   // Backgrounds / surfaces.
-  /// App canvas — warm cream per the brand brief. White cards float on it;
-  /// depth comes from the cream/white contrast plus hairline borders.
-  static const canvas = Color(0xFFF7F3EC);
-  static const background = Color(0xFFF7F3EC);
+  /// App canvas — pure white (user decision, overrides the brief's cream
+  /// base). Cream survives as subtle warm panels/input fills; depth comes
+  /// from hairline borders, never a tinted background.
+  static const canvas = Color(0xFFFFFFFF);
+  static const background = Color(0xFFFFFFFF);
   static const surface = Color(0xFFFFFFFF);
   static const surfaceLight = Color(0xFFF6F2EA); // input fills, subtle panels
   static const surfaceAlt = Color(0xFFF0EBE2); // skeletons, avatar circles

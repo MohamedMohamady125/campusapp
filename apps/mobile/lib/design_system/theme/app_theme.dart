@@ -17,8 +17,8 @@ abstract final class AppTheme {
   static ThemeData dark() => _build(AppColors.dark, AppTokens.darkTokens);
 
   static ThemeData _build(ColorScheme scheme, AppTokens tokens) {
-    // Light mode sits on the warm cream canvas so white cards visibly
-    // float — the app reads branded, not blank-white.
+    // Light mode sits on a pure white canvas (user preference); hairline
+    // borders carry card separation.
     final canvas = scheme.brightness == Brightness.light
         ? AppColors.canvas
         : scheme.surface;

@@ -3,7 +3,7 @@
     "short_name": "campusconnect",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#F7F3EC",
+    "background_color": "#FFFFFF",
     "theme_color": "#FF5A3C",
     "description": "A new Flutter project.",
     "orientation": "portrait-primary",
