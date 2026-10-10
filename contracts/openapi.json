@@ -1708,7 +1708,7 @@
         "type": "string"
       },
       "PaymentProofSubmitRequest": {
-        "description": "Requester confirms they paid: the uploaded screenshot key + optional note.",
+        "description": "Requester confirms they paid: the uploaded screenshot key + optional note.\n\nThe key must be a DB-backed image (\"db/{uuid}\") uploaded by the caller via\nPOST /images \u2014 the service rejects anything else (PROOF_KEY_INVALID).",
         "properties": {
           "note": {
             "anyOf": [
@@ -1733,46 +1733,6 @@
           "proof_key"
         ],
         "title": "PaymentProofSubmitRequest",
-        "type": "object"
-      },
-      "PaymentProofUploadUrlRequest": {
-        "description": "Requester asks for a signed URL to upload the transaction screenshot.",
-        "properties": {
-          "content_type": {
-            "title": "Content Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "content_type"
-        ],
-        "title": "PaymentProofUploadUrlRequest",
-        "type": "object"
-      },
-      "PaymentProofUploadUrlResponse": {
-        "properties": {
-          "fields": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "title": "Fields",
-            "type": "object"
-          },
-          "key": {
-            "title": "Key",
-            "type": "string"
-          },
-          "upload_url": {
-            "title": "Upload Url",
-            "type": "string"
-          }
-        },
-        "required": [
-          "upload_url",
-          "fields",
-          "key"
-        ],
-        "title": "PaymentProofUploadUrlResponse",
         "type": "object"
       },
       "PaymentQrUploadUrlRequest": {
@@ -2496,6 +2456,18 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "no_show_eligible_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Show Eligible At"
           },
           "order_text": {
             "title": "Order Text",
@@ -6839,75 +6811,6 @@
           }
         ],
         "summary": "Submit Payment Proof",
-        "tags": [
-          "runs"
-        ]
-      }
-    },
-    "/api/v1/runs/{run_id}/orders/{order_id}/payment-proof-upload-url": {
-      "post": {
-        "description": "Requester gets a signed URL to upload their transaction screenshot.",
-        "operationId": "payment_proof_upload_url_api_v1_runs__run_id__orders__order_id__payment_proof_upload_url_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "run_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Run Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "order_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Order Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PaymentProofUploadUrlRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentProofUploadUrlResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Payment Proof Upload Url",
         "tags": [
           "runs"
         ]

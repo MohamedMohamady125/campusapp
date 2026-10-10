@@ -130,6 +130,7 @@ String? pushRoute(Map<String, dynamic> data) {
         'run_status' ||
         'run_completed' ||
         'run_runner_arrived' ||
+        'run_no_show' ||
         'run_payment_submitted' ||
         'run_payment_confirmed':
       final runId = data['run_id'];

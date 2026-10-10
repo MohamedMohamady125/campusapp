@@ -78,8 +78,6 @@ import 'package:campus_api/src/model/offering_response.dart';
 import 'package:campus_api/src/model/payment_method.dart';
 import 'package:campus_api/src/model/payment_method_type.dart';
 import 'package:campus_api/src/model/payment_proof_submit_request.dart';
-import 'package:campus_api/src/model/payment_proof_upload_url_request.dart';
-import 'package:campus_api/src/model/payment_proof_upload_url_response.dart';
 import 'package:campus_api/src/model/payment_qr_upload_url_request.dart';
 import 'package:campus_api/src/model/payment_qr_upload_url_response.dart';
 import 'package:campus_api/src/model/ranked_tutor_response.dart';
@@ -188,8 +186,6 @@ part 'serializers.g.dart';
   PaymentMethod,
   PaymentMethodType,
   PaymentProofSubmitRequest,
-  PaymentProofUploadUrlRequest,
-  PaymentProofUploadUrlResponse,
   PaymentQrUploadUrlRequest,
   PaymentQrUploadUrlResponse,
   RankedTutorResponse,

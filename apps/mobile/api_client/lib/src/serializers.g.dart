@@ -74,8 +74,6 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(PaymentMethod.serializer)
       ..add(PaymentMethodType.serializer)
       ..add(PaymentProofSubmitRequest.serializer)
-      ..add(PaymentProofUploadUrlRequest.serializer)
-      ..add(PaymentProofUploadUrlResponse.serializer)
       ..add(PaymentQrUploadUrlRequest.serializer)
       ..add(PaymentQrUploadUrlResponse.serializer)
       ..add(RankedTutorResponse.serializer)
@@ -197,10 +195,6 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(ValidationError)]),
           () => ListBuilder<ValidationError>())
-      ..addBuilderFactory(
-          const FullType(
-              BuiltMap, const [const FullType(String), const FullType(String)]),
-          () => MapBuilder<String, String>())
       ..addBuilderFactory(
           const FullType(
               BuiltMap, const [const FullType(String), const FullType(String)]),

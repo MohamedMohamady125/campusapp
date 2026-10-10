@@ -20,6 +20,8 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   final String id;
   @override
+  final DateTime? noShowEligibleAt;
+  @override
   final String orderText;
   @override
   final DateTime? paymentConfirmedAt;
@@ -49,6 +51,7 @@ class _$RunOrderResponse extends RunOrderResponse {
       this.dropoffLat,
       this.dropoffLng,
       required this.id,
+      this.noShowEligibleAt,
       required this.orderText,
       this.paymentConfirmedAt,
       this.paymentNote,
@@ -77,6 +80,7 @@ class _$RunOrderResponse extends RunOrderResponse {
         dropoffLat == other.dropoffLat &&
         dropoffLng == other.dropoffLng &&
         id == other.id &&
+        noShowEligibleAt == other.noShowEligibleAt &&
         orderText == other.orderText &&
         paymentConfirmedAt == other.paymentConfirmedAt &&
         paymentNote == other.paymentNote &&
@@ -97,6 +101,7 @@ class _$RunOrderResponse extends RunOrderResponse {
     _$hash = $jc(_$hash, dropoffLat.hashCode);
     _$hash = $jc(_$hash, dropoffLng.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
+    _$hash = $jc(_$hash, noShowEligibleAt.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
     _$hash = $jc(_$hash, paymentConfirmedAt.hashCode);
     _$hash = $jc(_$hash, paymentNote.hashCode);
@@ -119,6 +124,7 @@ class _$RunOrderResponse extends RunOrderResponse {
           ..add('dropoffLat', dropoffLat)
           ..add('dropoffLng', dropoffLng)
           ..add('id', id)
+          ..add('noShowEligibleAt', noShowEligibleAt)
           ..add('orderText', orderText)
           ..add('paymentConfirmedAt', paymentConfirmedAt)
           ..add('paymentNote', paymentNote)
@@ -159,6 +165,11 @@ class RunOrderResponseBuilder
   String? _id;
   String? get id => _$this._id;
   set id(String? id) => _$this._id = id;
+
+  DateTime? _noShowEligibleAt;
+  DateTime? get noShowEligibleAt => _$this._noShowEligibleAt;
+  set noShowEligibleAt(DateTime? noShowEligibleAt) =>
+      _$this._noShowEligibleAt = noShowEligibleAt;
 
   String? _orderText;
   String? get orderText => _$this._orderText;
@@ -214,6 +225,7 @@ class RunOrderResponseBuilder
       _dropoffLat = $v.dropoffLat;
       _dropoffLng = $v.dropoffLng;
       _id = $v.id;
+      _noShowEligibleAt = $v.noShowEligibleAt;
       _orderText = $v.orderText;
       _paymentConfirmedAt = $v.paymentConfirmedAt;
       _paymentNote = $v.paymentNote;
@@ -255,6 +267,7 @@ class RunOrderResponseBuilder
             dropoffLng: dropoffLng,
             id: BuiltValueNullFieldError.checkNotNull(
                 id, r'RunOrderResponse', 'id'),
+            noShowEligibleAt: noShowEligibleAt,
             orderText: BuiltValueNullFieldError.checkNotNull(
                 orderText, r'RunOrderResponse', 'orderText'),
             paymentConfirmedAt: paymentConfirmedAt,

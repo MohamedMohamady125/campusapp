@@ -1,5 +1,6 @@
 """Food runs: lifecycle, orders, authz, expiry, run-context ratings."""
 
+import base64
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -446,6 +447,18 @@ async def test_visitor_sees_counts_only(client: httpx.AsyncClient) -> None:
 # -- state machine ------------------------------------------------------------
 
 
+async def _upload_image(client: httpx.AsyncClient, headers: dict[str, str]) -> str:
+    """DB-backed image upload (the only legal source of a proof key)."""
+    resp = await client.post(
+        "/api/v1/images",
+        json={"content_type": "image/png", "data_base64": base64.b64encode(b"png").decode()},
+        headers=headers,
+    )
+    assert resp.status_code == 201, resp.text
+    key: str = resp.json()["key"]
+    return key
+
+
 async def test_payment_proof_flow(client: httpx.AsyncClient) -> None:
     runner = await make_user(client, "runner@campus.edu")
     req = await make_user(client, "req@campus.edu")
@@ -461,36 +474,40 @@ async def test_payment_proof_flow(client: httpx.AsyncClient) -> None:
     )
     oid = resp.json()["my_order"]["id"]
     base = f"/api/v1/runs/{run['id']}/orders/{oid}"
+    key = await _upload_image(client, req)
 
     # Cannot submit payment before the runner accepts.
     early = await client.post(
-        f"{base}/payment-proof-upload-url", json={"content_type": "image/png"}, headers=req
+        f"{base}/payment-proof", json={"proof_key": key, "note": None}, headers=req
     )
     assert early.json()["error"]["code"] == "ORDER_NOT_ACCEPTED"
 
     await client.post(f"{base}/accept", headers=runner)
 
-    # Only the requester (not a bystander) may request an upload URL.
+    # Only the requester (not a bystander) may submit proof.
     forbidden = await client.post(
-        f"{base}/payment-proof-upload-url", json={"content_type": "image/png"}, headers=other
+        f"{base}/payment-proof", json={"proof_key": key, "note": None}, headers=other
     )
     assert forbidden.status_code == 403
     assert forbidden.json()["error"]["code"] == "NOT_REQUESTER"
 
-    # Unsupported content types are rejected.
-    bad = await client.post(
-        f"{base}/payment-proof-upload-url", json={"content_type": "application/pdf"}, headers=req
-    )
-    assert bad.json()["error"]["code"] == "UNSUPPORTED_CONTENT_TYPE"
+    # QA finding: an unvalidated proof_key let a requester fake "paid" (and
+    # even smuggle path traversal into the URL). Garbage, traversal, unknown
+    # ids, and other users' uploads are all rejected — nothing gets stamped.
+    for bogus in (
+        "run-payments/x.png",
+        "../../etc/passwd",
+        f"db/{uuid.uuid4()}",
+        await _upload_image(client, other),
+    ):
+        resp = await client.post(
+            f"{base}/payment-proof", json={"proof_key": bogus, "note": None}, headers=req
+        )
+        assert resp.json()["error"]["code"] == "PROOF_KEY_INVALID", bogus
+    view = (await client.get(f"/api/v1/runs/{run['id']}", headers=req)).json()
+    assert view["my_order"]["payment_submitted_at"] is None
 
-    signed = await client.post(
-        f"{base}/payment-proof-upload-url", json={"content_type": "image/png"}, headers=req
-    )
-    assert signed.status_code == 200, signed.text
-    key = signed.json()["key"]
-    assert key.startswith("run-payments/")
-
-    # Requester submits the proof; it surfaces on the runner's order card.
+    # Requester submits the real proof; it surfaces on the runner's order card.
     submit = await client.post(
         f"{base}/payment-proof", json={"proof_key": key, "note": "sent via Venmo"}, headers=req
     )
@@ -536,13 +553,14 @@ async def test_prepay_run_accept_before_payment_proof(client: httpx.AsyncClient)
     assert accept.status_code == 200, accept.text
 
     # Only now does the accepted requester see the runner's payment methods,
-    # and the proof upload path is open.
+    # and the proof path is open.
     view = (await client.get(f"/api/v1/runs/{run['id']}", headers=req)).json()
     assert view["runner"]["payment_methods"], "accepted requester must see payment rails"
-    signed = await client.post(
-        f"{base}/payment-proof-upload-url", json={"content_type": "image/png"}, headers=req
+    key = await _upload_image(client, req)
+    submit = await client.post(
+        f"{base}/payment-proof", json={"proof_key": key, "note": None}, headers=req
     )
-    assert signed.status_code == 200, signed.text
+    assert submit.status_code == 200, submit.text
 
 
 async def test_prepay_runner_can_drop_accepted_unpaid_order(client: httpx.AsyncClient) -> None:
@@ -575,7 +593,7 @@ async def test_prepay_runner_can_drop_accepted_unpaid_order(client: httpx.AsyncC
     # One requester pays (submits proof); the other never does.
     proof = await client.post(
         f"/api/v1/runs/{run['id']}/orders/{paid_oid}/payment-proof",
-        json={"proof_key": "run-payments/x.png", "note": None},
+        json={"proof_key": await _upload_image(client, paid_req), "note": None},
         headers=paid_req,
     )
     assert proof.status_code == 200, proof.text
@@ -755,8 +773,10 @@ async def test_cancel_and_no_show(client: httpx.AsyncClient) -> None:
     first_arrived = resp.json()["orders"][0]["arrived_at"]
     assert first_arrived is not None
     # The requester sees the stamp (drives their countdown) and is notified.
+    # The deadline is server-authoritative so clients never hardcode 5 min.
     view = (await client.get(f"/api/v1/runs/{run2['id']}", headers=req)).json()
     assert view["my_order"]["arrived_at"] is not None
+    assert view["my_order"]["no_show_eligible_at"] is not None
     async with async_session_factory() as session:
         notif = (
             (
@@ -784,6 +804,14 @@ async def test_cancel_and_no_show(client: httpx.AsyncClient) -> None:
         await session.commit()
     resp = await client.post(f"{base}/no-show", headers=runner)
     assert resp.json()["orders"][0]["status"] == "no_show"
+    # Never silent (QA finding): the requester is told their order closed.
+    async with async_session_factory() as session:
+        no_show_notifs = (
+            (await session.execute(select(Notification).where(Notification.type == "run_no_show")))
+            .scalars()
+            .all()
+        )
+    assert len(no_show_notifs) == 1
     # Cancelled past at_store is illegal.
     resp = await client.post(f"/api/v1/runs/{run2['id']}/cancel", headers=runner)
     assert resp.json()["error"]["code"] == "INVALID_TRANSITION"

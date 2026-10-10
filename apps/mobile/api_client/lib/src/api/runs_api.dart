@@ -16,8 +16,6 @@ import 'package:campus_api/src/model/food_spot_create_request.dart';
 import 'package:campus_api/src/model/food_spot_response.dart';
 import 'package:campus_api/src/model/http_validation_error.dart';
 import 'package:campus_api/src/model/payment_proof_submit_request.dart';
-import 'package:campus_api/src/model/payment_proof_upload_url_request.dart';
-import 'package:campus_api/src/model/payment_proof_upload_url_response.dart';
 import 'package:campus_api/src/model/run_create_request.dart';
 import 'package:campus_api/src/model/run_location_update_request.dart';
 import 'package:campus_api/src/model/run_order_create_request.dart';
@@ -1305,111 +1303,6 @@ class RunsApi {
     }
 
     return Response<RunPageResponse>(
-      data: _responseData,
-      headers: _response.headers,
-      isRedirect: _response.isRedirect,
-      requestOptions: _response.requestOptions,
-      redirects: _response.redirects,
-      statusCode: _response.statusCode,
-      statusMessage: _response.statusMessage,
-      extra: _response.extra,
-    );
-  }
-
-  /// Payment Proof Upload Url
-  /// Requester gets a signed URL to upload their transaction screenshot.
-  ///
-  /// Parameters:
-  /// * [runId] 
-  /// * [orderId] 
-  /// * [paymentProofUploadUrlRequest] 
-  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
-  /// * [headers] - Can be used to add additional headers to the request
-  /// * [extras] - Can be used to add flags to the request
-  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
-  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
-  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
-  ///
-  /// Returns a [Future] containing a [Response] with a [PaymentProofUploadUrlResponse] as data
-  /// Throws [DioException] if API call or serialization fails
-  Future<Response<PaymentProofUploadUrlResponse>> paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost({ 
-    required String runId,
-    required String orderId,
-    required PaymentProofUploadUrlRequest paymentProofUploadUrlRequest,
-    CancelToken? cancelToken,
-    Map<String, dynamic>? headers,
-    Map<String, dynamic>? extra,
-    ValidateStatus? validateStatus,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  }) async {
-    final _path = r'/api/v1/runs/{run_id}/orders/{order_id}/payment-proof-upload-url'.replaceAll('{' r'run_id' '}', encodeQueryParameter(_serializers, runId, const FullType(String)).toString()).replaceAll('{' r'order_id' '}', encodeQueryParameter(_serializers, orderId, const FullType(String)).toString());
-    final _options = Options(
-      method: r'POST',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[
-          {
-            'type': 'http',
-            'scheme': 'bearer',
-            'name': 'HTTPBearer',
-          },
-        ],
-        ...?extra,
-      },
-      contentType: 'application/json',
-      validateStatus: validateStatus,
-    );
-
-    dynamic _bodyData;
-
-    try {
-      const _type = FullType(PaymentProofUploadUrlRequest);
-      _bodyData = _serializers.serialize(paymentProofUploadUrlRequest, specifiedType: _type);
-
-    } catch(error, stackTrace) {
-      throw DioException(
-         requestOptions: _options.compose(
-          _dio.options,
-          _path,
-        ),
-        type: DioExceptionType.unknown,
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
-
-    final _response = await _dio.request<Object>(
-      _path,
-      data: _bodyData,
-      options: _options,
-      cancelToken: cancelToken,
-      onSendProgress: onSendProgress,
-      onReceiveProgress: onReceiveProgress,
-    );
-
-    PaymentProofUploadUrlResponse? _responseData;
-
-    try {
-      final rawResponse = _response.data;
-      _responseData = rawResponse == null ? null : _serializers.deserialize(
-        rawResponse,
-        specifiedType: const FullType(PaymentProofUploadUrlResponse),
-      ) as PaymentProofUploadUrlResponse;
-
-    } catch (error, stackTrace) {
-      throw DioException(
-        requestOptions: _response.requestOptions,
-        response: _response,
-        type: DioExceptionType.unknown,
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
-
-    return Response<PaymentProofUploadUrlResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

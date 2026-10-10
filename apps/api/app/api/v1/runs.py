@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user, require_role
 from app.core.pagination import DEFAULT_PAGE_SIZE, clamp_limit
 from app.db.session import get_session
-from app.integrations.storage.provider import get_storage_provider
 from app.models import User
 from app.models.enums import UserRole
 from app.repositories.run_repo import RunRepository
@@ -20,8 +19,6 @@ from app.schemas.run import (
     FoodSpotCreateRequest,
     FoodSpotResponse,
     PaymentProofSubmitRequest,
-    PaymentProofUploadUrlRequest,
-    PaymentProofUploadUrlResponse,
     RunCreateRequest,
     RunLocationUpdateRequest,
     RunOrderCreateRequest,
@@ -35,7 +32,7 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 
 
 def _service(session: AsyncSession = Depends(get_session)) -> RunService:
-    return RunService(session, get_storage_provider())
+    return RunService(session)
 
 
 def _encode_feed_cursor(ts: datetime, oid: uuid.UUID) -> str:
@@ -201,26 +198,6 @@ async def decline_order(
 ) -> RunResponse:
     run = await svc.decline_order(run_id=run_id, order_id=order_id, actor=user)
     return run_response(run, viewer_id=user.id)
-
-
-@router.post(
-    "/{run_id}/orders/{order_id}/payment-proof-upload-url",
-    response_model=PaymentProofUploadUrlResponse,
-)
-async def payment_proof_upload_url(
-    run_id: uuid.UUID,
-    order_id: uuid.UUID,
-    body: PaymentProofUploadUrlRequest,
-    user: User = Depends(get_current_user),
-    svc: RunService = Depends(_service),
-) -> PaymentProofUploadUrlResponse:
-    """Requester gets a signed URL to upload their transaction screenshot."""
-    signed = await svc.create_payment_proof_upload(
-        run_id=run_id, order_id=order_id, user=user, content_type=body.content_type
-    )
-    return PaymentProofUploadUrlResponse(
-        upload_url=signed.url, fields=signed.fields, key=signed.key
-    )
 
 
 @router.post("/{run_id}/orders/{order_id}/payment-proof", response_model=RunResponse)

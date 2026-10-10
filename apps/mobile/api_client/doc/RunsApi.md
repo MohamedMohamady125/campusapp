@@ -24,7 +24,6 @@ Method | HTTP request | Description
 [**markDeliveredApiV1RunsRunIdOrdersOrderIdDeliveredPost**](RunsApi.md#markdeliveredapiv1runsrunidordersorderiddeliveredpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/delivered | Mark Delivered
 [**markNoShowApiV1RunsRunIdOrdersOrderIdNoShowPost**](RunsApi.md#marknoshowapiv1runsrunidordersorderidnoshowpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/no-show | Mark No Show
 [**myRunsApiV1RunsMineGet**](RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs
-[**paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost**](RunsApi.md#paymentproofuploadurlapiv1runsrunidordersorderidpaymentproofuploadurlpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/payment-proof-upload-url | Payment Proof Upload Url
 [**requestSpotApiV1RunsRunIdOrdersPost**](RunsApi.md#requestspotapiv1runsrunidorderspost) | **POST** /api/v1/runs/{run_id}/orders | Request Spot
 [**runFeedApiV1RunsGet**](RunsApi.md#runfeedapiv1runsget) | **GET** /api/v1/runs | Run Feed
 [**submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost**](RunsApi.md#submitpaymentproofapiv1runsrunidordersorderidpaymentproofpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/payment-proof | Submit Payment Proof
@@ -654,53 +653,6 @@ This endpoint does not need any parameter.
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost**
-> PaymentProofUploadUrlResponse paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost(runId, orderId, paymentProofUploadUrlRequest)
-
-Payment Proof Upload Url
-
-Requester gets a signed URL to upload their transaction screenshot.
-
-### Example
-```dart
-import 'package:campus_api/api.dart';
-
-final api = CampusApi().getRunsApi();
-final String runId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
-final String orderId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
-final PaymentProofUploadUrlRequest paymentProofUploadUrlRequest = ; // PaymentProofUploadUrlRequest | 
-
-try {
-    final response = api.paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost(runId, orderId, paymentProofUploadUrlRequest);
-    print(response);
-} on DioException catch (e) {
-    print('Exception when calling RunsApi->paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost: $e\n');
-}
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **runId** | **String**|  | 
- **orderId** | **String**|  | 
- **paymentProofUploadUrlRequest** | [**PaymentProofUploadUrlRequest**](PaymentProofUploadUrlRequest.md)|  | 
-
-### Return type
-
-[**PaymentProofUploadUrlResponse**](PaymentProofUploadUrlResponse.md)
-
-### Authorization
-
-[HTTPBearer](../README.md#HTTPBearer)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

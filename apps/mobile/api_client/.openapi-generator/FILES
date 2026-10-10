@@ -73,8 +73,6 @@ doc/OfferingResponse.md
 doc/PaymentMethod.md
 doc/PaymentMethodType.md
 doc/PaymentProofSubmitRequest.md
-doc/PaymentProofUploadUrlRequest.md
-doc/PaymentProofUploadUrlResponse.md
 doc/PaymentQrUploadUrlRequest.md
 doc/PaymentQrUploadUrlResponse.md
 doc/RankedTutorResponse.md
@@ -207,8 +205,6 @@ lib/src/model/offering_response.dart
 lib/src/model/payment_method.dart
 lib/src/model/payment_method_type.dart
 lib/src/model/payment_proof_submit_request.dart
-lib/src/model/payment_proof_upload_url_request.dart
-lib/src/model/payment_proof_upload_url_response.dart
 lib/src/model/payment_qr_upload_url_request.dart
 lib/src/model/payment_qr_upload_url_response.dart
 lib/src/model/ranked_tutor_response.dart
@@ -251,5 +247,3 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/device_register_request_test.dart
-test/device_unregister_request_test.dart

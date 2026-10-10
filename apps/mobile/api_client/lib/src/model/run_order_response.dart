@@ -19,6 +19,7 @@ part 'run_order_response.g.dart';
 /// * [dropoffLat] 
 /// * [dropoffLng] 
 /// * [id] 
+/// * [noShowEligibleAt] 
 /// * [orderText] 
 /// * [paymentConfirmedAt] 
 /// * [paymentNote] 
@@ -47,6 +48,9 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
 
   @BuiltValueField(wireName: r'id')
   String get id;
+
+  @BuiltValueField(wireName: r'no_show_eligible_at')
+  DateTime? get noShowEligibleAt;
 
   @BuiltValueField(wireName: r'order_text')
   String get orderText;
@@ -136,6 +140,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       object.id,
       specifiedType: const FullType(String),
     );
+    if (object.noShowEligibleAt != null) {
+      yield r'no_show_eligible_at';
+      yield serializers.serialize(
+        object.noShowEligibleAt,
+        specifiedType: const FullType.nullable(DateTime),
+      );
+    }
     yield r'order_text';
     yield serializers.serialize(
       object.orderText,
@@ -258,6 +269,14 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
             specifiedType: const FullType(String),
           ) as String;
           result.id = valueDes;
+          break;
+        case r'no_show_eligible_at':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
+          result.noShowEligibleAt = valueDes;
           break;
         case r'order_text':
           final valueDes = serializers.deserialize(

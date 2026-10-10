@@ -24,19 +24,14 @@ from app.core.errors import (
     NotFoundError,
     ValidationAppError,
 )
-from app.integrations.storage.base import (
-    ALLOWED_CONTENT_TYPES,
-    SignedUpload,
-    StorageProvider,
-)
-from app.integrations.storage.provider import get_storage_provider
-from app.integrations.storage.resolve import image_public_url
+from app.integrations.storage.resolve import DB_KEY_PREFIX, image_public_url
 from app.models import (
     DropoffLocation,
     FoodSpot,
     Rating,
     Run,
     RunOrder,
+    StoredImage,
     User,
 )
 from app.models.enums import RatingContext, RunOrderStatus, RunStatus
@@ -63,6 +58,7 @@ NOTIFICATION_TYPE_RUN_COMPLETED = "run_completed"
 NOTIFICATION_TYPE_RUN_PAYMENT = "run_payment_submitted"
 NOTIFICATION_TYPE_RUN_PAYMENT_CONFIRMED = "run_payment_confirmed"
 NOTIFICATION_TYPE_RUN_ARRIVED = "run_runner_arrived"
+NOTIFICATION_TYPE_RUN_NO_SHOW = "run_no_show"
 
 # Runner ghost protection: any active run hard-expires this long after leaving.
 RUN_HARD_EXPIRY = timedelta(minutes=90)
@@ -124,6 +120,9 @@ def _order_response(order: RunOrder, *, rated_by_me: bool = False) -> RunOrderRe
         payment_submitted_at=order.payment_submitted_at,
         payment_confirmed_at=order.payment_confirmed_at,
         arrived_at=order.arrived_at,
+        no_show_eligible_at=(
+            order.arrived_at + NO_SHOW_WAIT if order.arrived_at is not None else None
+        ),
     )
 
 
@@ -197,11 +196,10 @@ def run_response(
 
 
 class RunService:
-    def __init__(self, session: AsyncSession, storage: StorageProvider | None = None) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self._session = session
         self._repo = RunRepository(session)
         self._notifications = NotificationRepository(session)
-        self._storage = storage or get_storage_provider()
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -443,33 +441,27 @@ class RunService:
         RunOrderStatus.received,
     )
 
-    async def create_payment_proof_upload(
-        self, *, run_id: uuid.UUID, order_id: uuid.UUID, user: User, content_type: str
-    ) -> SignedUpload:
-        """Signed-URL direct upload for the requester's transaction screenshot.
-
-        Off-app payment (spec: the app never moves money) — the requester pays
-        via the runner's revealed handle, then attaches proof here. Only the
-        requester on an accepted order may upload.
-        """
-        if content_type not in ALLOWED_CONTENT_TYPES:
-            raise ValidationAppError(
-                "Unsupported image type.",
-                code="UNSUPPORTED_CONTENT_TYPE",
-                details={"allowed": sorted(ALLOWED_CONTENT_TYPES)},
-            )
-        run = await self._get_or_404(run_id)
-        order = self._order_in(run, order_id)
-        if order.requester_id != user.id:
-            raise ForbiddenError("Not your order.", code="NOT_REQUESTER")
-        if order.status not in self._PAYABLE_STATUSES:
-            raise ConflictError(
-                "You can only submit payment after the runner accepts.",
-                code="ORDER_NOT_ACCEPTED",
-            )
-        ext = content_type.split("/")[-1]
-        key = f"run-payments/{order.id}/{uuid.uuid4()}.{ext}"
-        return await self._storage.create_signed_upload(key=key, content_type=content_type)
+    async def _assert_proof_key(self, proof_key: str, user: User) -> None:
+        """A proof key is only valid if it's a DB-backed image this user
+        actually uploaded (QA finding: an unvalidated key let a requester
+        fake "paid" with one request — which also stripped the runner's
+        right to drop them as unpaid)."""
+        image_id: uuid.UUID | None = None
+        if proof_key.startswith(DB_KEY_PREFIX):
+            try:
+                image_id = uuid.UUID(proof_key[len(DB_KEY_PREFIX) :])
+            except ValueError:
+                image_id = None
+        if image_id is not None:
+            image = (
+                await self._session.execute(select(StoredImage).where(StoredImage.id == image_id))
+            ).scalar_one_or_none()
+            if image is not None and image.uploaded_by == str(user.id):
+                return
+        raise ValidationAppError(
+            "Upload the screenshot first, then attach it.",
+            code="PROOF_KEY_INVALID",
+        )
 
     async def submit_payment_proof(
         self,
@@ -491,6 +483,7 @@ class RunService:
                 "You can only submit payment after the runner accepts.",
                 code="ORDER_NOT_ACCEPTED",
             )
+        await self._assert_proof_key(proof_key, user)
         order.payment_proof_key = proof_key
         order.payment_note = note
         order.payment_submitted_at = datetime.now(UTC)
@@ -630,7 +623,9 @@ class RunService:
                     extra={"run_status": "cancelled"},
                 )
             elif order.status == RunOrderStatus.requested:
-                order.status = RunOrderStatus.declined
+                # The run died — the requester wasn't declined (QA finding:
+                # `declined` here read as a personal rejection).
+                order.status = RunOrderStatus.cancelled
                 await self._notify(
                     order.requester_id,
                     NOTIFICATION_TYPE_RUN_STATUS,
@@ -716,6 +711,16 @@ class RunService:
                 code="NO_SHOW_TOO_EARLY",
             )
         order.status = RunOrderStatus.no_show
+        # Never silent (QA finding): the requester must learn their order was
+        # closed as a no-show — and that the dispute channel is rating/report.
+        await self._notify(
+            order.requester_id,
+            NOTIFICATION_TYPE_RUN_NO_SHOW,
+            run=run,
+            dedup_key="order_id",
+            dedup_value=str(order.id),
+            extra={"order_id": str(order.id), "dropoff": order.dropoff},
+        )
         await self._session.commit()
         return await self._get_or_404(run_id)
 

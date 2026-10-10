@@ -19,6 +19,7 @@ PUSH_TYPES: frozenset[str] = frozenset(
         "run_status",
         "run_completed",
         "run_runner_arrived",
+        "run_no_show",
         "run_payment_submitted",
         "run_payment_confirmed",
         "dm_message",
@@ -91,6 +92,13 @@ def render_push(type_: str, payload: dict[str, Any]) -> PushMessage | None:
                 else "Your runner is here — you have 5 minutes!"
             )
             body = "Meet them now or your order can be marked a no-show."
+        case "run_no_show":
+            title = "Your order was marked a no-show"
+            # Money copy stays loud: the requester may have prepaid.
+            body = (
+                "The 5-minute window passed. If you already paid, "
+                "message the runner — you can also rate or report."
+            )
         case "run_payment_submitted":
             requester = _str(payload, "requester_name")
             title = f"{requester} sent payment proof" if requester else "Payment proof received"

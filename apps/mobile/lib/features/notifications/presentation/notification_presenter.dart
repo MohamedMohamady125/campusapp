@@ -57,6 +57,11 @@ String notificationTitle(NotificationResponse n) {
       return dropoff == null
           ? 'Your runner is here — you have 5 minutes!'
           : 'Your runner is at $dropoff — you have 5 minutes!';
+    case 'run_no_show':
+      final dropoff = _str(n, 'dropoff');
+      return dropoff == null
+          ? 'Your order was marked a no-show'
+          : 'Your $dropoff order was marked a no-show';
     case 'run_payment_submitted':
       final requester = _str(n, 'requester_name');
       return requester == null
@@ -105,6 +110,7 @@ NotificationRoute? notificationRoute(NotificationResponse n) {
         'run_status' ||
         'run_completed' ||
         'run_runner_arrived' ||
+        'run_no_show' ||
         'run_payment_submitted' ||
         'run_payment_confirmed':
       final runId = _str(n, 'run_id');
@@ -124,6 +130,7 @@ IconData notificationIcon(NotificationResponse n) => switch (n.type) {
   'run_request_declined' => Icons.remove_circle_outline,
   'run_status' => Icons.directions_run,
   'run_runner_arrived' => Icons.hail_rounded,
+  'run_no_show' => Icons.timer_off_outlined,
   'run_payment_submitted' ||
   'run_payment_confirmed' => Icons.account_balance_wallet_outlined,
   _ => Icons.notifications_none,

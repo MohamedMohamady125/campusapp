@@ -114,6 +114,9 @@ class RunOrderResponse(BaseModel):
     # Both apps render a live 5-minute countdown from this stamp; the server
     # refuses no-show until NO_SHOW_WAIT has elapsed past it.
     arrived_at: datetime | None = None
+    # Server-authoritative end of the pickup window (arrived_at + NO_SHOW_WAIT)
+    # so clients never hardcode the 5 minutes. Null until the runner arrives.
+    no_show_eligible_at: datetime | None = None
     # Server-authoritative "the viewer already rated this order" flag (ratings
     # are unique per rater+order). The client greys out its Rate CTA on this —
     # it must never guess from local state (QA M-05: Rate stayed active).
@@ -161,20 +164,12 @@ class RunOrderCreateRequest(BaseModel):
     dropoff_location_id: uuid.UUID
 
 
-class PaymentProofUploadUrlRequest(BaseModel):
-    """Requester asks for a signed URL to upload the transaction screenshot."""
-
-    content_type: str
-
-
-class PaymentProofUploadUrlResponse(BaseModel):
-    upload_url: str
-    fields: dict[str, str]
-    key: str
-
-
 class PaymentProofSubmitRequest(BaseModel):
-    """Requester confirms they paid: the uploaded screenshot key + optional note."""
+    """Requester confirms they paid: the uploaded screenshot key + optional note.
+
+    The key must be a DB-backed image ("db/{uuid}") uploaded by the caller via
+    POST /images — the service rejects anything else (PROOF_KEY_INVALID).
+    """
 
     proof_key: str = Field(min_length=1, max_length=300)
     note: str | None = Field(default=None, max_length=300)

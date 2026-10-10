@@ -25,6 +25,7 @@
 | `run_request_accepted` / `declined` | requester | per order |
 | `run_status` at_store / delivering / cancelled | accepted requesters | collapse key `run:<id>` — newer replaces older banner |
 | `run_runner_arrived` | that requester | **time-sensitive** (breaks Focus) — 5-min window |
+| `run_no_show` | that requester | loud money copy — "if you already paid, message the runner" |
 | `run_completed` | requesters | rate prompt |
 | `run_payment_submitted` | runner | money copy stays loud |
 | `run_payment_confirmed` | requester | |

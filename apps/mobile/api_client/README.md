@@ -130,7 +130,6 @@ Class | Method | HTTP request | Description
 [*RunsApi*](doc/RunsApi.md) | [**markDeliveredApiV1RunsRunIdOrdersOrderIdDeliveredPost**](doc/RunsApi.md#markdeliveredapiv1runsrunidordersorderiddeliveredpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/delivered | Mark Delivered
 [*RunsApi*](doc/RunsApi.md) | [**markNoShowApiV1RunsRunIdOrdersOrderIdNoShowPost**](doc/RunsApi.md#marknoshowapiv1runsrunidordersorderidnoshowpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/no-show | Mark No Show
 [*RunsApi*](doc/RunsApi.md) | [**myRunsApiV1RunsMineGet**](doc/RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs
-[*RunsApi*](doc/RunsApi.md) | [**paymentProofUploadUrlApiV1RunsRunIdOrdersOrderIdPaymentProofUploadUrlPost**](doc/RunsApi.md#paymentproofuploadurlapiv1runsrunidordersorderidpaymentproofuploadurlpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/payment-proof-upload-url | Payment Proof Upload Url
 [*RunsApi*](doc/RunsApi.md) | [**requestSpotApiV1RunsRunIdOrdersPost**](doc/RunsApi.md#requestspotapiv1runsrunidorderspost) | **POST** /api/v1/runs/{run_id}/orders | Request Spot
 [*RunsApi*](doc/RunsApi.md) | [**runFeedApiV1RunsGet**](doc/RunsApi.md#runfeedapiv1runsget) | **GET** /api/v1/runs | Run Feed
 [*RunsApi*](doc/RunsApi.md) | [**submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost**](doc/RunsApi.md#submitpaymentproofapiv1runsrunidordersorderidpaymentproofpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/payment-proof | Submit Payment Proof
@@ -216,8 +215,6 @@ Class | Method | HTTP request | Description
  - [PaymentMethod](doc/PaymentMethod.md)
  - [PaymentMethodType](doc/PaymentMethodType.md)
  - [PaymentProofSubmitRequest](doc/PaymentProofSubmitRequest.md)
- - [PaymentProofUploadUrlRequest](doc/PaymentProofUploadUrlRequest.md)
- - [PaymentProofUploadUrlResponse](doc/PaymentProofUploadUrlResponse.md)
  - [PaymentQrUploadUrlRequest](doc/PaymentQrUploadUrlRequest.md)
  - [PaymentQrUploadUrlResponse](doc/PaymentQrUploadUrlResponse.md)
  - [RankedTutorResponse](doc/RankedTutorResponse.md)

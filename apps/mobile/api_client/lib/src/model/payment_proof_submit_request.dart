@@ -8,7 +8,7 @@ import 'package:built_value/serializer.dart';
 
 part 'payment_proof_submit_request.g.dart';
 
-/// Requester confirms they paid: the uploaded screenshot key + optional note.
+/// Requester confirms they paid: the uploaded screenshot key + optional note.  The key must be a DB-backed image (\"db/{uuid}\") uploaded by the caller via POST /images — the service rejects anything else (PROOF_KEY_INVALID).
 ///
 /// Properties:
 /// * [note] 

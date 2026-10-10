@@ -88,8 +88,6 @@ export 'package:campus_api/src/model/offering_response.dart';
 export 'package:campus_api/src/model/payment_method.dart';
 export 'package:campus_api/src/model/payment_method_type.dart';
 export 'package:campus_api/src/model/payment_proof_submit_request.dart';
-export 'package:campus_api/src/model/payment_proof_upload_url_request.dart';
-export 'package:campus_api/src/model/payment_proof_upload_url_response.dart';
 export 'package:campus_api/src/model/payment_qr_upload_url_request.dart';
 export 'package:campus_api/src/model/payment_qr_upload_url_response.dart';
 export 'package:campus_api/src/model/ranked_tutor_response.dart';
