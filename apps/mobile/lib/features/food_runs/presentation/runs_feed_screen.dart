@@ -252,7 +252,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// The one run to grab now — full-bleed brand blue, glow shadow, white ink.
+/// The one run to grab now — full-bleed food photo under an ink scrim.
 /// The countdown ticks live every second (Uber-style urgency) and the spots
 /// bar animates as seats fill.
 class _HeroRunCard extends StatefulWidget {
@@ -299,25 +299,21 @@ class _HeroRunCardState extends State<_HeroRunCard> {
       onTap: () => context.go('/runs/run/${run.id}'),
       child: Container(
         decoration: BoxDecoration(
-          // Branded depth: deep→light blue sweep instead of a flat fill.
+          // Neutral ink base — the food photo carries the color; no brand
+          // wash over photography (user: keep photos natural).
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.primaryDark,
-              AppColors.primary,
-              Color(0xFF2A72B4),
-            ],
+            colors: [AppColors.inkSoft, AppColors.ink],
           ),
           borderRadius: BorderRadius.circular(tokens.radiusXl),
-          boxShadow: AppShadows.primaryGlow,
+          boxShadow: AppShadows.lg,
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            // Spot photo backdrop under a heavy brand-blue wash: the card
-            // leads with real food texture while staying legible and
-            // unmistakably branded.
+            // Spot photo backdrop under a dark ink scrim: the card leads
+            // with real food texture while white text stays legible.
             if (run.foodSpot.imageUrl != null)
               Positioned.fill(
                 child: SpotImage(
@@ -330,12 +326,11 @@ class _HeroRunCardState extends State<_HeroRunCard> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                       colors: [
-                        AppColors.primaryDark.withValues(alpha: .92),
-                        AppColors.primary.withValues(alpha: .88),
-                        const Color(0xFF2A72B4).withValues(alpha: .86),
+                        AppColors.ink.withValues(alpha: .58),
+                        AppColors.ink.withValues(alpha: .72),
                       ],
                     ),
                   ),
