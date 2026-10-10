@@ -299,6 +299,10 @@ class _RunDetailBody extends ConsumerWidget {
       if (order.status == RunOrderStatus.requested) ...[
         SizedBox(height: tokens.space3),
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: context.colors.error,
+            backgroundColor: context.colors.error.withValues(alpha: 0.08),
+          ),
           onPressed: () => _act(
             context,
             () => controller.withdraw(order.id),
@@ -476,6 +480,7 @@ class _RunDetailBody extends ConsumerWidget {
         TextButton(
           style: TextButton.styleFrom(
             foregroundColor: context.colors.error,
+            backgroundColor: context.colors.error.withValues(alpha: 0.08),
           ),
           onPressed: () => _confirmCancel(context, controller),
           child: const Text('Cancel run'),
@@ -1841,7 +1846,8 @@ class _OrderCard extends StatelessWidget {
                   ),
                   // Honest-payer escape hatch: the money arrived but no
                   // screenshot — the runner settles it with one tap.
-                  if (onConfirmPaid != null)
+                  if (onConfirmPaid != null) ...[
+                    SizedBox(height: tokens.space2),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
@@ -1850,6 +1856,7 @@ class _OrderCard extends StatelessWidget {
                         label: const Text('Payment received'),
                       ),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -1919,6 +1926,7 @@ class _OrderCard extends StatelessWidget {
                     onPressed: onRemoveUnpaid,
                     style: TextButton.styleFrom(
                       foregroundColor: colors.error,
+                      backgroundColor: colors.error.withValues(alpha: 0.08),
                     ),
                     icon: const Icon(Icons.person_remove_outlined, size: 18),
                     label: const Text('Remove — unpaid'),
