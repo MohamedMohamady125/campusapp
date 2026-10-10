@@ -1,4 +1,5 @@
 import 'package:campusconnect/core/flags/flags_provider.dart';
+import 'package:campusconnect/core/push/push_service.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/auth/presentation/forgot_password_screen.dart';
@@ -57,7 +58,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       (_, next) => auth.value = next.status,
     );
 
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/runs',
     refreshListenable: auth,
     redirect: (context, state) {
@@ -228,6 +229,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  // A tapped push banner deep-links straight to its run/chat/thread.
+  ref.read(pushServiceProvider).onOpenRoute = router.go;
+  return router;
 });
 
 /// One visible tab: which branch it maps to + how it renders.

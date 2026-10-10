@@ -589,6 +589,46 @@
         "title": "DailyMetricItem",
         "type": "object"
       },
+      "DeviceRegisterRequest": {
+        "properties": {
+          "platform": {
+            "enum": [
+              "ios",
+              "android",
+              "web"
+            ],
+            "title": "Platform",
+            "type": "string"
+          },
+          "token": {
+            "maxLength": 512,
+            "minLength": 8,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "platform",
+          "token"
+        ],
+        "title": "DeviceRegisterRequest",
+        "type": "object"
+      },
+      "DeviceUnregisterRequest": {
+        "properties": {
+          "token": {
+            "maxLength": 512,
+            "minLength": 8,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "DeviceUnregisterRequest",
+        "type": "object"
+      },
       "DropoffLocationCreateRequest": {
         "description": "Admin-only: add a valid drop-off point (dorm hall, landmark).",
         "properties": {
@@ -5570,6 +5610,86 @@
           }
         ],
         "summary": "List Notifications",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/devices": {
+      "post": {
+        "description": "Register (or refresh) a push token for this install. Idempotent: the\napp calls it on every launch; tokens follow the logged-in account.",
+        "operationId": "register_device_api_v1_notifications_devices_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Register Device",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/devices/remove": {
+      "post": {
+        "description": "Called on logout so a shared phone stops getting the old user's pushes.",
+        "operationId": "unregister_device_api_v1_notifications_devices_remove_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceUnregisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unregister Device",
         "tags": [
           "notifications"
         ]

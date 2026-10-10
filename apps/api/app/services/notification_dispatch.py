@@ -14,6 +14,7 @@ from typing import Any
 
 from app.models import Notification
 from app.repositories.chat_repo import NotificationRepository
+from app.services.push_dispatch import send_push_for_notification
 
 DEDUP_WINDOW_MINUTES = 60
 
@@ -43,5 +44,7 @@ async def upsert_deduped_notification(
         merged["count"] = count + 1
         existing.payload = merged  # reassign so SQLAlchemy tracks the JSONB change
         existing.created_at = now  # bump to the top of the (created_at desc) feed
-        return
+        return  # folded — deliberately NO push (one interruption per context/hour)
     repo.add(Notification(user_id=user_id, type=type_, payload={**payload, "count": 1}))
+    # Fresh notification → push to the user's devices (best-effort, see module).
+    await send_push_for_notification(repo, user_id=user_id, type_=type_, payload=payload)

@@ -15,6 +15,7 @@ Name | Type | Description | Notes
 **dropoffLng** | **num** |  | [optional] 
 **id** | **String** |  | 
 **orderText** | **String** |  | 
+**paymentConfirmedAt** | [**DateTime**](DateTime.md) |  | [optional] 
 **paymentNote** | **String** |  | [optional] 
 **paymentProofUrl** | **String** |  | [optional] 
 **paymentSubmittedAt** | [**DateTime**](DateTime.md) |  | [optional] 

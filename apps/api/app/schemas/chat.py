@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -110,3 +110,12 @@ class NotificationPreferenceItem(BaseModel):
 
 class NotificationPreferencesUpdateRequest(BaseModel):
     preferences: list[NotificationPreferenceItem] = Field(min_length=1, max_length=20)
+
+
+class DeviceRegisterRequest(BaseModel):
+    platform: Literal["ios", "android", "web"]
+    token: str = Field(min_length=8, max_length=512)
+
+
+class DeviceUnregisterRequest(BaseModel):
+    token: str = Field(min_length=8, max_length=512)

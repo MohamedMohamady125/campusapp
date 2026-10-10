@@ -11,6 +11,8 @@ from app.db.session import get_session
 from app.models import NotificationPreference, User
 from app.repositories.chat_repo import NotificationRepository
 from app.schemas.chat import (
+    DeviceRegisterRequest,
+    DeviceUnregisterRequest,
     NotificationPageResponse,
     NotificationPreferenceItem,
     NotificationPreferencesUpdateRequest,
@@ -54,6 +56,31 @@ async def mark_notifications_read(
     await NotificationRepository(session).mark_read(
         user_id=user.id, ids=body.ids, now=datetime.now(UTC)
     )
+    await session.commit()
+
+
+@router.post("/devices", status_code=204)
+async def register_device(
+    body: DeviceRegisterRequest,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    """Register (or refresh) a push token for this install. Idempotent: the
+    app calls it on every launch; tokens follow the logged-in account."""
+    await NotificationRepository(session).register_device(
+        user_id=user.id, platform=body.platform, token=body.token, now=datetime.now(UTC)
+    )
+    await session.commit()
+
+
+@router.post("/devices/remove", status_code=204)
+async def unregister_device(
+    body: DeviceUnregisterRequest,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    """Called on logout so a shared phone stops getting the old user's pushes."""
+    await NotificationRepository(session).unregister_device(user_id=user.id, token=body.token)
     await session.commit()
 
 

@@ -28,6 +28,8 @@ doc/ConversationResponse.md
 doc/ConversationsApi.md
 doc/CourseResponse.md
 doc/DailyMetricItem.md
+doc/DeviceRegisterRequest.md
+doc/DeviceUnregisterRequest.md
 doc/DropoffLocationCreateRequest.md
 doc/DropoffLocationResponse.md
 doc/FlagItem.md
@@ -164,6 +166,8 @@ lib/src/model/conversation_response.dart
 lib/src/model/course_response.dart
 lib/src/model/daily_metric_item.dart
 lib/src/model/date.dart
+lib/src/model/device_register_request.dart
+lib/src/model/device_unregister_request.dart
 lib/src/model/dropoff_location_create_request.dart
 lib/src/model/dropoff_location_response.dart
 lib/src/model/flag_item.dart
@@ -247,5 +251,5 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/avatar_upload_url_request_test.dart
-test/avatar_upload_url_response_test.dart
+test/device_register_request_test.dart
+test/device_unregister_request_test.dart

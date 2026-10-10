@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any, cast
 
-from sqlalchemy import CursorResult, Select, func, or_, select, update
+from sqlalchemy import CursorResult, Select, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -12,6 +12,7 @@ from app.models import (
     Chat,
     ChatMembership,
     ChatMessage,
+    DeviceToken,
     Notification,
     NotificationPreference,
     User,
@@ -228,5 +229,36 @@ class NotificationRepository:
         )
         return {r[0] for r in rows}
 
-    def add(self, obj: Notification | NotificationPreference) -> None:
+    def add(self, obj: DeviceToken | Notification | NotificationPreference) -> None:
         self._session.add(obj)
+
+    # -- push device tokens ----------------------------------------------------
+
+    async def device_tokens_for(self, user_id: uuid.UUID) -> list[str]:
+        rows = await self._session.execute(
+            select(DeviceToken.token).where(DeviceToken.user_id == user_id)
+        )
+        return [r[0] for r in rows]
+
+    async def register_device(
+        self, *, user_id: uuid.UUID, platform: str, token: str, now: datetime
+    ) -> DeviceToken:
+        """Upsert by token: a device that logs into another account moves with it."""
+        existing = (
+            (await self._session.execute(select(DeviceToken).where(DeviceToken.token == token)))
+            .scalars()
+            .first()
+        )
+        if existing is not None:
+            existing.user_id = user_id
+            existing.platform = platform
+            existing.last_seen_at = now
+            return existing
+        device = DeviceToken(user_id=user_id, platform=platform, token=token, last_seen_at=now)
+        self._session.add(device)
+        return device
+
+    async def unregister_device(self, *, user_id: uuid.UUID, token: str) -> None:
+        await self._session.execute(
+            delete(DeviceToken).where(DeviceToken.user_id == user_id, DeviceToken.token == token)
+        )

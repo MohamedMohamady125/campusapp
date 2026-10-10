@@ -13,24 +13,23 @@ part 'run_order_response.g.dart';
 /// RunOrderResponse
 ///
 /// Properties:
-/// * [arrivedAt]
-/// * [createdAt]
-/// * [dropoff]
-/// * [dropoffLat]
-/// * [dropoffLng]
-/// * [id]
-/// * [orderText]
-/// * [paymentConfirmedAt]
-/// * [paymentNote]
-/// * [paymentProofUrl]
-/// * [paymentSubmittedAt]
-/// * [ratedByMe]
-/// * [requester]
-/// * [runId]
-/// * [status]
+/// * [arrivedAt] 
+/// * [createdAt] 
+/// * [dropoff] 
+/// * [dropoffLat] 
+/// * [dropoffLng] 
+/// * [id] 
+/// * [orderText] 
+/// * [paymentConfirmedAt] 
+/// * [paymentNote] 
+/// * [paymentProofUrl] 
+/// * [paymentSubmittedAt] 
+/// * [ratedByMe] 
+/// * [requester] 
+/// * [runId] 
+/// * [status] 
 @BuiltValue()
-abstract class RunOrderResponse
-    implements Built<RunOrderResponse, RunOrderResponseBuilder> {
+abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderResponseBuilder> {
   @BuiltValueField(wireName: r'arrived_at')
   DateTime? get arrivedAt;
 
@@ -79,19 +78,17 @@ abstract class RunOrderResponse
 
   RunOrderResponse._();
 
-  factory RunOrderResponse([void updates(RunOrderResponseBuilder b)]) =
-      _$RunOrderResponse;
+  factory RunOrderResponse([void updates(RunOrderResponseBuilder b)]) = _$RunOrderResponse;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(RunOrderResponseBuilder b) => b..ratedByMe = false;
+  static void _defaults(RunOrderResponseBuilder b) => b
+      ..ratedByMe = false;
 
   @BuiltValueSerializer(custom: true)
-  static Serializer<RunOrderResponse> get serializer =>
-      _$RunOrderResponseSerializer();
+  static Serializer<RunOrderResponse> get serializer => _$RunOrderResponseSerializer();
 }
 
-class _$RunOrderResponseSerializer
-    implements PrimitiveSerializer<RunOrderResponse> {
+class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderResponse> {
   @override
   final Iterable<Type> types = const [RunOrderResponse, _$RunOrderResponse];
 
@@ -202,9 +199,7 @@ class _$RunOrderResponseSerializer
     RunOrderResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) {
-    return _serializeProperties(serializers, object,
-            specifiedType: specifiedType)
-        .toList();
+    return _serializeProperties(serializers, object, specifiedType: specifiedType).toList();
   }
 
   void _deserializeProperties(
@@ -359,3 +354,4 @@ class _$RunOrderResponseSerializer
     return result.build();
   }
 }
+

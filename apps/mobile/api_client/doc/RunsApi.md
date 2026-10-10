@@ -11,6 +11,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**acceptOrderApiV1RunsRunIdOrdersOrderIdAcceptPost**](RunsApi.md#acceptorderapiv1runsrunidordersorderidacceptpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/accept | Accept Order
 [**cancelRunApiV1RunsRunIdCancelPost**](RunsApi.md#cancelrunapiv1runsrunidcancelpost) | **POST** /api/v1/runs/{run_id}/cancel | Cancel Run
+[**confirmPaymentApiV1RunsRunIdOrdersOrderIdConfirmPaymentPost**](RunsApi.md#confirmpaymentapiv1runsrunidordersorderidconfirmpaymentpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/confirm-payment | Confirm Payment
 [**confirmReceivedApiV1RunsRunIdOrdersOrderIdReceivedPost**](RunsApi.md#confirmreceivedapiv1runsrunidordersorderidreceivedpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/received | Confirm Received
 [**createDropoffApiV1RunsDropoffsPost**](RunsApi.md#createdropoffapiv1runsdropoffspost) | **POST** /api/v1/runs/dropoffs | Create Dropoff
 [**createRunApiV1RunsPost**](RunsApi.md#createrunapiv1runspost) | **POST** /api/v1/runs | Create Run
@@ -100,6 +101,51 @@ try {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **runId** | **String**|  | 
+
+### Return type
+
+[**RunResponse**](RunResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **confirmPaymentApiV1RunsRunIdOrdersOrderIdConfirmPaymentPost**
+> RunResponse confirmPaymentApiV1RunsRunIdOrdersOrderIdConfirmPaymentPost(runId, orderId)
+
+Confirm Payment
+
+Runner marks an order paid — covers payment sent without a screenshot.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getRunsApi();
+final String runId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String orderId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+
+try {
+    final response = api.confirmPaymentApiV1RunsRunIdOrdersOrderIdConfirmPaymentPost(runId, orderId);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling RunsApi->confirmPaymentApiV1RunsRunIdOrdersOrderIdConfirmPaymentPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **runId** | **String**|  | 
+ **orderId** | **String**|  | 
 
 ### Return type
 

@@ -107,6 +107,8 @@ Class | Method | HTTP request | Description
 [*MetaApi*](doc/MetaApi.md) | [**readyApiV1HealthReadyGet**](doc/MetaApi.md#readyapiv1healthreadyget) | **GET** /api/v1/health/ready | Ready
 [*NotificationsApi*](doc/NotificationsApi.md) | [**listNotificationsApiV1NotificationsGet**](doc/NotificationsApi.md#listnotificationsapiv1notificationsget) | **GET** /api/v1/notifications | List Notifications
 [*NotificationsApi*](doc/NotificationsApi.md) | [**markNotificationsReadApiV1NotificationsReadPost**](doc/NotificationsApi.md#marknotificationsreadapiv1notificationsreadpost) | **POST** /api/v1/notifications/read | Mark Notifications Read
+[*NotificationsApi*](doc/NotificationsApi.md) | [**registerDeviceApiV1NotificationsDevicesPost**](doc/NotificationsApi.md#registerdeviceapiv1notificationsdevicespost) | **POST** /api/v1/notifications/devices | Register Device
+[*NotificationsApi*](doc/NotificationsApi.md) | [**unregisterDeviceApiV1NotificationsDevicesRemovePost**](doc/NotificationsApi.md#unregisterdeviceapiv1notificationsdevicesremovepost) | **POST** /api/v1/notifications/devices/remove | Unregister Device
 [*NotificationsApi*](doc/NotificationsApi.md) | [**updatePreferencesApiV1NotificationsPreferencesPatch**](doc/NotificationsApi.md#updatepreferencesapiv1notificationspreferencespatch) | **PATCH** /api/v1/notifications/preferences | Update Preferences
 [*RatingsApi*](doc/RatingsApi.md) | [**createRatingApiV1RatingsPost**](doc/RatingsApi.md#createratingapiv1ratingspost) | **POST** /api/v1/ratings | Create Rating
 [*RatingsApi*](doc/RatingsApi.md) | [**listUserRatingsApiV1UsersUserIdRatingsGet**](doc/RatingsApi.md#listuserratingsapiv1usersuseridratingsget) | **GET** /api/v1/users/{user_id}/ratings | List User Ratings
@@ -115,6 +117,7 @@ Class | Method | HTTP request | Description
 [*ReportsApi*](doc/ReportsApi.md) | [**updateReportApiV1AdminReportsReportIdPatch**](doc/ReportsApi.md#updatereportapiv1adminreportsreportidpatch) | **PATCH** /api/v1/admin/reports/{report_id} | Update Report
 [*RunsApi*](doc/RunsApi.md) | [**acceptOrderApiV1RunsRunIdOrdersOrderIdAcceptPost**](doc/RunsApi.md#acceptorderapiv1runsrunidordersorderidacceptpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/accept | Accept Order
 [*RunsApi*](doc/RunsApi.md) | [**cancelRunApiV1RunsRunIdCancelPost**](doc/RunsApi.md#cancelrunapiv1runsrunidcancelpost) | **POST** /api/v1/runs/{run_id}/cancel | Cancel Run
+[*RunsApi*](doc/RunsApi.md) | [**confirmPaymentApiV1RunsRunIdOrdersOrderIdConfirmPaymentPost**](doc/RunsApi.md#confirmpaymentapiv1runsrunidordersorderidconfirmpaymentpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/confirm-payment | Confirm Payment
 [*RunsApi*](doc/RunsApi.md) | [**confirmReceivedApiV1RunsRunIdOrdersOrderIdReceivedPost**](doc/RunsApi.md#confirmreceivedapiv1runsrunidordersorderidreceivedpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/received | Confirm Received
 [*RunsApi*](doc/RunsApi.md) | [**createDropoffApiV1RunsDropoffsPost**](doc/RunsApi.md#createdropoffapiv1runsdropoffspost) | **POST** /api/v1/runs/dropoffs | Create Dropoff
 [*RunsApi*](doc/RunsApi.md) | [**createRunApiV1RunsPost**](doc/RunsApi.md#createrunapiv1runspost) | **POST** /api/v1/runs | Create Run
@@ -172,6 +175,8 @@ Class | Method | HTTP request | Description
  - [ConversationResponse](doc/ConversationResponse.md)
  - [CourseResponse](doc/CourseResponse.md)
  - [DailyMetricItem](doc/DailyMetricItem.md)
+ - [DeviceRegisterRequest](doc/DeviceRegisterRequest.md)
+ - [DeviceUnregisterRequest](doc/DeviceUnregisterRequest.md)
  - [DropoffLocationCreateRequest](doc/DropoffLocationCreateRequest.md)
  - [DropoffLocationResponse](doc/DropoffLocationResponse.md)
  - [FlagItem](doc/FlagItem.md)

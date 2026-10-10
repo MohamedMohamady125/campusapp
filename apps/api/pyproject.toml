@@ -14,6 +14,7 @@ dependencies = [
     "alembic>=1.13",
     "argon2-cffi>=23.1",
     "pyjwt>=2.9",
+    "cryptography>=43",  # RS256 signing of FCM HTTP v1 OAuth assertions (push)
     "redis>=5.0",
     "celery>=5.4",
     "boto3>=1.34",

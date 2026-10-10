@@ -11,6 +11,8 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**listNotificationsApiV1NotificationsGet**](NotificationsApi.md#listnotificationsapiv1notificationsget) | **GET** /api/v1/notifications | List Notifications
 [**markNotificationsReadApiV1NotificationsReadPost**](NotificationsApi.md#marknotificationsreadapiv1notificationsreadpost) | **POST** /api/v1/notifications/read | Mark Notifications Read
+[**registerDeviceApiV1NotificationsDevicesPost**](NotificationsApi.md#registerdeviceapiv1notificationsdevicespost) | **POST** /api/v1/notifications/devices | Register Device
+[**unregisterDeviceApiV1NotificationsDevicesRemovePost**](NotificationsApi.md#unregisterdeviceapiv1notificationsdevicesremovepost) | **POST** /api/v1/notifications/devices/remove | Unregister Device
 [**updatePreferencesApiV1NotificationsPreferencesPatch**](NotificationsApi.md#updatepreferencesapiv1notificationspreferencespatch) | **PATCH** /api/v1/notifications/preferences | Update Preferences
 
 
@@ -81,6 +83,90 @@ try {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **notificationsReadRequest** | [**NotificationsReadRequest**](NotificationsReadRequest.md)|  | 
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **registerDeviceApiV1NotificationsDevicesPost**
+> registerDeviceApiV1NotificationsDevicesPost(deviceRegisterRequest)
+
+Register Device
+
+Register (or refresh) a push token for this install. Idempotent: the app calls it on every launch; tokens follow the logged-in account.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getNotificationsApi();
+final DeviceRegisterRequest deviceRegisterRequest = ; // DeviceRegisterRequest | 
+
+try {
+    api.registerDeviceApiV1NotificationsDevicesPost(deviceRegisterRequest);
+} on DioException catch (e) {
+    print('Exception when calling NotificationsApi->registerDeviceApiV1NotificationsDevicesPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **deviceRegisterRequest** | [**DeviceRegisterRequest**](DeviceRegisterRequest.md)|  | 
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **unregisterDeviceApiV1NotificationsDevicesRemovePost**
+> unregisterDeviceApiV1NotificationsDevicesRemovePost(deviceUnregisterRequest)
+
+Unregister Device
+
+Called on logout so a shared phone stops getting the old user's pushes.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getNotificationsApi();
+final DeviceUnregisterRequest deviceUnregisterRequest = ; // DeviceUnregisterRequest | 
+
+try {
+    api.unregisterDeviceApiV1NotificationsDevicesRemovePost(deviceUnregisterRequest);
+} on DioException catch (e) {
+    print('Exception when calling NotificationsApi->unregisterDeviceApiV1NotificationsDevicesRemovePost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **deviceUnregisterRequest** | [**DeviceUnregisterRequest**](DeviceUnregisterRequest.md)|  | 
 
 ### Return type
 

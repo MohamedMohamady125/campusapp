@@ -58,6 +58,10 @@ class Settings(BaseSettings):
 
     sentry_dsn: str = ""
 
+    # Push notifications (FCM HTTP v1). Paste the Firebase service-account
+    # JSON (one line) — empty means the stub provider (no real pushes).
+    fcm_service_account_json: str = ""
+
     cors_origins: str = "http://localhost:3000,http://localhost:8080"
 
     # Pre-launch only: keep a few demo food runs open so the feed never looks

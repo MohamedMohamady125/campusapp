@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:campus_api/campus_api.dart';
+import 'package:campusconnect/core/push/push_service.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,6 +46,7 @@ class AuthController extends Notifier<AuthState> {
       }
       final me = await _repo.fetchMe();
       state = AuthState(status: AuthStatus.authenticated, user: me);
+      unawaited(ref.read(pushServiceProvider).syncToken());
     } on Object {
       // Stored tokens rejected, storage unreadable, or network dead —
       // treat as signed out and let the user log back in.
@@ -56,9 +58,13 @@ class AuthController extends Notifier<AuthState> {
     await _repo.login(email: email, password: password);
     final me = await _repo.fetchMe();
     state = AuthState(status: AuthStatus.authenticated, user: me);
+    unawaited(ref.read(pushServiceProvider).syncToken());
   }
 
   Future<void> logOut() async {
+    // Unregister the push token while the session is still valid, so a
+    // shared phone stops getting this account's pushes.
+    await ref.read(pushServiceProvider).clearToken();
     await _repo.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
+import 'package:campusconnect/features/food_runs/presentation/run_live_activity.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +61,9 @@ class RunDetailController
     try {
       final run = await _repo.fetchRun(arg);
       state = RunDetailState(run: run, loading: false);
+      // Keep the lock-screen/Dynamic Island tracker in step (iOS no-op
+      // elsewhere) — requesters watch the run without opening the app.
+      unawaited(ref.read(runLiveActivityProvider).sync(run));
     } on Object catch (e) {
       debugPrint('RunDetailController.refresh ERROR: $e');
       state = RunDetailState(
@@ -73,6 +77,7 @@ class RunDetailController
   Future<void> _mutate(Future<RunResponse> Function() action) async {
     final run = await action();
     state = RunDetailState(run: run, loading: false);
+    unawaited(ref.read(runLiveActivityProvider).sync(run));
     // Every mutation ripples to the feed instantly — no manual refresh.
     ref.read(runsFeedControllerProvider.notifier).pokeAfterMutation();
   }

@@ -27,6 +27,27 @@ class Notification(TimestampedBase):
     user: Mapped[User] = relationship()
 
 
+class DeviceToken(TimestampedBase):
+    """Push-capable device registration (FCM/APNs token per install).
+
+    One row per (user, token). Tokens rotate — the app re-registers on every
+    launch and the unique token column lets a token move between accounts
+    (log out / log in on a shared phone) by reassigning `user_id`.
+    """
+
+    __tablename__ = "device_tokens"
+    __table_args__ = (UniqueConstraint("token", name="uq_device_token"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    platform: Mapped[str] = mapped_column(String(10))  # ios | android | web
+    token: Mapped[str] = mapped_column(String(512))
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped[User] = relationship()
+
+
 class NotificationPreference(TimestampedBase):
     __tablename__ = "notification_preferences"
     __table_args__ = (UniqueConstraint("user_id", "type", name="uq_notification_pref"),)
