@@ -8,11 +8,11 @@ import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
+import 'package:campusconnect/features/food_runs/presentation/dasher_setup_sheet.dart';
 import 'package:campusconnect/features/food_runs/presentation/payment_method_display.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
 import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
-import 'package:campusconnect/features/profile/presentation/avatar_sheet.dart';
 import 'package:flutter/cupertino.dart'
     show
         CupertinoDatePicker,
@@ -54,9 +54,10 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
   List<PaymentMethod> _savedMethods = [];
   final List<String> _paymentPrefs = ['cash'];
   PaymentMethodType _quickType = kSelectablePaymentTypes.first;
-  // Uber-style transparency: a profile photo is required to post a run
-  // (server enforces AVATAR_REQUIRED). Gated via a bottom sheet — shown on
-  // open and again at Post if skipped — so the form itself stays clean.
+  // Dashing requires a profile photo AND at least one payment handle
+  // (server enforces AVATAR_REQUIRED + PAYMENT_METHOD_REQUIRED). Gated via
+  // the animated setup sheet — shown on open and again at Post if skipped —
+  // so the form itself stays clean.
   bool _hasAvatar = true; // optimistic until /users/me answers
 
   @override
@@ -74,14 +75,29 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
         _hasPaymentMethod = _savedMethods.isNotEmpty;
         _hasAvatar = me.avatarUrl != null;
       });
-      // No photo yet: raise the gate sheet right away (dismissible — they
-      // can fill the form first and get re-prompted at Post).
-      if (!_hasAvatar) {
-        showAvatarSheet(context, gate: true).then((added) {
-          if (mounted && added) setState(() => _hasAvatar = true);
+      // Missing photo or handle: raise the first-run setup sheet right away
+      // (dismissible — they can fill the form first, re-prompted at Post).
+      if (!_hasAvatar || !_hasPaymentMethod) {
+        showDasherSetupSheet(
+          context,
+          needsPhoto: !_hasAvatar,
+          needsHandle: !_hasPaymentMethod,
+        ).then((done) async {
+          if (mounted && done) await _refreshMe();
         }).ignore();
       }
     }).ignore();
+  }
+
+  /// Re-pulls /users/me after the setup sheet saves a photo/handle.
+  Future<void> _refreshMe() async {
+    final me = await ref.read(runsRepositoryProvider).fetchMe();
+    if (!mounted) return;
+    setState(() {
+      _savedMethods = me.paymentMethods.toList();
+      _hasPaymentMethod = _savedMethods.isNotEmpty;
+      _hasAvatar = me.avatarUrl != null;
+    });
   }
 
   @override
@@ -91,10 +107,9 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
     super.dispose();
   }
 
-  bool get _needsPayment {
-    if (_feeCentsValue == 0 && !_prepay) return false;
-    return !_hasPaymentMethod;
-  }
+  // A handle is required for EVERY run — even free ones — so requesters
+  // always have a way to settle up if plans change.
+  bool get _needsPayment => !_hasPaymentMethod;
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -102,16 +117,20 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
       _snack("Pick where you're headed first.");
       return;
     }
-    if (!_hasAvatar) {
-      // They dismissed the gate earlier — re-raise it at the moment of
-      // intent, then carry straight on with the post.
-      final added = await showAvatarSheet(context, gate: true);
-      if (!mounted || !added) return;
-      setState(() => _hasAvatar = true);
-    }
-    if (_needsPayment && _quickHandle.text.trim().length < 2) {
-      _snack('Add a payment handle so people can pay you.');
-      return;
+    // They dismissed the gate earlier — re-raise it at the moment of
+    // intent, then carry straight on with the post. The inline quick-handle
+    // card also satisfies the handle step if they typed one there instead.
+    final needsHandle =
+        !_hasPaymentMethod && _quickHandle.text.trim().length < 2;
+    if (!_hasAvatar || needsHandle) {
+      final done = await showDasherSetupSheet(
+        context,
+        needsPhoto: !_hasAvatar,
+        needsHandle: needsHandle,
+      );
+      if (!mounted || !done) return;
+      await _refreshMe();
+      if (!mounted) return;
     }
     setState(() => _submitting = true);
     final repo = ref.read(runsRepositoryProvider);

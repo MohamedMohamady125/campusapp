@@ -156,7 +156,7 @@ async def test_create_and_feed(client: httpx.AsyncClient) -> None:
 
 
 async def test_create_validations(client: httpx.AsyncClient) -> None:
-    runner = await make_user(client, "runner@campus.edu")
+    runner = await make_user(client, "runner@campus.edu", payment=False)
     spot_id = await _make_spot()
 
     resp = await client.post("/api/v1/runs", json=_payload(str(uuid.uuid4())), headers=runner)
@@ -169,7 +169,10 @@ async def test_create_validations(client: httpx.AsyncClient) -> None:
     )
     assert resp.json()["error"]["code"] == "LEAVING_AT_PAST"
 
-    # Fee without a payment method is blocked; adding one unblocks it.
+    # ANY run without a payment method is blocked — even a free one —
+    # so requesters always have a way to settle up. Adding one unblocks.
+    resp = await client.post("/api/v1/runs", json=_payload(spot_id), headers=runner)
+    assert resp.json()["error"]["code"] == "PAYMENT_METHOD_REQUIRED"
     resp = await client.post("/api/v1/runs", json=_payload(spot_id, fee_cents=200), headers=runner)
     assert resp.json()["error"]["code"] == "PAYMENT_METHOD_REQUIRED"
     await _set_payment(client, runner)

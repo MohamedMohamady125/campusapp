@@ -217,9 +217,11 @@ class RunService:
                 "Add a profile photo before posting a run.",
                 code="AVATAR_REQUIRED",
             )
-        if (body.fee_cents > 0 or body.prepay_required) and not runner.payment_methods:
+        # A handle is required for EVERY run (even free ones) so requesters
+        # always have a way to settle up if plans change mid-run.
+        if not runner.payment_methods:
             raise BusinessRuleError(
-                "Add a payment method before charging a fee.",
+                "Add a payment method before posting a run.",
                 code="PAYMENT_METHOD_REQUIRED",
             )
         # Accepted ways to pay. "cash" is allowed only on pay-on-handoff runs
