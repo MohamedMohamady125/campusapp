@@ -4,7 +4,7 @@ import 'package:campusconnect/design_system/material.dart';
 ///
 /// From docs/TROT_LOGO_BRIEF.md: warm off-white cream canvas (#F7F3EC),
 /// near-black charcoal ink (#1C1B19), a single bold coral-orange accent
-/// (#FF5A3C), and soft warm grays. One accent only — no rainbow. All
+/// (#F0532E), and soft warm grays. One accent only — no rainbow. All
 /// neutrals are WARM (brown-leaning), never cool blue-grays.
 ///
 /// WCAG notes (measured): white-on-coral is 3.10 (FAILS AA) so coral CTAs
@@ -13,7 +13,7 @@ import 'package:campusconnect/design_system/material.dart';
 /// Destructive is a distinct true red #D92D20 so errors never read as brand.
 abstract final class AppColors {
   // Primary — Trot coral.
-  static const primary = Color(0xFFFF5A3C);
+  static const primary = Color(0xFFF0532E);
   static const primaryDark = Color(0xFFC8371D); // pressed states, link text
   static const primaryLight = Color(0xFFFF7A5F);
   static const primaryBg = Color(0xFFFFEDE8); // tinted chip/selected fills
@@ -186,7 +186,7 @@ abstract final class AppShadows {
   /// Under hero coral CTAs only.
   static const primaryGlow = [
     BoxShadow(
-      color: Color(0x47FF5A3C), // primary @ 28%
+      color: Color(0x47F0532E), // primary @ 28%
       blurRadius: 24,
       offset: Offset(0, 8),
     ),

@@ -74,7 +74,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
   // Trot status/accent tokens. Verified badge rides the coral brand accent;
   // warning is a text-grade amber that passes AA on its tinted container.
   static const lightTokens = AppTokens(
-    verified: Color(0xFFFF5A3C),
+    verified: Color(0xFFF0532E),
     onVerified: Color(0xFF1C1B19),
     success: Color(0xFF059669),
     warning: Color(0xFFB45309),

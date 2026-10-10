@@ -8,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 ///
 /// Warm cream canvas, white cards, hairline borders instead of shadows;
 /// zero elevation and zero surface tint everywhere. One accent color
-/// (coral #FF5A3C) for CTAs and selected states — with INK labels, since
+/// (coral #F0532E) for CTAs and selected states — with INK labels, since
 /// white-on-coral fails WCAG AA; ink (charcoal) for snackbars and contrast
 /// moments. Manrope w800 display type, Inter body. Cupertino slide page
 /// transitions on all platforms.
