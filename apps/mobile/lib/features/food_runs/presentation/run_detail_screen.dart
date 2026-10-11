@@ -1,8 +1,8 @@
 import 'dart:async' show unawaited;
-
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/confetti_burst.dart';
+import 'package:campusconnect/design_system/components/content_width.dart';
 import 'package:campusconnect/design_system/components/empty_state.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
 import 'package:campusconnect/design_system/components/roll_text.dart';
@@ -52,26 +52,30 @@ class RunDetailScreen extends ConsumerWidget {
         title: Text(run == null ? 'Run' : run.foodSpot.name),
       ),
       body: SafeArea(
-        child: switch ((state.loading, run)) {
-          (true, null) => const _DetailSkeleton(),
-          (false, null) => EmptyState(
-            icon: Icons.cloud_off,
-            title: "Couldn't load this run",
-            body: 'Check your connection and try again.',
-            actionLabel: 'Retry',
-            onAction: () => ref
-                .read(runDetailControllerProvider(runId).notifier)
-                .refresh()
-                .ignore(),
-          ),
-          (_, final RunResponse run) => _RunDetailBody(
-            run: run,
-            // Server-authoritative: never derived from a client id compare —
-            // a not-yet-loaded profile used to demote the runner to visitor
-            // and show them "Request a spot" on their own run.
-            isRunner: run.isMine ?? false,
-          ),
-        },
+        // Single-column phone-style flow: keep it readable on desktop (QA #16).
+        child: ContentWidth(
+          max: 640,
+          child: switch ((state.loading, run)) {
+            (true, null) => const _DetailSkeleton(),
+            (false, null) => EmptyState(
+              icon: Icons.cloud_off,
+              title: "Couldn't load this run",
+              body: 'Check your connection and try again.',
+              actionLabel: 'Retry',
+              onAction: () => ref
+                  .read(runDetailControllerProvider(runId).notifier)
+                  .refresh()
+                  .ignore(),
+            ),
+            (_, final RunResponse run) => _RunDetailBody(
+              run: run,
+              // Server-authoritative: never derived from a client id compare —
+              // a not-yet-loaded profile used to demote the runner to visitor
+              // and show them "Request a spot" on their own run.
+              isRunner: run.isMine ?? false,
+            ),
+          },
+        ),
       ),
     );
   }
@@ -154,7 +158,15 @@ class _RunDetailBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
     final controller = ref.read(runDetailControllerProvider(run.id).notifier);
-    final myOrder = run.myOrder;
+    // A withdrawn/declined order is not a live one: fall through to the
+    // visitor view so "Request a spot" comes back (the server allows
+    // re-ordering after withdraw/decline — no dead ends, spec §6.3).
+    final rawOrder = run.myOrder;
+    final orderIsDead =
+        rawOrder != null &&
+        (rawOrder.status == RunOrderStatus.cancelled ||
+            rawOrder.status == RunOrderStatus.declined);
+    final myOrder = orderIsDead ? null : rawOrder;
 
     return ListView(
       padding: EdgeInsets.all(tokens.space4),
@@ -174,7 +186,16 @@ class _RunDetailBody extends ConsumerWidget {
         else if (myOrder != null)
           ..._requesterSection(context, ref, controller, myOrder)
         else
-          ..._visitorSection(context, controller),
+          ..._visitorSection(
+            context,
+            controller,
+            priorOrderNote: switch (rawOrder?.status) {
+              RunOrderStatus.cancelled => 'You withdrew your earlier request.',
+              RunOrderStatus.declined =>
+                "The runner couldn't take your earlier order.",
+              _ => null,
+            },
+          ),
         SizedBox(height: tokens.space8),
       ],
     );
@@ -183,12 +204,23 @@ class _RunDetailBody extends ConsumerWidget {
   // ── Visitor ────────────────────────────────────────────────────────────
   List<Widget> _visitorSection(
     BuildContext context,
-    RunDetailController controller,
-  ) {
+    RunDetailController controller, {
+    String? priorOrderNote,
+  }) {
     final tokens = context.tokens;
     final open = run.status == RunStatus.open;
     final full = run.acceptedCount >= run.spotsMax;
     return [
+      if (priorOrderNote != null) ...[
+        Text(
+          priorOrderNote,
+          style: context.text.bodyMedium?.copyWith(
+            color: context.colors.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(height: tokens.space3),
+      ],
       if (open && !full)
         FilledButton.icon(
           icon: const Icon(Icons.add_shopping_cart_outlined),
@@ -2443,6 +2475,7 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
   final _text = TextEditingController();
   final _price = TextEditingController();
   String? _dropoffId;
+  String? _dropoffName;
 
   @override
   void dispose() {
@@ -2577,28 +2610,50 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
                 color: context.colors.error,
               ),
             ),
-            data: (spots) => DropdownButtonFormField<String>(
-              initialValue: _dropoffId,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.place_outlined),
-                hintText: 'Pick a drop-off spot',
+            // Searchable picker sheet instead of a raw 50-item Material
+            // dropdown (UX audit #15) — type a building name, tap, done.
+            data: (spots) => InkWell(
+              borderRadius: tokens.brSm,
+              onTap: () async {
+                final picked =
+                    await showModalBottomSheet<DropoffLocationResponse>(
+                      context: context,
+                      isScrollControlled: true,
+                      showDragHandle: true,
+                      builder: (_) => _DropoffPickerSheet(
+                        spots: spots,
+                        selectedId: _dropoffId,
+                      ),
+                    );
+                if (picked == null || !mounted) return;
+                setState(() {
+                  _dropoffId = picked.id;
+                  _dropoffName = picked.name;
+                });
+              },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.place_outlined),
+                  suffixIcon: Icon(Icons.unfold_more),
+                  hintText: 'Pick a drop-off spot',
+                ),
+                isEmpty: _dropoffName == null,
+                child: Text(
+                  _dropoffName ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              items: [
-                for (final s in spots)
-                  DropdownMenuItem(value: s.id, child: Text(s.name)),
-              ],
-              onChanged: (v) => setState(() => _dropoffId = v),
             ),
           ),
           SizedBox(height: tokens.space4),
           Text(
-            // Payment terms at the point of commitment — keep explicit.
-            // Live "items + fee = total" once a price is typed.
+            // Payment terms at the point of commitment — money copy stays
+            // loud (copy-diet exemption, UX audit #18): full-contrast ink.
             _totalLine(),
-            style: context.text.bodySmall?.copyWith(
-              color: context.colors.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
+            style: context.text.bodyMedium?.copyWith(
+              color: context.colors.onSurface,
+              fontWeight: FontWeight.w700,
             ),
           ),
           SizedBox(height: tokens.space4),
@@ -2631,6 +2686,118 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
               widget.onSubmit(order, _dropoffId!, 0).ignore();
             },
             child: const Text('Send request'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Searchable drop-off picker: a type-to-filter list sheet replacing the raw
+/// Material dropdown (UX audit #15). Pops with the chosen spot.
+class _DropoffPickerSheet extends StatefulWidget {
+  const _DropoffPickerSheet({required this.spots, required this.selectedId});
+
+  final List<DropoffLocationResponse> spots;
+  final String? selectedId;
+
+  @override
+  State<_DropoffPickerSheet> createState() => _DropoffPickerSheetState();
+}
+
+class _DropoffPickerSheetState extends State<_DropoffPickerSheet> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  List<DropoffLocationResponse> get _filtered {
+    final q = _query.text.trim().toLowerCase();
+    if (q.isEmpty) return widget.spots;
+    return [
+      for (final s in widget.spots)
+        if (s.name.toLowerCase().contains(q) ||
+            (s.description?.toLowerCase().contains(q) ?? false))
+          s,
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final spots = _filtered;
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.7;
+    return SizedBox(
+      height: maxHeight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              tokens.space4,
+              0,
+              tokens.space4,
+              tokens.space3,
+            ),
+            child: TextField(
+              controller: _query,
+              autofocus: true,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search drop-off spots',
+              ),
+            ),
+          ),
+          Expanded(
+            child: spots.isEmpty
+                ? Center(
+                    child: Text(
+                      'No spots match',
+                      style: context.text.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.only(bottom: tokens.space6),
+                    itemCount: spots.length,
+                    itemBuilder: (context, i) {
+                      final spot = spots[i];
+                      final selected = spot.id == widget.selectedId;
+                      return ListTile(
+                        leading: Icon(
+                          Icons.place_outlined,
+                          color: selected
+                              ? colors.primary
+                              : colors.onSurfaceVariant,
+                        ),
+                        title: Text(
+                          spot.name,
+                          style: context.text.bodyMedium?.copyWith(
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: spot.description == null
+                            ? null
+                            : Text(
+                                spot.description!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                        trailing: selected
+                            ? Icon(Icons.check, color: colors.primary)
+                            : null,
+                        onTap: () => Navigator.of(context).pop(spot),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

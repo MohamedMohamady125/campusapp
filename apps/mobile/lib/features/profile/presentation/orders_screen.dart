@@ -48,6 +48,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Orders')),
       body: ContentWidth(
+        // Single-column phone-style flow: keep it readable on desktop (QA #16).
+        max: 640,
         child: RefreshIndicator(
           onRefresh: _refresh,
           child: CustomScrollView(
@@ -101,12 +103,17 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       RunStatus.atStore,
       RunStatus.delivering,
     };
-    final active = orders
-        .where((r) => activeStatuses.contains(r.status))
-        .toList();
-    final past = orders
-        .where((r) => !activeStatuses.contains(r.status))
-        .toList();
+    // An order is only "in progress" while it's live — a withdrawn/declined
+    // one on a still-open run is history, not an active order (QA #11).
+    bool isActive(RunResponse r) {
+      if (!activeStatuses.contains(r.status)) return false;
+      final status = r.myOrder?.status;
+      return status != RunOrderStatus.cancelled &&
+          status != RunOrderStatus.declined;
+    }
+
+    final active = orders.where(isActive).toList();
+    final past = orders.where((r) => !isActive(r)).toList();
     return [
       SliverPadding(
         padding: EdgeInsets.fromLTRB(

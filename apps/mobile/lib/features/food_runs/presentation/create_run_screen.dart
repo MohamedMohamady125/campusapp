@@ -1,5 +1,6 @@
 import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/error/api_error.dart';
+import 'package:campusconnect/design_system/components/content_width.dart';
 import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/components/roll_text.dart';
 import 'package:campusconnect/design_system/components/success_check.dart';
@@ -253,187 +254,192 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Start a run')),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(tokens.space4),
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const _SectionLabel(label: 'Where are you headed?'),
-                SizedBox(height: tokens.space2),
-                // Once a spot is picked the selector becomes an image-led
-                // card (same photo-banner language as the feed); until then
-                // it's a quiet "pick a spot" row.
-                Pressable(
-                  onTap: _pickSpot,
-                  child: _spot == null
-                      ? Container(
-                          padding: EdgeInsets.all(tokens.space4),
-                          decoration: BoxDecoration(
-                            borderRadius: tokens.brSm,
-                            border: Border.all(color: colors.outlineVariant),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.storefront_outlined,
-                                color: colors.onSurfaceVariant,
-                              ),
-                              SizedBox(width: tokens.space3),
-                              Expanded(
-                                child: Text(
-                                  'Pick a food spot',
-                                  style: context.text.titleSmall?.copyWith(
+        // Single-column phone-style flow: keep it readable on desktop (QA #16).
+        child: ContentWidth(
+          max: 640,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(tokens.space4),
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _SectionLabel(label: 'Where are you headed?'),
+                  SizedBox(height: tokens.space2),
+                  // Once a spot is picked the selector becomes an image-led
+                  // card (same photo-banner language as the feed); until then
+                  // it's a quiet "pick a spot" row.
+                  Pressable(
+                    onTap: _pickSpot,
+                    child: _spot == null
+                        ? Container(
+                            padding: EdgeInsets.all(tokens.space4),
+                            decoration: BoxDecoration(
+                              borderRadius: tokens.brSm,
+                              border: Border.all(color: colors.outlineVariant),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.storefront_outlined,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                                SizedBox(width: tokens.space3),
+                                Expanded(
+                                  child: Text(
+                                    'Pick a food spot',
+                                    style: context.text.titleSmall?.copyWith(
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.expand_more,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ],
+                            ),
+                          )
+                        : _SelectedSpotCard(spot: _spot!),
+                  ),
+                  SizedBox(height: tokens.space6),
+
+                  const _SectionLabel(label: 'When are you leaving?'),
+                  SizedBox(height: tokens.space2),
+                  Pressable(
+                    onTap: _pickLeavingTime,
+                    child: Container(
+                      padding: EdgeInsets.all(tokens.space4),
+                      decoration: BoxDecoration(
+                        borderRadius: tokens.brSm,
+                        border: Border.all(color: colors.outlineVariant),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.schedule, color: colors.primary),
+                          SizedBox(width: tokens.space3),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _leavingDisplay(),
+                                  style: context.text.titleMedium?.copyWith(
+                                    color: colors.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  'Tap to pick an exact time',
+                                  style: context.text.bodySmall?.copyWith(
                                     color: colors.onSurfaceVariant,
                                   ),
                                 ),
-                              ),
-                              Icon(
-                                Icons.expand_more,
-                                color: colors.onSurfaceVariant,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        )
-                      : _SelectedSpotCard(spot: _spot!),
-                ),
-                SizedBox(height: tokens.space6),
-
-                const _SectionLabel(label: 'When are you leaving?'),
-                SizedBox(height: tokens.space2),
-                Pressable(
-                  onTap: _pickLeavingTime,
-                  child: Container(
-                    padding: EdgeInsets.all(tokens.space4),
-                    decoration: BoxDecoration(
-                      borderRadius: tokens.brSm,
-                      border: Border.all(color: colors.outlineVariant),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.schedule, color: colors.primary),
-                        SizedBox(width: tokens.space3),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _leavingDisplay(),
-                                style: context.text.titleMedium?.copyWith(
-                                  color: colors.onSurface,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Text(
-                                'Tap to pick an exact time',
-                                style: context.text.bodySmall?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 20,
+                            color: colors.onSurfaceVariant,
                           ),
-                        ),
-                        Icon(
-                          Icons.edit_outlined,
-                          size: 20,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: tokens.space3),
-                // Quick departure offsets as the same custom stadium pills
-                // the feed filters use — no stock Material chips.
-                Wrap(
-                  spacing: tokens.space2,
-                  runSpacing: tokens.space2,
-                  children: [
-                    for (final (label, offset) in const [
-                      ('Now', Duration.zero),
-                      ('+15 min', Duration(minutes: 15)),
-                      ('+30 min', Duration(minutes: 30)),
-                      ('+1 hr', Duration(hours: 1)),
-                    ])
-                      _TimePill(
-                        label: label,
-                        onTap: () => _quickLeaving(offset),
-                      ),
-                  ],
-                ),
-                SizedBox(height: tokens.space6),
-
-                const _SectionLabel(label: 'The deal'),
-                SizedBox(height: tokens.space3),
-                // One widget card instead of a wall of stepper rows —
-                // tap-a-pill pricing, Uber-style, with a live earnings line.
-                _DealCard(
-                  feeCents: _feeCentsValue,
-                  spotsMax: _spotsMax,
-                  prepay: _prepay,
-                  onFeeChanged: (v) => setState(() => _feeCentsValue = v),
-                  onSpotsChanged: (v) => setState(() => _spotsMax = v),
-                  onPrepayChanged: (v) => setState(() {
-                    _prepay = v;
-                    if (v) {
-                      // No cash before pickup — swap it for the saved rails.
-                      _paymentPrefs.remove('cash');
-                      if (_paymentPrefs.isEmpty) {
-                        for (final m in _savedMethods) {
-                          final w = m.type.wireValue;
-                          if (!_paymentPrefs.contains(w)) _paymentPrefs.add(w);
-                        }
-                      }
-                    } else if (_paymentPrefs.isEmpty) {
-                      _paymentPrefs.add('cash');
-                    }
-                  }),
-                ),
-                // How requesters pay: cash + saved rails at handoff, rails
-                // only on prepay (no cash before pickup). Multi-select; the
-                // last pick can't be deselected so the run always advertises
-                // at least one way to pay.
-                if (_feeCentsValue > 0 || _prepay) ...[
                   SizedBox(height: tokens.space3),
-                  _PaymentPrefCard(
-                    savedMethods: _savedMethods,
-                    selected: _paymentPrefs,
+                  // Quick departure offsets as the same custom stadium pills
+                  // the feed filters use — no stock Material chips.
+                  Wrap(
+                    spacing: tokens.space2,
+                    runSpacing: tokens.space2,
+                    children: [
+                      for (final (label, offset) in const [
+                        ('Now', Duration.zero),
+                        ('+15 min', Duration(minutes: 15)),
+                        ('+30 min', Duration(minutes: 30)),
+                        ('+1 hr', Duration(hours: 1)),
+                      ])
+                        _TimePill(
+                          label: label,
+                          onTap: () => _quickLeaving(offset),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: tokens.space6),
+
+                  const _SectionLabel(label: 'The deal'),
+                  SizedBox(height: tokens.space3),
+                  // One widget card instead of a wall of stepper rows —
+                  // tap-a-pill pricing, Uber-style, with a live earnings line.
+                  _DealCard(
+                    feeCents: _feeCentsValue,
+                    spotsMax: _spotsMax,
                     prepay: _prepay,
-                    onToggled: (v) => setState(() {
-                      if (_paymentPrefs.contains(v)) {
-                        if (_paymentPrefs.length > 1) _paymentPrefs.remove(v);
-                      } else {
-                        _paymentPrefs.add(v);
+                    onFeeChanged: (v) => setState(() => _feeCentsValue = v),
+                    onSpotsChanged: (v) => setState(() => _spotsMax = v),
+                    onPrepayChanged: (v) => setState(() {
+                      _prepay = v;
+                      if (v) {
+                        // No cash before pickup — swap it for the saved rails.
+                        _paymentPrefs.remove('cash');
+                        if (_paymentPrefs.isEmpty) {
+                          for (final m in _savedMethods) {
+                            final w = m.type.wireValue;
+                            if (!_paymentPrefs.contains(w))
+                              _paymentPrefs.add(w);
+                          }
+                        }
+                      } else if (_paymentPrefs.isEmpty) {
+                        _paymentPrefs.add('cash');
                       }
                     }),
                   ),
-                ],
-                if (_needsPayment) ...[
-                  SizedBox(height: tokens.space3),
-                  _PaymentPromptCard(
-                    type: _quickType,
-                    handle: _quickHandle,
-                    onTypeChanged: (t) => setState(() => _quickType = t),
-                  ),
-                ],
-                SizedBox(height: tokens.space6),
+                  // How requesters pay: cash + saved rails at handoff, rails
+                  // only on prepay (no cash before pickup). Multi-select; the
+                  // last pick can't be deselected so the run always advertises
+                  // at least one way to pay.
+                  if (_feeCentsValue > 0 || _prepay) ...[
+                    SizedBox(height: tokens.space3),
+                    _PaymentPrefCard(
+                      savedMethods: _savedMethods,
+                      selected: _paymentPrefs,
+                      prepay: _prepay,
+                      onToggled: (v) => setState(() {
+                        if (_paymentPrefs.contains(v)) {
+                          if (_paymentPrefs.length > 1) _paymentPrefs.remove(v);
+                        } else {
+                          _paymentPrefs.add(v);
+                        }
+                      }),
+                    ),
+                  ],
+                  if (_needsPayment) ...[
+                    SizedBox(height: tokens.space3),
+                    _PaymentPromptCard(
+                      type: _quickType,
+                      handle: _quickHandle,
+                      onTypeChanged: (t) => setState(() => _quickType = t),
+                    ),
+                  ],
+                  SizedBox(height: tokens.space6),
 
-                const _SectionLabel(label: 'Anything else?'),
-                SizedBox(height: tokens.space3),
-                TextFormField(
-                  controller: _note,
-                  maxLines: 2,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Note (optional)',
-                    hintText: 'e.g. Cash-only spot, keep orders simple',
-                    alignLabelWithHint: true,
+                  const _SectionLabel(label: 'Anything else?'),
+                  SizedBox(height: tokens.space3),
+                  TextFormField(
+                    controller: _note,
+                    maxLines: 2,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Note (optional)',
+                      hintText: 'e.g. Cash-only spot, keep orders simple',
+                      alignLabelWithHint: true,
+                    ),
                   ),
-                ),
-                SizedBox(height: tokens.space6),
-              ],
+                  SizedBox(height: tokens.space6),
+                ],
+              ),
             ),
           ),
         ),

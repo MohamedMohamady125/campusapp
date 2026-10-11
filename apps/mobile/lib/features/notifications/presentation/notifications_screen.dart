@@ -144,8 +144,10 @@ class _NotificationRow extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(tokens.space3),
           decoration: BoxDecoration(
-            // Unread rows get the primaryBg tint (Fifty Free §5).
-            color: unread ? colors.primaryContainer : colors.surface,
+            // White card in both states — the coral dot + bold title carry
+            // "unread". A wall of tinted surfaces broke the one-accent-per-
+            // viewport rule and read as alarming blocks in dark (UX audit #7).
+            color: colors.surface,
             borderRadius: tokens.brSm,
             border: Border.all(color: colors.outlineVariant),
           ),

@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/core/validation.dart';
+import 'package:campusconnect/design_system/components/trot_mark.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
@@ -123,31 +124,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(height: tokens.space6),
-                      // --- Wordmark (flat, hairline — Fifty Free) ---
-                      Center(
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: ShapeDecoration(
-                            color: AppColors.primaryBg,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: tokens.brMd,
-                              side: const BorderSide(
-                                color: AppColors.primaryBorder,
-                              ),
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.school_outlined,
-                            color: AppColors.primaryDark,
-                            size: 30,
-                          ),
-                        ),
-                      ),
+                      // --- Brand mark (Trot "t" + Drop-off dot, UX #9) ---
+                      const Center(child: TrotMark(size: 56)),
                       SizedBox(height: tokens.space6),
                       // --- Title ---
                       Text(
-                        'CampusConnect',
+                        'Trot',
                         style: AppTextStyles.displayMedium,
                         textAlign: TextAlign.center,
                       ),

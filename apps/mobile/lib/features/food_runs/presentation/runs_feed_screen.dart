@@ -77,6 +77,8 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
               label: Text('Post a run', style: AppTextStyles.button),
             ),
       body: ContentWidth(
+        // Single-column phone-style flow: keep it readable on desktop (QA #16).
+        max: 640,
         child: RefreshIndicator(
           onRefresh: _refresh,
           child: CustomScrollView(
@@ -375,6 +377,9 @@ class _HeroRunCardState extends State<_HeroRunCard> {
     final ratingText = ReputationChip.formatRating(
       runner.reputationScore.toDouble(),
     );
+    final ratingCountLabel = runner.ratingCount == 1
+        ? '1 rating'
+        : '${runner.ratingCount} ratings';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -430,10 +435,9 @@ class _HeroRunCardState extends State<_HeroRunCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    rated
-                        ? '★ $ratingText · ${runner.ratingCount} ratings'
-                        // Same label as ReputationChip (QA S-06).
-                        : 'New member',
+                    // Same label as ReputationChip (QA S-06); singular for
+                    // a single rating (QA #13).
+                    rated ? '★ $ratingText · $ratingCountLabel' : 'New member',
                     style: context.text.labelSmall?.copyWith(
                       color: Colors.white.withValues(alpha: .75),
                     ),
@@ -478,9 +482,13 @@ class _HeroRunCardState extends State<_HeroRunCard> {
                 child: Text(
                   widget.isMine
                       ? 'Manage my run'
-                      : run.myOrder != null
+                      // Withdrawn/declined orders aren't live — the CTA goes
+                      // back to requesting (one verb everywhere: QA #12).
+                      : run.myOrder != null &&
+                            run.myOrder!.status != RunOrderStatus.cancelled &&
+                            run.myOrder!.status != RunOrderStatus.declined
                       ? 'View my order'
-                      : 'Attach my order',
+                      : 'Request a spot',
                   style: AppTextStyles.button.copyWith(
                     color: AppColors.primary,
                   ),

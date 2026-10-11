@@ -34,6 +34,20 @@ class RunRow extends StatelessWidget {
         // "New member" everywhere (QA S-06) — same wording as ReputationChip.
         : '${runner.displayName} · New member';
     final statusVisible = showStatus && run.status != RunStatus.open;
+    final terminal =
+        run.status == RunStatus.done ||
+        run.status == RunStatus.cancelled ||
+        run.status == RunStatus.expired;
+    // History rows show the outcome, not a stale "N spots open" (UX audit
+    // #14): the status pill carries Done/Cancelled, and the trailing slot
+    // shows what the viewer paid when the record has it. Money stays loud.
+    final order = run.myOrder;
+    final paidCents = order == null
+        ? null
+        : (order.actualPriceCents ?? order.itemPriceCents);
+    final trailing = terminal
+        ? (paidCents != null ? runFeeAmount(paidCents + run.feeCents) : null)
+        : spotsLabel(run);
     final accent = statusVisible
         ? runStatusColor(context, run.status)
         : _urgencyColor(context, run.leavingAt);
@@ -121,14 +135,22 @@ class RunRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SizedBox(width: tokens.space2),
-                  Text(
-                    spotsLabel(run),
-                    style: context.text.labelSmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
+                  if (trailing != null) ...[
+                    SizedBox(width: tokens.space2),
+                    Text(
+                      trailing,
+                      style: terminal
+                          // Money reads as money — bold ink, not meta gray.
+                          ? context.text.labelLarge?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w700,
+                            )
+                          : context.text.labelSmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

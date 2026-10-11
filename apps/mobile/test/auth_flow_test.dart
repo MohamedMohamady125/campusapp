@@ -22,7 +22,7 @@ void main() {
     await tester.pumpWidget(_app(anonState));
     await tester.pumpAndSettle();
 
-    expect(find.text('CampusConnect'), findsOneWidget);
+    expect(find.text('Trot'), findsOneWidget);
     expect(find.text('Sign in'), findsWidgets);
     expect(find.byType(NavigationBar), findsNothing);
   });

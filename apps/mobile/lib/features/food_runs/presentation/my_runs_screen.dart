@@ -57,6 +57,8 @@ class _MyRunsScreenState extends ConsumerState<MyRunsScreen> {
 
     return Scaffold(
       body: ContentWidth(
+        // Single-column phone-style flow: keep it readable on desktop (QA #16).
+        max: 640,
         child: RefreshIndicator(
           onRefresh: _refresh,
           child: CustomScrollView(
@@ -137,12 +139,18 @@ class _MyRunsScreenState extends ConsumerState<MyRunsScreen> {
       RunStatus.atStore,
       RunStatus.delivering,
     };
-    final active = state.myRuns
-        .where((r) => activeStatuses.contains(r.status))
-        .toList();
-    final past = state.myRuns
-        .where((r) => !activeStatuses.contains(r.status))
-        .toList();
+    // A requester-side run is only "active" while MY order on it is live —
+    // a withdrawn/declined order on a still-open run belongs in Past (QA #11).
+    bool isActive(RunResponse r) {
+      if (!activeStatuses.contains(r.status)) return false;
+      if (r.isMine ?? false) return true;
+      final status = r.myOrder?.status;
+      return status != RunOrderStatus.cancelled &&
+          status != RunOrderStatus.declined;
+    }
+
+    final active = state.myRuns.where(isActive).toList();
+    final past = state.myRuns.where((r) => !isActive(r)).toList();
     final shown = _filter == MyRunsFilter.active ? active : past;
     return [
       SliverToBoxAdapter(
