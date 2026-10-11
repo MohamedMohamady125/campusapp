@@ -460,8 +460,8 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
             FilledButton(
               onPressed: _submitting ? null : _submit,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.ink,
-                foregroundColor: Colors.white,
+                backgroundColor: context.colors.inverseSurface,
+                foregroundColor: context.colors.onInverseSurface,
               ),
               child: _submitting
                   ? const SizedBox.square(
@@ -1235,7 +1235,7 @@ class _FeeStepButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 24,
-          color: enabled ? colors.onSurface : AppColors.textTertiary,
+          color: enabled ? colors.onSurface : colors.onSurfaceVariant,
         ),
       ),
     );

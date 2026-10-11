@@ -3,7 +3,6 @@ import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/core/validation.dart';
 import 'package:campusconnect/design_system/components/trot_mark.dart';
 import 'package:campusconnect/design_system/material.dart';
-import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
@@ -166,9 +165,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             size: 20,
                           ),
                           suffixIcon: (_emailKnown ?? false)
-                              ? const Icon(
+                              ? Icon(
                                   Icons.check_circle_outline,
-                                  color: AppColors.primaryDark,
+                                  color: colors.onPrimaryContainer,
                                   size: 20,
                                 )
                               : null,

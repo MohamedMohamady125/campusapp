@@ -3,7 +3,6 @@ import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/components/fade_slide_in.dart';
 import 'package:campusconnect/design_system/components/pressable.dart';
 import 'package:campusconnect/design_system/material.dart';
-import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
@@ -227,6 +226,7 @@ class _DasherSetupSheetState extends ConsumerState<_DasherSetupSheet> {
 
   Widget _header(BuildContext context) {
     final tokens = context.tokens;
+    final colors = context.colors;
     return Column(
       children: [
         // Coral badge pops in — the "you're about to become a dasher" moment.
@@ -239,14 +239,14 @@ class _DasherSetupSheetState extends ConsumerState<_DasherSetupSheet> {
           child: Container(
             width: 64,
             height: 64,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryBg,
+            decoration: BoxDecoration(
+              color: colors.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.directions_run,
               size: 32,
-              color: AppColors.primaryDark,
+              color: colors.onPrimaryContainer,
             ),
           ),
         ),

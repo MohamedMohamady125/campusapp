@@ -40,7 +40,7 @@ abstract final class AppTheme {
         },
       ),
       splashColor: scheme.primary.withValues(alpha: 0.08),
-      highlightColor: Colors.black.withValues(alpha: 0.03),
+      highlightColor: scheme.onSurface.withValues(alpha: 0.03),
       extensions: [tokens],
     );
 
@@ -109,14 +109,14 @@ abstract final class AppTheme {
             fontSize: 11,
             letterSpacing: 0.2,
             fontWeight: sel ? FontWeight.w700 : FontWeight.w600,
-            color: sel ? scheme.primary : AppColors.textTertiary,
+            color: sel ? scheme.primary : scheme.onSurfaceVariant,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final sel = states.contains(WidgetState.selected);
           return IconThemeData(
             size: 24,
-            color: sel ? scheme.primary : AppColors.textTertiary,
+            color: sel ? scheme.primary : scheme.onSurfaceVariant,
           );
         }),
       ),
@@ -164,7 +164,7 @@ abstract final class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: scheme.onPrimaryContainer,
-          disabledForegroundColor: AppColors.textTertiary,
+          disabledForegroundColor: scheme.onSurfaceVariant,
           minimumSize: const Size(64, 48),
           textStyle: AppTextStyles.buttonSmall,
           shape: const StadiumBorder(),
@@ -183,7 +183,11 @@ abstract final class AppTheme {
         filled: true,
         fillColor: scheme.surfaceContainerLow,
         contentPadding: const EdgeInsets.all(16),
-        hintStyle: AppTextStyles.inputHint,
+        hintStyle: AppTextStyles.inputHint.copyWith(
+          color: scheme.brightness == Brightness.light
+              ? AppColors.textHint
+              : scheme.onSurfaceVariant.withValues(alpha: 0.7),
+        ),
         border: OutlineInputBorder(
           borderRadius: tokens.brMd,
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -248,7 +252,11 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: scheme.inverseSurface,
-        contentTextStyle: AppTextStyles.toast,
+        // onInverseSurface, NOT white: in dark mode inverseSurface is light,
+        // so a white toast label would be invisible.
+        contentTextStyle: AppTextStyles.toast.copyWith(
+          color: scheme.onInverseSurface,
+        ),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: tokens.brMd),
       ),

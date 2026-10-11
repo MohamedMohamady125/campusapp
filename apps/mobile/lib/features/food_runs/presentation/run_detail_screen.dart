@@ -1101,7 +1101,7 @@ class _LifecycleNode extends StatelessWidget {
                         duration: AppMotion.resolve(context, AppMotion.enter),
                         curve: AppMotion.standard,
                         height: 2,
-                        color: leftLineActive ? AppColors.primary : muted,
+                        color: leftLineActive ? colors.primary : muted,
                       ),
               ),
               _Dot(reached: reached, active: active),
@@ -1112,7 +1112,7 @@ class _LifecycleNode extends StatelessWidget {
                         duration: AppMotion.resolve(context, AppMotion.enter),
                         curve: AppMotion.standard,
                         height: 2,
-                        color: rightLineActive ? AppColors.primary : muted,
+                        color: rightLineActive ? colors.primary : muted,
                       ),
               ),
             ],
@@ -1126,7 +1126,7 @@ class _LifecycleNode extends StatelessWidget {
             style: AppTextStyles.label.copyWith(
               fontSize: 9,
               letterSpacing: 0.4,
-              color: reached ? AppColors.primary : colors.onSurfaceVariant,
+              color: reached ? colors.primary : colors.onSurfaceVariant,
             ),
           ),
         ),
@@ -1152,9 +1152,9 @@ class _Dot extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: reached ? AppColors.primary : colors.surface,
+        color: reached ? colors.primary : colors.surface,
         border: Border.all(
-          color: reached ? AppColors.primary : colors.outlineVariant,
+          color: reached ? colors.primary : colors.outlineVariant,
           width: 2,
         ),
         boxShadow: active ? AppShadows.primaryGlow : null,
@@ -1853,7 +1853,7 @@ class _RunnerOwnOrderCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(tokens.space4),
       decoration: BoxDecoration(
-        color: AppColors.primaryBg,
+        color: colors.primaryContainer,
         borderRadius: tokens.brMd,
         border: Border.all(color: AppColors.primaryBorder),
       ),
@@ -1862,16 +1862,16 @@ class _RunnerOwnOrderCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.lunch_dining_outlined,
                 size: 18,
-                color: AppColors.primaryDark,
+                color: colors.onPrimaryContainer,
               ),
               SizedBox(width: tokens.space2),
               Text(
                 'Your order',
                 style: context.text.titleSmall?.copyWith(
-                  color: AppColors.primaryDark,
+                  color: colors.onPrimaryContainer,
                 ),
               ),
             ],

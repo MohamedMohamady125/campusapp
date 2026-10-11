@@ -111,8 +111,8 @@ abstract final class AppColors {
     surfaceTint: Colors.transparent,
   );
 
-  /// Dark scheme retained for completeness (app forces light mode) —
-  /// warm charcoal neutrals, coral accent.
+  /// Dark scheme — warm charcoal neutrals, lighter coral accent
+  /// (selected via the Appearance picker or the OS setting).
   static const dark = ColorScheme(
     brightness: Brightness.dark,
     primary: primaryAccent,

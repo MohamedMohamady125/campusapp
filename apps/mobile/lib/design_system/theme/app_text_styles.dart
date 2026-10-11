@@ -12,7 +12,9 @@ abstract final class AppTextStyles {
     FontWeight weight, {
     double? ls,
     double? height,
-    Color color = AppColors.textHeading,
+    // Null by default so text inherits the ambient theme color — a baked
+    // light-mode charcoal here made dark mode unreadable (QA #39).
+    Color? color,
   }) => GoogleFonts.manrope(
     fontSize: size,
     fontWeight: weight,
@@ -26,7 +28,7 @@ abstract final class AppTextStyles {
     FontWeight weight, {
     double? ls,
     double? height,
-    Color color = AppColors.textPrimary,
+    Color? color,
   }) => GoogleFonts.inter(
     fontSize: size,
     fontWeight: weight,
@@ -68,34 +70,17 @@ abstract final class AppTextStyles {
   static final TextStyle bodyMedium = _inter(14, FontWeight.w400, height: 1.55);
   static final TextStyle bodySmall = _inter(12, FontWeight.w500, height: 1.45);
 
-  // Micro labels — UPPERCASE eyebrows.
-  static final TextStyle label = _inter(
-    11,
-    FontWeight.w700,
-    ls: 1,
-    color: AppColors.textSecondary,
-  );
-  static final TextStyle labelWide = _inter(
-    11,
-    FontWeight.w700,
-    ls: 1.4,
-    color: AppColors.textSecondary,
-  );
+  // Micro labels — UPPERCASE eyebrows. No baked color: call sites mute them
+  // with `context.colors.onSurfaceVariant` where the design wants it.
+  static final TextStyle label = _inter(11, FontWeight.w700, ls: 1);
+  static final TextStyle labelWide = _inter(11, FontWeight.w700, ls: 1.4);
   static final TextStyle labelSmall = _inter(10, FontWeight.w700);
   static final TextStyle labelTiny = _inter(9, FontWeight.w600);
 
-  // Buttons — Manrope w800.
-  static final TextStyle button = _manrope(
-    15,
-    FontWeight.w800,
-    ls: 0.2,
-    color: Colors.white,
-  );
-  static final TextStyle buttonSmall = _manrope(
-    13,
-    FontWeight.w800,
-    color: AppColors.primaryDark,
-  );
+  // Buttons — Manrope w800. Color comes from each ButtonStyle's
+  // foregroundColor, which is theme-aware.
+  static final TextStyle button = _manrope(15, FontWeight.w800, ls: 0.2);
+  static final TextStyle buttonSmall = _manrope(13, FontWeight.w800);
 
   // Numbers — Inter, tabular figures.
   static final TextStyle stat = _inter(28, FontWeight.w700, ls: -0.5).copyWith(
@@ -107,19 +92,11 @@ abstract final class AppTextStyles {
 
   static final TextStyle profileName = _manrope(26, FontWeight.w800, ls: -0.8);
 
-  // Inputs / toasts / avatars.
+  // Inputs / toasts / avatars. Hint and toast colors are applied in
+  // app_theme.dart from the active ColorScheme.
   static final TextStyle input = _inter(15, FontWeight.w500);
-  static final TextStyle inputHint = _inter(
-    15,
-    FontWeight.w400,
-    color: AppColors.textHint,
-  );
-  static final TextStyle toast = _inter(
-    13,
-    FontWeight.w600,
-    ls: 0.2,
-    color: Colors.white,
-  );
+  static final TextStyle inputHint = _inter(15, FontWeight.w400);
+  static final TextStyle toast = _inter(13, FontWeight.w600, ls: 0.2);
   static final TextStyle avatarLetter = _manrope(
     20,
     FontWeight.w800,

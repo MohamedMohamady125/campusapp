@@ -1,5 +1,4 @@
 import 'package:campusconnect/design_system/material.dart';
-import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 
@@ -47,7 +46,7 @@ class EmptyState extends StatelessWidget {
                 color: colors.surfaceContainer,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 32, color: AppColors.textTertiary),
+              child: Icon(icon, size: 32, color: colors.onSurfaceVariant),
             ),
             SizedBox(height: tokens.space5),
             Text(

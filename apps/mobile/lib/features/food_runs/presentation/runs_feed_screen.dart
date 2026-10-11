@@ -70,8 +70,9 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
           : FloatingActionButton.extended(
               onPressed: () => context.go('/runs/create'),
               tooltip: 'Post a run',
-              backgroundColor: AppColors.ink,
-              foregroundColor: Colors.white,
+              // Ink in light, light in dark — the FAB must pop off the canvas.
+              backgroundColor: context.colors.inverseSurface,
+              foregroundColor: context.colors.onInverseSurface,
               shape: const StadiumBorder(),
               icon: const Icon(Icons.add),
               label: Text('Post a run', style: AppTextStyles.button),
@@ -216,7 +217,7 @@ class _Header extends StatelessWidget {
               Text(
                 _dateEyebrow(),
                 style: AppTextStyles.labelWide.copyWith(
-                  color: AppColors.primary,
+                  color: context.colors.primary,
                 ),
               ),
               SizedBox(height: tokens.space1),
