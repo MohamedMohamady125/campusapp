@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache_get_json, cache_invalidate_prefix, cache_set_json
 from app.core.deps import get_current_user, require_role
 from app.core.pagination import DEFAULT_PAGE_SIZE, clamp_limit
 from app.db.session import get_session
@@ -30,6 +31,13 @@ from app.schemas.run import (
 from app.services.run_service import RunService, run_response
 
 router = APIRouter(prefix="/runs", tags=["runs"])
+
+# Admin-curated catalogs change ~never but are read by every client opening
+# the create/request flows — cache them in Redis (§7.2 hot reads). Writes
+# are admin-only and invalidate explicitly, so a long TTL is safe.
+_SPOTS_CACHE_KEY = "runs:spots"
+_DROPOFFS_CACHE_KEY = "runs:dropoffs"
+_CATALOG_TTL_SECONDS = 300
 
 
 def _service(session: AsyncSession = Depends(get_session)) -> RunService:
@@ -57,8 +65,17 @@ async def list_spots(
     _: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> list[FoodSpotResponse]:
+    cached = await cache_get_json(_SPOTS_CACHE_KEY)
+    if cached is not None:
+        return [FoodSpotResponse.model_validate(s) for s in cached]
     spots = await RunRepository(session).list_spots()
-    return [FoodSpotResponse.model_validate(s) for s in spots]
+    payload = [FoodSpotResponse.model_validate(s) for s in spots]
+    await cache_set_json(
+        _SPOTS_CACHE_KEY,
+        [p.model_dump(mode="json") for p in payload],
+        ttl_seconds=_CATALOG_TTL_SECONDS,
+    )
+    return payload
 
 
 @router.post("/spots", response_model=FoodSpotResponse, status_code=201)
@@ -69,6 +86,7 @@ async def create_spot(
 ) -> FoodSpotResponse:
     """Admin-only: add a campus/off-campus food spot to the catalog."""
     spot = await svc.create_spot(body=body)
+    await cache_invalidate_prefix(_SPOTS_CACHE_KEY)
     return FoodSpotResponse.model_validate(spot)
 
 
@@ -78,8 +96,17 @@ async def list_dropoffs(
     svc: RunService = Depends(_service),
 ) -> list[DropoffLocationResponse]:
     """Valid drop-off points requesters choose from when joining a run."""
+    cached = await cache_get_json(_DROPOFFS_CACHE_KEY)
+    if cached is not None:
+        return [DropoffLocationResponse.model_validate(loc) for loc in cached]
     locations = await svc.list_dropoffs()
-    return [DropoffLocationResponse.model_validate(loc) for loc in locations]
+    payload = [DropoffLocationResponse.model_validate(loc) for loc in locations]
+    await cache_set_json(
+        _DROPOFFS_CACHE_KEY,
+        [p.model_dump(mode="json") for p in payload],
+        ttl_seconds=_CATALOG_TTL_SECONDS,
+    )
+    return payload
 
 
 @router.post("/dropoffs", response_model=DropoffLocationResponse, status_code=201)
@@ -90,6 +117,7 @@ async def create_dropoff(
 ) -> DropoffLocationResponse:
     """Admin-only: add a valid drop-off point (dorm hall, landmark)."""
     location = await svc.create_dropoff(body=body)
+    await cache_invalidate_prefix(_DROPOFFS_CACHE_KEY)
     return DropoffLocationResponse.model_validate(location)
 
 

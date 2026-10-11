@@ -130,6 +130,45 @@ def test_ws_dark_without_flag_and_live_with_it(app: FastAPI) -> None:
             assert event["chat_id"] == chat["id"]
 
 
+async def test_runs_catalog_cache_invalidated_on_admin_create(
+    client: httpx.AsyncClient,
+) -> None:
+    """Spots/dropoffs are Redis-cached hot reads; admin writes must bust them."""
+    from sqlalchemy import update
+
+    from app.models import User
+    from app.models.enums import UserRole
+
+    student = await make_user(client, "cachestudent@campus.edu")
+    admin = await make_user(client, "cacheadmin@campus.edu")
+    async with async_session_factory() as session:
+        await session.execute(
+            update(User).where(User.email == "cacheadmin@campus.edu").values(role=UserRole.admin)
+        )
+        await session.commit()
+
+    # Prime both catalog caches.
+    assert (await client.get("/api/v1/runs/spots", headers=student)).status_code == 200
+    assert (await client.get("/api/v1/runs/dropoffs", headers=student)).status_code == 200
+
+    # Admin create must invalidate — the new entries appear immediately.
+    spot = await client.post(
+        "/api/v1/runs/spots",
+        json={"name": "Cache Café", "category": "campus"},
+        headers=admin,
+    )
+    assert spot.status_code == 201, spot.text
+    dropoff = await client.post(
+        "/api/v1/runs/dropoffs", json={"name": "Cache Hall lobby"}, headers=admin
+    )
+    assert dropoff.status_code == 201, dropoff.text
+
+    spots = (await client.get("/api/v1/runs/spots", headers=student)).json()
+    assert "Cache Café" in {s["name"] for s in spots}
+    dropoffs = (await client.get("/api/v1/runs/dropoffs", headers=student)).json()
+    assert "Cache Hall lobby" in {d["name"] for d in dropoffs}
+
+
 async def test_tutor_search_cache_invalidated_on_offering_change(
     client: httpx.AsyncClient,
 ) -> None:
