@@ -184,10 +184,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             size: 20,
                           ),
                         ),
-                        validator: (v) =>
-                            ((v ?? '').trim().length == 6)
-                                ? null
-                                : 'Enter the 6-digit code',
+                        validator: (v) => ((v ?? '').trim().length == 6)
+                            ? null
+                            : 'Enter the 6-digit code',
                       ),
                       SizedBox(height: tokens.space4),
                       TextFormField(

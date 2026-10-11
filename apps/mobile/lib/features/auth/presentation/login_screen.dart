@@ -57,9 +57,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
     _checkedEmail = email;
     try {
-      final exists = await ref
-          .read(authRepositoryProvider)
-          .emailExists(email);
+      final exists = await ref.read(authRepositoryProvider).emailExists(email);
       if (!mounted || _email.text.trim() != email) return;
       setState(() => _emailKnown = exists);
     } on Object {
