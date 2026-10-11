@@ -69,8 +69,29 @@ String notificationTitle(NotificationResponse n) {
           : '$requester sent payment proof';
     case 'run_payment_confirmed':
       return 'Runner confirmed your payment';
+    case 'run_price_final':
+      return _priceFinalTitle(n);
   }
   return 'You have a new notification';
+}
+
+/// Settle-up headline: exact dollars, loud (payment-terms rule — money
+/// copy is exempt from the copy diet).
+String _priceFinalTitle(NotificationResponse n) {
+  final delta = int.tryParse(_str(n, 'delta_cents') ?? '');
+  final actual = int.tryParse(_str(n, 'actual_price_cents') ?? '');
+  if (delta == null || actual == null) return 'Final price for your order';
+  String money(int cents) => cents % 100 == 0
+      ? '\$${cents ~/ 100}'
+      : '\$${(cents / 100).toStringAsFixed(2)}';
+  if (delta > 0) {
+    return 'Items came to ${money(actual)} — you owe ${money(delta)} more';
+  }
+  if (delta < 0) {
+    return 'Items came to ${money(actual)} — '
+        '${money(-delta)} back to you';
+  }
+  return 'Items came to ${money(actual)} — exactly your estimate';
 }
 
 /// Friendly copy per run-status update payload.
@@ -112,7 +133,8 @@ NotificationRoute? notificationRoute(NotificationResponse n) {
         'run_runner_arrived' ||
         'run_no_show' ||
         'run_payment_submitted' ||
-        'run_payment_confirmed':
+        'run_payment_confirmed' ||
+        'run_price_final':
       final runId = _str(n, 'run_id');
       if (runId == null) return null;
       return ('/runs/run/$runId', _str(n, 'spot_name'));
@@ -132,7 +154,8 @@ IconData notificationIcon(NotificationResponse n) => switch (n.type) {
   'run_runner_arrived' => Icons.hail_rounded,
   'run_no_show' => Icons.timer_off_outlined,
   'run_payment_submitted' ||
-  'run_payment_confirmed' => Icons.account_balance_wallet_outlined,
+  'run_payment_confirmed' ||
+  'run_price_final' => Icons.account_balance_wallet_outlined,
   _ => Icons.notifications_none,
 };
 

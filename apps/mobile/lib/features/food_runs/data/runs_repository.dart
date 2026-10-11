@@ -77,16 +77,36 @@ class RunsRepository {
   Future<RunResponse> requestSpot(
     String runId,
     String orderText,
-    String dropoffLocationId,
-  ) async {
+    String dropoffLocationId, {
+    required int itemPriceCents,
+  }) async {
     final res = await _runs.requestSpotApiV1RunsRunIdOrdersPost(
       runId: runId,
       runOrderCreateRequest: RunOrderCreateRequest(
         (b) => b
           ..orderText = orderText
+          ..itemPriceCents = itemPriceCents
           ..dropoffLocationId = dropoffLocationId,
       ),
     );
+    return res.data!;
+  }
+
+  /// Runner enters the real receipt price after buying — drives the
+  /// settle-up delta shown loud on both sides. Re-entry fixes typos.
+  Future<RunResponse> setActualPrice(
+    String runId,
+    String orderId,
+    int actualPriceCents,
+  ) async {
+    final res = await _runs
+        .setActualPriceApiV1RunsRunIdOrdersOrderIdActualPricePost(
+          runId: runId,
+          orderId: orderId,
+          actualPriceSubmitRequest: ActualPriceSubmitRequest(
+            (b) => b..actualPriceCents = actualPriceCents,
+          ),
+        );
     return res.data!;
   }
 

@@ -82,8 +82,22 @@ class RunDetailController
     ref.read(runsFeedControllerProvider.notifier).pokeAfterMutation();
   }
 
-  Future<void> requestSpot(String orderText, String dropoffLocationId) =>
-      _mutate(() => _repo.requestSpot(arg, orderText, dropoffLocationId));
+  Future<void> requestSpot(
+    String orderText,
+    String dropoffLocationId, {
+    required int itemPriceCents,
+  }) => _mutate(
+    () => _repo.requestSpot(
+      arg,
+      orderText,
+      dropoffLocationId,
+      itemPriceCents: itemPriceCents,
+    ),
+  );
+
+  /// Runner enters the real receipt price (settle-up truth-up).
+  Future<void> setActualPrice(String orderId, int actualPriceCents) =>
+      _mutate(() => _repo.setActualPrice(arg, orderId, actualPriceCents));
 
   /// Requester uploads a transaction screenshot + note as payment proof.
   Future<void> submitPaymentProof(

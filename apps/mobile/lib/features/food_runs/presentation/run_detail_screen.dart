@@ -223,9 +223,13 @@ class _RunDetailBody extends ConsumerWidget {
       isScrollControlled: true,
       builder: (sheetContext) => _RequestSheet(
         run: run,
-        onSubmit: (order, dropoffId) => _act(
+        onSubmit: (order, dropoffId, itemPriceCents) => _act(
           context,
-          () => controller.requestSpot(order, dropoffId),
+          () => controller.requestSpot(
+            order,
+            dropoffId,
+            itemPriceCents: itemPriceCents,
+          ),
           success: success,
         ),
       ),
@@ -253,7 +257,7 @@ class _RunDetailBody extends ConsumerWidget {
     final alreadyRated = order.ratedByMe ?? false;
     final canRate = rateable && !alreadyRated;
     return [
-      _MyOrderCard(order: order),
+      _MyOrderCard(order: order, feeCents: run.feeCents),
       SizedBox(height: tokens.space3),
       OutlinedButton.icon(
         icon: const Icon(Icons.chat_bubble_outline, size: 18),
@@ -266,9 +270,12 @@ class _RunDetailBody extends ConsumerWidget {
           orderId: order.id,
         ),
       ),
-      if (accepted && (run.feeCents > 0 || run.prepayRequired)) ...[
+      if (accepted &&
+          (run.feeCents > 0 ||
+              run.prepayRequired ||
+              (order.itemPriceCents ?? 0) > 0)) ...[
         SizedBox(height: tokens.space3),
-        _PaymentCard(run: run),
+        _PaymentCard(run: run, order: order),
         SizedBox(height: tokens.space3),
         _PaymentProofCard(order: order, controller: controller),
       ],
@@ -386,6 +393,18 @@ class _RunDetailBody extends ConsumerWidget {
       RunStatus.delivering,
     }.contains(run.status);
 
+    // Dasher money math over live deliveries: what they'll front at the
+    // counter (estimates until receipt truth-ups) and what comes back
+    // (items reimbursed + fee per order).
+    final frontingCents = deliveries.fold<int>(
+      0,
+      (sum, o) => sum + (o.actualPriceCents ?? o.itemPriceCents ?? 0),
+    );
+    final comingBackCents = frontingCents + deliveries.length * run.feeCents;
+    final anyEstimate = deliveries.any(
+      (o) => o.actualPriceCents == null && (o.itemPriceCents ?? 0) > 0,
+    );
+
     return [
       if (active)
         // Glanceable dashboard: how many need an answer, how many are
@@ -400,6 +419,14 @@ class _RunDetailBody extends ConsumerWidget {
         // it for a receipt — what happened, to whom, and the money total.
         // Full per-order detail stays below in the WRAPPED UP cards.
         _RunSummaryCard(run: run, orders: orders),
+      if (active && frontingCents > 0) ...[
+        SizedBox(height: tokens.space2),
+        _RunnerMoneyStrip(
+          frontingCents: frontingCents,
+          comingBackCents: comingBackCents,
+          approximate: anyEstimate,
+        ),
+      ],
       SizedBox(height: tokens.space3),
       if (active) ...[
         _RunnerStatusStepper(
@@ -592,6 +619,21 @@ class _RunDetailBody extends ConsumerWidget {
                   success: '${order.requester.displayName} removed — unpaid.',
                 )
               : null,
+          // Receipt truth-up is legal once the dasher is buying (server's
+          // _PAYABLE_STATUSES gate mirrored client-side).
+          onSetPrice:
+              const {
+                    RunStatus.atStore,
+                    RunStatus.delivering,
+                    RunStatus.done,
+                  }.contains(run.status) &&
+                  const {
+                    RunOrderStatus.accepted,
+                    RunOrderStatus.delivered,
+                    RunOrderStatus.received,
+                  }.contains(order.status)
+              ? () => _promptActualPrice(context, controller, order)
+              : null,
           onMessage: () => _openRunChat(
             context,
             ref,
@@ -642,6 +684,58 @@ class _RunDetailBody extends ConsumerWidget {
         SizedBox(height: tokens.space3),
       ],
     ];
+  }
+
+  /// Receipt-price dialog: one $ field, prefilled on re-entry (typo fixes
+  /// are allowed — the server lets the runner overwrite).
+  Future<void> _promptActualPrice(
+    BuildContext context,
+    RunDetailController controller,
+    RunOrderResponse order,
+  ) async {
+    final existing = order.actualPriceCents;
+    final text = TextEditingController(
+      text: existing == null ? '' : (existing / 100).toStringAsFixed(2),
+    );
+    final cents = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Receipt price — ${order.requester.displayName}'),
+        content: TextField(
+          controller: text,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            prefixText: r'$ ',
+            hintText: '0.00',
+            helperText: 'What their items cost on the receipt, incl. tax.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = _parsePriceCents(text.text);
+              if (value == null || value > 50000) return;
+              Navigator.of(dialogContext).pop(value);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    text.dispose();
+    if (cents == null || !context.mounted) return;
+    await _act(
+      context,
+      () => controller.setActualPrice(order.id, cents),
+      success:
+          'Final price saved — '
+          '${order.requester.displayName} sees the settle-up.',
+    );
   }
 
   Future<void> _confirmCancel(
@@ -1049,11 +1143,13 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// The requester's own order: text + status chip.
+/// The requester's own order: text + status chip + the money line (their
+/// estimate, then the receipt truth-up with a loud settle-up delta).
 class _MyOrderCard extends StatelessWidget {
-  const _MyOrderCard({required this.order});
+  const _MyOrderCard({required this.order, required this.feeCents});
 
   final RunOrderResponse order;
+  final int feeCents;
 
   @override
   Widget build(BuildContext context) {
@@ -1126,6 +1222,7 @@ class _MyOrderCard extends StatelessWidget {
             icon: Icons.place_outlined,
             label: 'Drop at ${order.dropoff}',
           ),
+          ..._moneyRows(context),
           SizedBox(height: tokens.space2),
           Text(
             copy,
@@ -1137,21 +1234,70 @@ class _MyOrderCard extends StatelessWidget {
       ),
     );
   }
+
+  /// Estimate line until the runner enters the receipt price; then the final
+  /// price plus a loud "you owe / they owe you" delta (payment-terms rule:
+  /// money copy is exempt from the copy diet).
+  List<Widget> _moneyRows(BuildContext context) {
+    final tokens = context.tokens;
+    final estimate = order.itemPriceCents ?? 0;
+    final actual = order.actualPriceCents;
+    if (estimate <= 0 && actual == null) return const [];
+    final items = actual ?? estimate;
+    final total = runFeeAmount(items + feeCents);
+    final feePart = feeCents > 0
+        ? ' + ${runFeeAmount(feeCents)} fee = $total'
+        : '';
+    final label = actual == null
+        ? 'Est. ${runFeeAmount(items)} items$feePart'
+        : 'Receipt: ${runFeeAmount(items)} items$feePart';
+    final delta = actual == null || estimate <= 0 ? 0 : actual - estimate;
+    return [
+      SizedBox(height: tokens.space2),
+      _InfoRow(icon: Icons.receipt_long_outlined, label: label),
+      if (delta != 0) ...[
+        SizedBox(height: tokens.space1),
+        Text(
+          delta > 0
+              ? 'You owe ${runFeeAmount(delta)} more than your estimate.'
+              : 'The runner owes you ${runFeeAmount(-delta)} back.',
+          style: context.text.bodySmall?.copyWith(
+            color: delta > 0 ? tokens.warning : tokens.success,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ];
+  }
 }
 
 /// Revealed only after the runner accepts you (spec: PII stays hidden until
 /// then). Lists every rail the runner saved with a tap-to-copy handle —
 /// payment always happens off-app, stated plainly.
 class _PaymentCard extends StatelessWidget {
-  const _PaymentCard({required this.run});
+  const _PaymentCard({required this.run, required this.order});
 
   final RunResponse run;
+  final RunOrderResponse order;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
     final methods = run.runner.paymentMethods ?? const <PaymentMethod>[];
+    // The amount to send: receipt price when the runner entered it,
+    // otherwise the requester's own estimate — plus the delivery fee.
+    final actual = order.actualPriceCents;
+    final items = actual ?? order.itemPriceCents ?? 0;
+    final total = items + run.feeCents;
+    final isEstimate = actual == null && items > 0;
+    final headline = items > 0
+        ? '${runFeeAmount(total)} to the runner'
+              '${isEstimate ? ' (est.)' : ''}'
+        : '${runFeeAmount(run.feeCents)} to the runner';
+    final breakdown = items > 0 && run.feeCents > 0
+        ? '${runFeeAmount(items)} items + ${runFeeAmount(run.feeCents)} fee'
+        : null;
     return Container(
       padding: EdgeInsets.all(tokens.space4),
       // Neutral panel like every other card — amber is reserved for the one
@@ -1175,13 +1321,22 @@ class _PaymentCard extends StatelessWidget {
               ),
               SizedBox(width: tokens.space2),
               Expanded(
-                child: Text(
-                  '${runFeeAmount(run.feeCents)} to the runner',
-                  style: context.text.titleSmall,
-                ),
+                child: Text(headline, style: context.text.titleSmall),
               ),
             ],
           ),
+          if (breakdown != null) ...[
+            SizedBox(height: tokens.space1),
+            Padding(
+              padding: EdgeInsets.only(left: 18 + tokens.space2),
+              child: Text(
+                breakdown,
+                style: context.text.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
           if (methods.isEmpty)
             Padding(
               padding: EdgeInsets.only(top: tokens.space2),
@@ -1195,7 +1350,7 @@ class _PaymentCard extends StatelessWidget {
           else
             for (final m in methods) ...[
               SizedBox(height: tokens.space3),
-              _PaymentMethodRow(method: m, amountCents: run.feeCents),
+              _PaymentMethodRow(method: m, amountCents: total),
             ],
           if (run.prepayRequired) ...[
             SizedBox(height: tokens.space3),
@@ -1306,6 +1461,18 @@ class _RunSummaryCard extends StatelessWidget {
         )
         .length;
     final collectedCents = delivered * run.feeCents;
+    // Items money on delivered orders — receipt price when entered,
+    // otherwise the requester's estimate.
+    final itemsCents = orders
+        .where(
+          (o) =>
+              o.status == RunOrderStatus.delivered ||
+              o.status == RunOrderStatus.received,
+        )
+        .fold<int>(
+          0,
+          (s, o) => s + (o.actualPriceCents ?? o.itemPriceCents ?? 0),
+        );
 
     return Container(
       padding: EdgeInsets.all(tokens.space4),
@@ -1360,7 +1527,7 @@ class _RunSummaryCard extends StatelessWidget {
               Icons.receipt_long_outlined,
               'Payment proofs: $proofs of ${orders.length}',
             ),
-          if (run.feeCents > 0 && delivered > 0) ...[
+          if ((run.feeCents > 0 && delivered > 0) || itemsCents > 0) ...[
             SizedBox(height: tokens.space2),
             Divider(height: 1, color: colors.outlineVariant),
             SizedBox(height: tokens.space3),
@@ -1370,9 +1537,14 @@ class _RunSummaryCard extends StatelessWidget {
                 SizedBox(width: tokens.space2),
                 Expanded(
                   child: Text(
-                    'Total fees: ${runFeeAmount(collectedCents)} '
-                    '(${runFeeAmount(run.feeCents)} × $delivered) — '
-                    'collected off-app.',
+                    itemsCents > 0
+                        ? 'Total: ${runFeeAmount(itemsCents)} items + '
+                              '${runFeeAmount(collectedCents)} fees = '
+                              '${runFeeAmount(itemsCents + collectedCents)} '
+                              '— collected off-app.'
+                        : 'Total fees: ${runFeeAmount(collectedCents)} '
+                              '(${runFeeAmount(run.feeCents)} × $delivered) — '
+                              'collected off-app.',
                     style: context.text.bodyMedium?.copyWith(
                       color: tokens.success,
                       fontWeight: FontWeight.w700,
@@ -1397,6 +1569,58 @@ class _RunSummaryCard extends StatelessWidget {
           Icon(icon, size: 18, color: colors.onSurfaceVariant),
           SizedBox(width: tokens.space2),
           Expanded(child: Text(label, style: context.text.bodyMedium)),
+        ],
+      ),
+    );
+  }
+}
+
+/// The dasher's money line under the dashboard: what they'll front at the
+/// counter and what's coming back (items reimbursed + fees). `~` marks
+/// totals still based on requester estimates. Money copy stays loud.
+class _RunnerMoneyStrip extends StatelessWidget {
+  const _RunnerMoneyStrip({
+    required this.frontingCents,
+    required this.comingBackCents,
+    required this.approximate,
+  });
+
+  final int frontingCents;
+  final int comingBackCents;
+  final bool approximate;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final a = approximate ? '~' : '';
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: tokens.space3,
+        vertical: tokens.space2,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: tokens.brSm,
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.account_balance_wallet_outlined,
+            size: 16,
+            color: colors.onSurfaceVariant,
+          ),
+          SizedBox(width: tokens.space2),
+          Expanded(
+            child: Text(
+              'Fronting $a${runFeeAmount(frontingCents)} at the counter · '
+              '$a${runFeeAmount(comingBackCents)} coming back',
+              style: context.text.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1632,6 +1856,7 @@ class _OrderCard extends StatelessWidget {
     required this.onRate,
     this.onRemoveUnpaid,
     this.onConfirmPaid,
+    this.onSetPrice,
     this.collectFeeCents,
   });
 
@@ -1663,6 +1888,71 @@ class _OrderCard extends StatelessWidget {
   /// Runner vouches "I got the money" for a prepay order with no proof —
   /// the honest payer who forgot the screenshot stops looking unpaid.
   final VoidCallback? onConfirmPaid;
+
+  /// Runner enters the real receipt price after buying (settle-up truth-up);
+  /// non-null only while the run is at the store or later.
+  final VoidCallback? onSetPrice;
+
+  /// Money lines in the boxed panel: what the items cost (estimate until the
+  /// receipt truth-up) and — on non-prepay runs — the full amount to collect
+  /// at handoff. Money copy stays loud to prevent disputes.
+  List<Widget> _moneyRows(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final actual = order.actualPriceCents;
+    final items = actual ?? order.itemPriceCents ?? 0;
+    final rows = <Widget>[];
+    if (items > 0) {
+      rows.addAll([
+        SizedBox(height: tokens.space3),
+        Row(
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 18,
+              color: colors.onSurfaceVariant,
+            ),
+            SizedBox(width: tokens.space2),
+            Expanded(
+              child: Text(
+                actual == null
+                    ? 'Items ~${runFeeAmount(items)} (their estimate)'
+                    : 'Items ${runFeeAmount(items)} (receipt)',
+                style: context.text.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ]);
+    }
+    final fee = collectFeeCents;
+    if (fee != null && (fee > 0 || items > 0)) {
+      final total = items + fee;
+      final approx = items > 0 && actual == null ? '~' : '';
+      rows.addAll([
+        SizedBox(height: tokens.space3),
+        Row(
+          children: [
+            Icon(Icons.payments_outlined, size: 18, color: tokens.success),
+            SizedBox(width: tokens.space2),
+            Expanded(
+              child: Text(
+                'Collect $approx${runFeeAmount(total)} at handoff',
+                style: context.text.bodySmall?.copyWith(
+                  color: tokens.success,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ]);
+    }
+    return rows;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1764,29 +2054,7 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (collectFeeCents != null && collectFeeCents! > 0) ...[
-                  SizedBox(height: tokens.space3),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.payments_outlined,
-                        size: 18,
-                        color: tokens.success,
-                      ),
-                      SizedBox(width: tokens.space2),
-                      Expanded(
-                        child: Text(
-                          'Collect ${runFeeAmount(collectFeeCents!)} '
-                          'at handoff',
-                          style: context.text.bodySmall?.copyWith(
-                            color: tokens.success,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ..._moneyRows(context),
               ],
             ),
           ),
@@ -1862,6 +2130,21 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ],
                 ],
+              ),
+            ),
+          ],
+          // Receipt truth-up: enter (or fix) the real items price once the
+          // dasher is at the store — drives the settle-up delta both sides.
+          if (onSetPrice != null) ...[
+            SizedBox(height: tokens.space3),
+            OutlinedButton.icon(
+              onPressed: onSetPrice,
+              icon: const Icon(Icons.receipt_long_outlined, size: 18),
+              label: Text(
+                order.actualPriceCents == null
+                    ? 'Enter receipt price'
+                    : 'Receipt: '
+                          '${runFeeAmount(order.actualPriceCents!)} · edit',
               ),
             ),
           ],
@@ -2103,6 +2386,15 @@ class _PaymentProofReview extends StatelessWidget {
   }
 }
 
+/// Parses a dollars string ("11.50", "$11.5") into cents; null when invalid.
+int? _parsePriceCents(String raw) {
+  final cleaned = raw.replaceAll(r'$', '').trim();
+  if (cleaned.isEmpty) return null;
+  final value = double.tryParse(cleaned);
+  if (value == null || value < 0) return null;
+  return (value * 100).round();
+}
+
 /// Request sheet: order text + a drop-off *picker* (admin-curated catalog,
 /// no free-text addresses). Consumer so it can read the dropoff catalog and
 /// keep its own selection state.
@@ -2110,7 +2402,12 @@ class _RequestSheet extends ConsumerStatefulWidget {
   const _RequestSheet({required this.run, required this.onSubmit});
 
   final RunResponse run;
-  final Future<void> Function(String orderText, String dropoffId) onSubmit;
+  final Future<void> Function(
+    String orderText,
+    String dropoffId,
+    int itemPriceCents,
+  )
+  onSubmit;
 
   @override
   ConsumerState<_RequestSheet> createState() => _RequestSheetState();
@@ -2118,12 +2415,32 @@ class _RequestSheet extends ConsumerStatefulWidget {
 
 class _RequestSheetState extends ConsumerState<_RequestSheet> {
   final _text = TextEditingController();
+  final _price = TextEditingController();
   String? _dropoffId;
 
   @override
   void dispose() {
     _text.dispose();
+    _price.dispose();
     super.dispose();
+  }
+
+  /// The live "items + fee = total" line under the price field — the
+  /// requester sees exactly what they'll owe before committing (money copy
+  /// stays loud; payment terms ride along).
+  String _totalLine() {
+    final run = widget.run;
+    final suffix = run.prepayRequired
+        ? 'prepay before pickup'
+        : 'pay at handoff';
+    final cents = _parsePriceCents(_price.text) ?? 0;
+    if (cents <= 0) return '${runFeeLabel(run.feeCents)} · $suffix';
+    final total = cents + run.feeCents;
+    if (run.feeCents == 0) {
+      return '${runFeeAmount(total)} total · $suffix';
+    }
+    return '${runFeeAmount(cents)} + ${runFeeAmount(run.feeCents)} fee '
+        '= ${runFeeAmount(total)} · $suffix';
   }
 
   void _snack(String message) {
@@ -2202,6 +2519,23 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
             ),
           ),
           SizedBox(height: tokens.space4),
+          Text('What will it cost?', style: AppTextStyles.label),
+          SizedBox(height: tokens.space2),
+          TextField(
+            controller: _price,
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+            ),
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              prefixText: r'$ ',
+              hintText: '0.00',
+              // Honest expectation-setting: the runner trues it up from the
+              // receipt later, so a rough number is fine.
+              helperText: 'Your items incl. tax — add ~10% if unsure.',
+            ),
+          ),
+          SizedBox(height: tokens.space4),
           Text('Where should they drop it?', style: AppTextStyles.label),
           SizedBox(height: tokens.space2),
           catalog.when(
@@ -2229,11 +2563,11 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
           SizedBox(height: tokens.space4),
           Text(
             // Payment terms at the point of commitment — keep explicit.
-            run.prepayRequired
-                ? '${runFeeLabel(run.feeCents)} · prepay before pickup'
-                : '${runFeeLabel(run.feeCents)} · pay at handoff',
+            // Live "items + fee = total" once a price is typed.
+            _totalLine(),
             style: context.text.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: tokens.space4),
@@ -2244,13 +2578,22 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
                 _snack('Add your order first.');
                 return;
               }
+              final cents = _parsePriceCents(_price.text);
+              if (cents == null || cents <= 0) {
+                _snack('Add what your items cost (a rough number is fine).');
+                return;
+              }
+              if (cents > 50000) {
+                _snack(r'Price must be under $500.');
+                return;
+              }
               if (_dropoffId == null) {
                 _snack('Pick a drop-off spot.');
                 return;
               }
               Navigator.of(context).pop();
               unawaited(HapticFeedback.selectionClick());
-              widget.onSubmit(order, _dropoffId!).ignore();
+              widget.onSubmit(order, _dropoffId!, cents).ignore();
             },
             child: const Text('Send request'),
           ),
