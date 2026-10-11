@@ -144,7 +144,18 @@ def run_response(
     runner (they are the payment instructions), hidden from passers-by.
     """
     is_runner = run.runner_id == viewer_id
-    my_order = next((o for o in run.orders if o.requester_id == viewer_id), None)
+    # A requester may have withdrawn/declined orders plus one live one (re-
+    # ordering is allowed): surface the live order, else the latest terminal
+    # one so the UI can still show "declined"/"withdrawn" state.
+    viewer_orders = [o for o in run.orders if o.requester_id == viewer_id]
+    my_order = next(
+        (
+            o
+            for o in viewer_orders
+            if o.status not in (RunOrderStatus.cancelled, RunOrderStatus.declined)
+        ),
+        viewer_orders[-1] if viewer_orders else None,
+    )
     # The runner's own order (self-order) never counts toward spots.
     others = [o for o in run.orders if o.requester_id != run.runner_id]
     accepted = [o for o in others if o.status in _ACTIVE_ORDER_STATUSES]

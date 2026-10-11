@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models import DropoffLocation, FoodSpot, Run, RunOrder
-from app.models.enums import RunStatus
+from app.models.enums import RunOrderStatus, RunStatus
 
 # Eager-load everything a RunResponse needs — no N+1 on the feed (spec §7.2).
 _RUN_LOAD = (
@@ -123,8 +123,14 @@ class RunRepository:
         return result.scalars().first()
 
     async def find_order(self, run_id: uuid.UUID, requester_id: uuid.UUID) -> RunOrder | None:
+        """Live order for (run, requester) — withdrawn/declined orders don't
+        block a fresh request (duplicate-order check, QA issue)."""
         result = await self._session.execute(
-            select(RunOrder).where(RunOrder.run_id == run_id, RunOrder.requester_id == requester_id)
+            select(RunOrder).where(
+                RunOrder.run_id == run_id,
+                RunOrder.requester_id == requester_id,
+                RunOrder.status.notin_([RunOrderStatus.cancelled, RunOrderStatus.declined]),
+            )
         )
         return result.scalars().first()
 

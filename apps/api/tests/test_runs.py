@@ -419,6 +419,40 @@ async def test_run_full_and_decline_and_withdraw(client: httpx.AsyncClient) -> N
     resp = await client.delete(f"/api/v1/runs/{run['id']}/orders/{o2['id']}", headers=r1)
     assert resp.status_code == 403
 
+    # Declined doesn't block a fresh request (QA regression): r2 can re-order.
+    assert (await order(r2))["error"]["code"] == "RUN_FULL"  # cap still applies
+
+
+async def test_reorder_after_withdraw_and_decline(client: httpx.AsyncClient) -> None:
+    """A cancelled or declined order must not trip DUPLICATE_ORDER (QA issue #1)."""
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    spot_id = await _make_spot()
+    run = await _create_run(client, runner, spot_id)
+    dropoff_id = await _make_dropoff()
+
+    async def order() -> httpx.Response:
+        return await client.post(
+            f"/api/v1/runs/{run['id']}/orders",
+            json=_order_body("food", dropoff_id=dropoff_id),
+            headers=req,
+        )
+
+    # Withdraw → re-order succeeds.
+    o1 = (await order()).json()["my_order"]
+    resp = await client.delete(f"/api/v1/runs/{run['id']}/orders/{o1['id']}", headers=req)
+    assert resp.status_code == 204
+    resp = await order()
+    assert resp.status_code == 201, resp.text
+    o2 = resp.json()["my_order"]
+
+    # Decline → re-order succeeds; a live request still blocks duplicates.
+    resp = await client.post(f"/api/v1/runs/{run['id']}/orders/{o2['id']}/decline", headers=runner)
+    assert resp.status_code == 200
+    resp = await order()
+    assert resp.status_code == 201, resp.text
+    assert (await order()).json()["error"]["code"] == "DUPLICATE_ORDER"
+
 
 async def test_visitor_sees_counts_only(client: httpx.AsyncClient) -> None:
     runner = await make_user(client, "runner@campus.edu")

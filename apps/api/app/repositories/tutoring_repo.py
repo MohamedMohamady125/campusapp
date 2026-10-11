@@ -26,15 +26,18 @@ class TutoringRepository:
         """Prefix match on code, substring on title — J2 is typed fast."""
         pattern_code = f"{query}%"
         pattern_title = f"%{query}%"
+        # Code-prefix matches outrank incidental title substrings ("CS" must
+        # surface CS101 before "Topics in Biology") — QA issue #3.
+        code_match = Course.code.ilike(pattern_code)
         stmt = (
             select(Course)
             .where(
                 or_(
-                    Course.code.ilike(pattern_code),
+                    code_match,
                     Course.title.ilike(pattern_title),
                 )
             )
-            .order_by(Course.code)
+            .order_by(code_match.desc(), Course.code)
             .limit(COURSE_AUTOCOMPLETE_LIMIT)
         )
         return list((await self._session.execute(stmt)).scalars())

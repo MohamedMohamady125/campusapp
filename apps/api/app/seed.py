@@ -6,7 +6,9 @@ Idempotent: skips seeding if any user already exists.
 
 import asyncio
 import random
+import struct
 import uuid
+import zlib
 from datetime import UTC, datetime, timedelta
 
 import structlog
@@ -28,6 +30,7 @@ from app.models import (
     Rating,
     Run,
     RunOrder,
+    StoredImage,
     TutorOffering,
     User,
 )
@@ -45,6 +48,32 @@ from app.models.enums import (
 log = structlog.get_logger()
 
 rng = random.Random(42)  # deterministic seed data
+
+# Warm, distinct avatar fills for demo users (brand-adjacent, no two alike
+# in a row). Solid-color PNGs keep seed rows tiny (~100 bytes each).
+_AVATAR_COLORS: list[tuple[int, int, int]] = [
+    (230, 103, 60),  # coral (brand)
+    (46, 50, 54),  # charcoal
+    (67, 130, 108),  # moss
+    (196, 149, 58),  # ochre
+    (104, 110, 180),  # periwinkle
+    (171, 87, 112),  # plum
+    (58, 138, 160),  # teal
+    (150, 106, 70),  # tan
+]
+
+
+def _solid_png(rgb: tuple[int, int, int], size: int = 64) -> bytes:
+    """Minimal valid PNG of one color — stdlib only, no PIL dependency."""
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data))
+
+    ihdr = struct.pack(">IIBBBBB", size, size, 8, 2, 0, 0, 0)  # 8-bit RGB
+    row = b"\x00" + bytes(rgb) * size  # filter byte + pixels
+    idat = zlib.compress(row * size)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", idat) + chunk(b"IEND", b"")
+
 
 _DEPARTMENTS = {
     "CS": "Computer Science",
@@ -301,6 +330,20 @@ async def _seed(session: AsyncSession) -> None:
         )
         users.append(user)
         session.add(user)
+
+    # Every demo user gets an avatar: posting a run requires one
+    # (AVATAR_REQUIRED trust rule), so seed accounts must be run-ready.
+    avatars = [
+        StoredImage(
+            content_type="image/png",
+            data=_solid_png(_AVATAR_COLORS[i % len(_AVATAR_COLORS)]),
+        )
+        for i in range(len(users))
+    ]
+    session.add_all(avatars)
+    await session.flush()
+    for user, avatar in zip(users, avatars, strict=True):
+        user.avatar_key = f"db/{avatar.id}"
 
     await session.flush()
 

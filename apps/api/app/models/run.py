@@ -19,7 +19,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -111,7 +111,15 @@ class Run(TimestampedBase):
 class RunOrder(TimestampedBase):
     __tablename__ = "run_orders"
     __table_args__ = (
-        UniqueConstraint("run_id", "requester_id", name="uq_run_order_run_requester"),
+        # Partial unique: one LIVE order per (run, requester). Withdrawn and
+        # declined orders don't block a fresh request (QA issue #1).
+        Index(
+            "uq_run_order_live",
+            "run_id",
+            "requester_id",
+            unique=True,
+            postgresql_where=text("status NOT IN ('cancelled', 'declined')"),
+        ),
     )
 
     run_id: Mapped[uuid.UUID] = mapped_column(
