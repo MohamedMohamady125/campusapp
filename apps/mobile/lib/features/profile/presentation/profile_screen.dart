@@ -1,5 +1,6 @@
 import 'dart:async' show unawaited;
 
+import 'package:campus_api/campus_api.dart';
 import 'package:campusconnect/core/legal.dart';
 import 'package:campusconnect/core/theme_mode_provider.dart';
 import 'package:campusconnect/design_system/components/reputation_chip.dart';
@@ -73,6 +74,18 @@ class ProfileScreen extends ConsumerWidget {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.go('/profile/edit'),
                       ),
+                      // Staff only: the behaviour dashboard (the API
+                      // rejects students anyway; the row just stays hidden).
+                      if (user.role != UserRole.student) ...[
+                        const Divider(height: 1, indent: 56),
+                        ListTile(
+                          leading: const Icon(Icons.insights_outlined),
+                          title: const Text('Behavior insights'),
+                          subtitle: const Text('What students use most'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.go('/profile/insights'),
+                        ),
+                      ],
                     ],
                   ),
                 ),

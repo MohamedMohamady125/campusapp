@@ -2,6 +2,7 @@ import 'package:campusconnect/core/analytics/analytics_service.dart';
 import 'package:campusconnect/core/flags/flags_provider.dart';
 import 'package:campusconnect/core/push/push_service.dart';
 import 'package:campusconnect/design_system/material.dart';
+import 'package:campusconnect/features/admin/presentation/behavior_insights_screen.dart';
 import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:campusconnect/features/auth/presentation/forgot_password_screen.dart';
 import 'package:campusconnect/features/auth/presentation/login_screen.dart';
@@ -211,6 +212,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'orders',
                     builder: (_, _) => const OrdersScreen(),
+                  ),
+                  GoRoute(
+                    path: 'insights',
+                    builder: (_, _) => const BehaviorInsightsScreen(),
                   ),
                 ],
               ),
