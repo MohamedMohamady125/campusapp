@@ -32,6 +32,10 @@ async def test_security_headers_present(client: httpx.AsyncClient) -> None:
     assert resp.headers["referrer-policy"] == "no-referrer"
     assert "max-age=" in resp.headers["strict-transport-security"]
     assert "camera=()" in resp.headers["permissions-policy"]
+    # JSON API: deny-all CSP; docs get a relaxed CDN policy instead.
+    assert resp.headers["content-security-policy"] == ("default-src 'none'; frame-ancestors 'none'")
+    docs = await client.get("/docs")
+    assert "cdn.jsdelivr.net" in docs.headers["content-security-policy"]
 
 
 # -- flags ------------------------------------------------------------------

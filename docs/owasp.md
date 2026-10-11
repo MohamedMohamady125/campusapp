@@ -27,11 +27,13 @@ Status legend: ✅ addressed · 🟡 partial (noted follow-up) · N/A not applic
 - Security headers middleware: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Strict-Transport-Security`, `Permissions-Policy`.
 - CORS restricted to configured origins (no `*` with credentials).
 - Error envelope hides internals; framework 500s return generic `INTERNAL` (no stack traces to clients).
+- Content-Security-Policy: deny-all (`default-src 'none'; frame-ancestors 'none'`) on all JSON/API responses; relaxed CDN allowlist only on `/docs`, `/redoc`, `/openapi.json` (`security_headers.py`).
 - ✅ (M10) Swagger UI (`/docs`) disabled in prod; `/redoc` intentionally kept for published API docs.
 
-## A06 — Vulnerable & Outdated Components 🟡
-- `pip-audit` run in M8 (see RUN_LOG for findings/date) and in CI (`ci-api.yml` audit step).
-- Flutter dependency scan TODO(blocked): pub.dev unreachable from this network.
+## A06 — Vulnerable & Outdated Components ✅
+- `pip-audit` run in M8 and in CI (`ci-api.yml` audit step).
+- 2026-10-11 audit: pyjwt 2.13.0 (8 PYSEC advisories) → upgraded to 2.15.1; urllib3 2.7.0 (3 PYSEC advisories) → upgraded to 2.8.0. Pins raised in `pyproject.toml`; re-audit clean (0 known vulnerabilities).
+- 2026-10-11 Flutter scan: `dart pub outdated` run — no security advisories against current pins; upgrades available are feature/major bumps only (riverpod 3, freezed 3) deferred deliberately.
 
 ## A07 — Identification & Authentication Failures ✅
 - Access tokens ~15 min; refresh rotation + reuse detection; logout and password reset revoke sessions.

@@ -21,6 +21,18 @@ _HEADERS: list[tuple[bytes, bytes]] = [
     (b"permissions-policy", b"camera=(), microphone=(), geolocation=()"),
 ]
 
+# The API serves JSON (and raw images) — nothing should ever execute. A
+# deny-all CSP kills any reflected-content XSS vector dead. /docs + /redoc
+# load Swagger assets from a CDN, so they get a relaxed policy instead.
+_CSP_STRICT = (b"content-security-policy", b"default-src 'none'; frame-ancestors 'none'")
+_CSP_DOCS = (
+    b"content-security-policy",
+    b"default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
+    b"style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+    b"img-src 'self' https://fastapi.tiangolo.com data:; frame-ancestors 'none'",
+)
+_DOCS_PATHS = ("/docs", "/redoc", "/openapi.json")
+
 
 class SecurityHeadersMiddleware:
     def __init__(self, app: ASGIApp) -> None:
@@ -30,11 +42,14 @@ class SecurityHeadersMiddleware:
         if scope["type"] != "http":
             await self._app(scope, receive, send)
             return
+        path = scope.get("path", "")
+        csp = _CSP_DOCS if path.startswith(_DOCS_PATHS) else _CSP_STRICT
 
         async def send_with_headers(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
                 headers.extend(_HEADERS)
+                headers.append(csp)
                 message["headers"] = headers
             await send(message)
 
