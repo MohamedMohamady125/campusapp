@@ -68,7 +68,10 @@ Class | Method | HTTP request | Description
 [*AdminApi*](doc/AdminApi.md) | [**adminMetricsApiV1AdminMetricsGet**](doc/AdminApi.md#adminmetricsapiv1adminmetricsget) | **GET** /api/v1/admin/metrics | Admin Metrics
 [*AnalyticsApi*](doc/AnalyticsApi.md) | [**adminBehaviorApiV1AdminBehaviorGet**](doc/AnalyticsApi.md#adminbehaviorapiv1adminbehaviorget) | **GET** /api/v1/admin/behavior | Admin Behavior
 [*AnalyticsApi*](doc/AnalyticsApi.md) | [**ingestEventsApiV1AnalyticsEventsPost**](doc/AnalyticsApi.md#ingesteventsapiv1analyticseventspost) | **POST** /api/v1/analytics/events | Ingest Events
+[*AuthApi*](doc/AuthApi.md) | [**changeEmailApiV1AuthChangeEmailPost**](doc/AuthApi.md#changeemailapiv1authchangeemailpost) | **POST** /api/v1/auth/change-email | Change Email
+[*AuthApi*](doc/AuthApi.md) | [**changePasswordApiV1AuthChangePasswordPost**](doc/AuthApi.md#changepasswordapiv1authchangepasswordpost) | **POST** /api/v1/auth/change-password | Change Password
 [*AuthApi*](doc/AuthApi.md) | [**checkEmailApiV1AuthCheckEmailPost**](doc/AuthApi.md#checkemailapiv1authcheckemailpost) | **POST** /api/v1/auth/check-email | Check Email
+[*AuthApi*](doc/AuthApi.md) | [**confirmEmailChangeApiV1AuthConfirmEmailChangePost**](doc/AuthApi.md#confirmemailchangeapiv1authconfirmemailchangepost) | **POST** /api/v1/auth/confirm-email-change | Confirm Email Change
 [*AuthApi*](doc/AuthApi.md) | [**forgotPasswordApiV1AuthForgotPasswordPost**](doc/AuthApi.md#forgotpasswordapiv1authforgotpasswordpost) | **POST** /api/v1/auth/forgot-password | Forgot Password
 [*AuthApi*](doc/AuthApi.md) | [**loginApiV1AuthLoginPost**](doc/AuthApi.md#loginapiv1authloginpost) | **POST** /api/v1/auth/login | Login
 [*AuthApi*](doc/AuthApi.md) | [**logoutApiV1AuthLogoutPost**](doc/AuthApi.md#logoutapiv1authlogoutpost) | **POST** /api/v1/auth/logout | Logout
@@ -162,6 +165,8 @@ Class | Method | HTTP request | Description
  - [BanRequest](doc/BanRequest.md)
  - [BehaviorDay](doc/BehaviorDay.md)
  - [BehaviorResponse](doc/BehaviorResponse.md)
+ - [ChangeEmailRequest](doc/ChangeEmailRequest.md)
+ - [ChangePasswordRequest](doc/ChangePasswordRequest.md)
  - [ChatCreateRequest](doc/ChatCreateRequest.md)
  - [ChatMembershipResponse](doc/ChatMembershipResponse.md)
  - [ChatMessageCreateRequest](doc/ChatMessageCreateRequest.md)
@@ -176,6 +181,7 @@ Class | Method | HTTP request | Description
  - [CheckEmailResponse](doc/CheckEmailResponse.md)
  - [ClientEventBatchRequest](doc/ClientEventBatchRequest.md)
  - [ClientEventIn](doc/ClientEventIn.md)
+ - [ConfirmEmailChangeRequest](doc/ConfirmEmailChangeRequest.md)
  - [ConversationContext](doc/ConversationContext.md)
  - [ConversationCreateRequest](doc/ConversationCreateRequest.md)
  - [ConversationPageResponse](doc/ConversationPageResponse.md)

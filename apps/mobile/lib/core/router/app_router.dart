@@ -25,6 +25,7 @@ import 'package:campusconnect/features/notifications/presentation/notifications_
 import 'package:campusconnect/features/profile/presentation/edit_profile_screen.dart';
 import 'package:campusconnect/features/profile/presentation/orders_screen.dart';
 import 'package:campusconnect/features/profile/presentation/profile_screen.dart';
+import 'package:campusconnect/features/profile/presentation/security_screen.dart';
 import 'package:campusconnect/features/tutoring/presentation/tutor_search_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -212,6 +213,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'orders',
                     builder: (_, _) => const OrdersScreen(),
+                  ),
+                  GoRoute(
+                    path: 'security',
+                    builder: (_, _) => const SecurityScreen(),
                   ),
                   GoRoute(
                     path: 'insights',

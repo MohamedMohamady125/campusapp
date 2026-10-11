@@ -3,11 +3,16 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.deps import get_current_user
 from app.db.session import get_session
 from app.integrations.email.provider import get_email_provider
+from app.models import User
 from app.schemas.auth import (
+    ChangeEmailRequest,
+    ChangePasswordRequest,
     CheckEmailRequest,
     CheckEmailResponse,
+    ConfirmEmailChangeRequest,
     ForgotPasswordRequest,
     LoginRequest,
     LogoutRequest,
@@ -91,3 +96,35 @@ async def reset_password(
 ) -> MessageResponse:
     await svc.reset_password(email=body.email, code=body.code, new_password=body.new_password)
     return MessageResponse(message="Password updated. Please log in.")
+
+
+@router.post("/change-password", response_model=TokenResponse)
+async def change_password(
+    body: ChangePasswordRequest,
+    user: User = Depends(get_current_user),
+    svc: AuthService = Depends(_service),
+) -> TokenResponse:
+    access, refresh_token = await svc.change_password(
+        user, current_password=body.current_password, new_password=body.new_password
+    )
+    return TokenResponse(access_token=access, refresh_token=refresh_token)
+
+
+@router.post("/change-email", response_model=MessageResponse)
+async def change_email(
+    body: ChangeEmailRequest,
+    user: User = Depends(get_current_user),
+    svc: AuthService = Depends(_service),
+) -> MessageResponse:
+    await svc.request_email_change(user, new_email=body.new_email, password=body.password)
+    return MessageResponse(message="Code sent to your new email.")
+
+
+@router.post("/confirm-email-change", response_model=MessageResponse)
+async def confirm_email_change(
+    body: ConfirmEmailChangeRequest,
+    user: User = Depends(get_current_user),
+    svc: AuthService = Depends(_service),
+) -> MessageResponse:
+    new_email = await svc.confirm_email_change(user, code=body.code)
+    return MessageResponse(message=f"Email updated to {new_email}.")

@@ -18,6 +18,7 @@ class UserStatus(enum.StrEnum):
 class VerificationPurpose(enum.StrEnum):
     email_verify = "email_verify"
     password_reset = "password_reset"
+    email_change = "email_change"
 
 
 class ListingCategory(enum.StrEnum):

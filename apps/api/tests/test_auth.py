@@ -159,3 +159,84 @@ async def test_cross_user_profile_hides_email(client: httpx.AsyncClient) -> None
     )
     assert resp.status_code == 200
     assert "email" not in resp.json()  # public profile never leaks email (spec §8)
+
+
+async def test_change_password_flow(client: httpx.AsyncClient) -> None:
+    await _register_and_verify(client)
+    tokens = await _login(client)
+    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+    # Wrong current password → 401.
+    resp = await client.post(
+        "/api/v1/auth/change-password",
+        json={"current_password": "Wrongpass1", "new_password": "N3wSecret!pw"},
+        headers=headers,
+    )
+    assert resp.status_code == 401
+
+    resp = await client.post(
+        "/api/v1/auth/change-password",
+        json={"current_password": PASSWORD, "new_password": "N3wSecret!pw"},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    new_tokens = resp.json()
+
+    # Old refresh token family is revoked.
+    resp = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+    )
+    assert resp.status_code == 401
+    # New pair works; old password no longer logs in, new one does.
+    resp = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": new_tokens["refresh_token"]}
+    )
+    assert resp.status_code == 200
+    resp = await client.post("/api/v1/auth/login", json={"email": EMAIL, "password": PASSWORD})
+    assert resp.status_code == 401
+    resp = await client.post(
+        "/api/v1/auth/login", json={"email": EMAIL, "password": "N3wSecret!pw"}
+    )
+    assert resp.status_code == 200
+
+
+async def test_change_email_flow(client: httpx.AsyncClient) -> None:
+    await _register_and_verify(client)
+    tokens = await _login(client)
+    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+    # Non-campus target domain rejected.
+    resp = await client.post(
+        "/api/v1/auth/change-email",
+        json={"new_email": "me@gmail.com", "password": PASSWORD},
+        headers=headers,
+    )
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "EMAIL_DOMAIN_NOT_ALLOWED"
+
+    # Confirm without a pending change → business rule error.
+    resp = await client.post(
+        "/api/v1/auth/confirm-email-change", json={"code": "123456"}, headers=headers
+    )
+    assert resp.json()["error"]["code"] == "NO_PENDING_EMAIL"
+
+    # Happy path: code goes to the NEW address.
+    resp = await client.post(
+        "/api/v1/auth/change-email",
+        json={"new_email": "newme@campus.edu", "password": PASSWORD},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    code = _last_code_for("newme@campus.edu")
+    resp = await client.post(
+        "/api/v1/auth/confirm-email-change", json={"code": code}, headers=headers
+    )
+    assert resp.status_code == 200, resp.text
+
+    # Login works with the new email only.
+    resp = await client.post(
+        "/api/v1/auth/login", json={"email": "newme@campus.edu", "password": PASSWORD}
+    )
+    assert resp.status_code == 200
+    resp = await client.post("/api/v1/auth/login", json={"email": EMAIL, "password": PASSWORD})
+    assert resp.status_code == 401

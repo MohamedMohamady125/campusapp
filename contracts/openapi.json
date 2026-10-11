@@ -142,6 +142,45 @@
         "title": "BehaviorResponse",
         "type": "object"
       },
+      "ChangeEmailRequest": {
+        "properties": {
+          "new_email": {
+            "format": "email",
+            "title": "New Email",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "new_email",
+          "password"
+        ],
+        "title": "ChangeEmailRequest",
+        "type": "object"
+      },
+      "ChangePasswordRequest": {
+        "properties": {
+          "current_password": {
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordRequest",
+        "type": "object"
+      },
       "ChatCreateRequest": {
         "properties": {
           "description": {
@@ -600,6 +639,20 @@
           "occurred_at"
         ],
         "title": "ClientEventIn",
+        "type": "object"
+      },
+      "ConfirmEmailChangeRequest": {
+        "properties": {
+          "code": {
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "ConfirmEmailChangeRequest",
         "type": "object"
       },
       "ConversationContext": {
@@ -3819,6 +3872,98 @@
         ]
       }
     },
+    "/api/v1/auth/change-email": {
+      "post": {
+        "operationId": "change_email_api_v1_auth_change_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__auth__MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Change Email",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "post": {
+        "operationId": "change_password_api_v1_auth_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Change Password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/v1/auth/check-email": {
       "post": {
         "description": "Login/registration UX hint: does an account exist for this email?",
@@ -3856,6 +4001,52 @@
           }
         },
         "summary": "Check Email",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/confirm-email-change": {
+      "post": {
+        "operationId": "confirm_email_change_api_v1_auth_confirm_email_change_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmEmailChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__auth__MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm Email Change",
         "tags": [
           "auth"
         ]

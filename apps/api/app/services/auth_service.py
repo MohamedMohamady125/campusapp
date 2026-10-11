@@ -53,14 +53,19 @@ class AuthService:
         """Login/registration UX hint — see CheckEmailResponse for rationale."""
         return await self._repo.get_by_email(email.lower()) is not None
 
-    async def register(self, *, email: str, password: str, display_name: str) -> User:
+    @staticmethod
+    def _require_campus_email(email: str) -> None:
+        """Hard gate: a valid .edu address on the configured campus domain (spec §8)."""
         settings = get_settings()
         domain = email.rsplit("@", 1)[-1].lower()
-        if domain != settings.campus_email_domain:
+        if not domain.endswith(".edu") or domain != settings.campus_email_domain:
             raise BusinessRuleError(
-                f"Registration requires a @{settings.campus_email_domain} email.",
+                f"A valid @{settings.campus_email_domain} student email is required.",
                 code="EMAIL_DOMAIN_NOT_ALLOWED",
             )
+
+    async def register(self, *, email: str, password: str, display_name: str) -> User:
+        self._require_campus_email(email)
         if await self._repo.get_by_email(email):
             raise ConflictError("An account with this email already exists.", code="EMAIL_TAKEN")
 
@@ -80,7 +85,9 @@ class AuthService:
         await self._session.commit()
         return user
 
-    async def _issue_code(self, user: User, purpose: VerificationPurpose) -> None:
+    async def _issue_code(
+        self, user: User, purpose: VerificationPurpose, *, to_email: str | None = None
+    ) -> None:
         await enforce_rate_limit(
             f"code:{user.id}:{purpose}",
             limit=CODE_REQUEST_LIMIT,
@@ -95,12 +102,14 @@ class AuthService:
                 expires_at=datetime.now(UTC) + timedelta(minutes=CODE_TTL_MINUTES),
             )
         )
-        subject = (
-            "Verify your CampusConnect email"
-            if purpose == VerificationPurpose.email_verify
-            else "Reset your CampusConnect password"
+        subjects = {
+            VerificationPurpose.email_verify: "Verify your Trot email",
+            VerificationPurpose.password_reset: "Reset your Trot password",
+            VerificationPurpose.email_change: "Confirm your new Trot email",
+        }
+        await self._email.send(
+            to=to_email or user.email, subject=subjects[purpose], body=f"Your code is {code}."
         )
-        await self._email.send(to=user.email, subject=subject, body=f"Your code is {code}.")
 
     async def resend_code(self, *, email: str) -> None:
         user = await self._repo.get_by_email(email.lower())
@@ -211,3 +220,67 @@ class AuthService:
         user.password_hash = hash_password(new_password)
         await self._repo.revoke_all_for_user(user.id, datetime.now(UTC))
         await self._session.commit()
+
+    # --- Authenticated account changes ---
+
+    async def change_password(
+        self, user: User, *, current_password: str, new_password: str
+    ) -> tuple[str, str]:
+        """Rotate the password; revoke every session and mint a fresh pair."""
+        if not verify_password(current_password, user.password_hash):
+            raise UnauthenticatedError("Current password is wrong.", code="INVALID_CREDENTIALS")
+        user.password_hash = hash_password(new_password)
+        await self._repo.revoke_all_for_user(user.id, datetime.now(UTC))
+        tokens = await self._mint_tokens(user, family_id=uuid.uuid4())
+        self._session.add(
+            AuditLog(
+                actor_id=user.id,
+                action="auth.password_changed",
+                target_type="user",
+                target_id=user.id,
+            )
+        )
+        await self._session.commit()
+        return tokens
+
+    async def request_email_change(self, user: User, *, new_email: str, password: str) -> None:
+        """Start an email change: code goes to the NEW address to prove ownership."""
+        if not verify_password(password, user.password_hash):
+            raise UnauthenticatedError("Password is wrong.", code="INVALID_CREDENTIALS")
+        new_email = new_email.lower()
+        self._require_campus_email(new_email)
+        if new_email == user.email:
+            raise BusinessRuleError("That is already your email.", code="EMAIL_UNCHANGED")
+        if await self._repo.get_by_email(new_email):
+            raise ConflictError("An account with this email already exists.", code="EMAIL_TAKEN")
+        user.pending_email = new_email
+        await self._issue_code(user, VerificationPurpose.email_change, to_email=new_email)
+        await self._session.commit()
+
+    async def confirm_email_change(self, user: User, *, code: str) -> str:
+        """Finish the email change once the code sent to the new address checks out."""
+        if not user.pending_email:
+            raise BusinessRuleError("No email change in progress.", code="NO_PENDING_EMAIL")
+        record = await self._consume_code(user, code, VerificationPurpose.email_change)
+        if record is None:
+            raise UnauthenticatedError("Invalid or expired code.", code="CODE_INVALID")
+        if await self._repo.get_by_email(user.pending_email):
+            # Raced by another signup while the code was in flight.
+            user.pending_email = None
+            await self._session.commit()
+            raise ConflictError("An account with this email already exists.", code="EMAIL_TAKEN")
+        old_email = user.email
+        user.email = user.pending_email
+        user.pending_email = None
+        user.email_verified_at = datetime.now(UTC)
+        self._session.add(
+            AuditLog(
+                actor_id=user.id,
+                action="auth.email_changed",
+                target_type="user",
+                target_id=user.id,
+                metadata_={"old_email": old_email, "new_email": user.email},
+            )
+        )
+        await self._session.commit()
+        return user.email

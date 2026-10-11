@@ -74,6 +74,14 @@ class ProfileScreen extends ConsumerWidget {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.go('/profile/edit'),
                       ),
+                      const Divider(height: 1, indent: 56),
+                      ListTile(
+                        leading: const Icon(Icons.lock_outline),
+                        title: const Text('Security'),
+                        subtitle: const Text('Password and email'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.go('/profile/security'),
+                      ),
                       // Staff only: the behaviour dashboard (the API
                       // rejects students anyway; the row just stays hidden).
                       if (user.role != UserRole.student) ...[

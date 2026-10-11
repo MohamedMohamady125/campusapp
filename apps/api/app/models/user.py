@@ -18,6 +18,8 @@ class User(TimestampedBase):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Email-change flow: new address awaiting code confirmation (sent to it).
+    pending_email: Mapped[str | None] = mapped_column(String(255))
     display_name: Mapped[str] = mapped_column(String(80))
     year: Mapped[str | None] = mapped_column(String(20))
     major: Mapped[str | None] = mapped_column(String(120))

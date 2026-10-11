@@ -9,7 +9,10 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**changeEmailApiV1AuthChangeEmailPost**](AuthApi.md#changeemailapiv1authchangeemailpost) | **POST** /api/v1/auth/change-email | Change Email
+[**changePasswordApiV1AuthChangePasswordPost**](AuthApi.md#changepasswordapiv1authchangepasswordpost) | **POST** /api/v1/auth/change-password | Change Password
 [**checkEmailApiV1AuthCheckEmailPost**](AuthApi.md#checkemailapiv1authcheckemailpost) | **POST** /api/v1/auth/check-email | Check Email
+[**confirmEmailChangeApiV1AuthConfirmEmailChangePost**](AuthApi.md#confirmemailchangeapiv1authconfirmemailchangepost) | **POST** /api/v1/auth/confirm-email-change | Confirm Email Change
 [**forgotPasswordApiV1AuthForgotPasswordPost**](AuthApi.md#forgotpasswordapiv1authforgotpasswordpost) | **POST** /api/v1/auth/forgot-password | Forgot Password
 [**loginApiV1AuthLoginPost**](AuthApi.md#loginapiv1authloginpost) | **POST** /api/v1/auth/login | Login
 [**logoutApiV1AuthLogoutPost**](AuthApi.md#logoutapiv1authlogoutpost) | **POST** /api/v1/auth/logout | Logout
@@ -19,6 +22,88 @@ Method | HTTP request | Description
 [**resetPasswordApiV1AuthResetPasswordPost**](AuthApi.md#resetpasswordapiv1authresetpasswordpost) | **POST** /api/v1/auth/reset-password | Reset Password
 [**verifyApiV1AuthVerifyPost**](AuthApi.md#verifyapiv1authverifypost) | **POST** /api/v1/auth/verify | Verify
 
+
+# **changeEmailApiV1AuthChangeEmailPost**
+> AppSchemasAuthMessageResponse changeEmailApiV1AuthChangeEmailPost(changeEmailRequest)
+
+Change Email
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getAuthApi();
+final ChangeEmailRequest changeEmailRequest = ; // ChangeEmailRequest | 
+
+try {
+    final response = api.changeEmailApiV1AuthChangeEmailPost(changeEmailRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AuthApi->changeEmailApiV1AuthChangeEmailPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **changeEmailRequest** | [**ChangeEmailRequest**](ChangeEmailRequest.md)|  | 
+
+### Return type
+
+[**AppSchemasAuthMessageResponse**](AppSchemasAuthMessageResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **changePasswordApiV1AuthChangePasswordPost**
+> TokenResponse changePasswordApiV1AuthChangePasswordPost(changePasswordRequest)
+
+Change Password
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getAuthApi();
+final ChangePasswordRequest changePasswordRequest = ; // ChangePasswordRequest | 
+
+try {
+    final response = api.changePasswordApiV1AuthChangePasswordPost(changePasswordRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AuthApi->changePasswordApiV1AuthChangePasswordPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **changePasswordRequest** | [**ChangePasswordRequest**](ChangePasswordRequest.md)|  | 
+
+### Return type
+
+[**TokenResponse**](TokenResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **checkEmailApiV1AuthCheckEmailPost**
 > CheckEmailResponse checkEmailApiV1AuthCheckEmailPost(checkEmailRequest)
@@ -55,6 +140,47 @@ Name | Type | Description  | Notes
 ### Authorization
 
 No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **confirmEmailChangeApiV1AuthConfirmEmailChangePost**
+> AppSchemasAuthMessageResponse confirmEmailChangeApiV1AuthConfirmEmailChangePost(confirmEmailChangeRequest)
+
+Confirm Email Change
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getAuthApi();
+final ConfirmEmailChangeRequest confirmEmailChangeRequest = ; // ConfirmEmailChangeRequest | 
+
+try {
+    final response = api.confirmEmailChangeApiV1AuthConfirmEmailChangePost(confirmEmailChangeRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AuthApi->confirmEmailChangeApiV1AuthConfirmEmailChangePost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **confirmEmailChangeRequest** | [**ConfirmEmailChangeRequest**](ConfirmEmailChangeRequest.md)|  | 
+
+### Return type
+
+[**AppSchemasAuthMessageResponse**](AppSchemasAuthMessageResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 

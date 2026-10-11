@@ -22,6 +22,8 @@ import 'package:campus_api/src/model/avatar_upload_url_response.dart';
 import 'package:campus_api/src/model/ban_request.dart';
 import 'package:campus_api/src/model/behavior_day.dart';
 import 'package:campus_api/src/model/behavior_response.dart';
+import 'package:campus_api/src/model/change_email_request.dart';
+import 'package:campus_api/src/model/change_password_request.dart';
 import 'package:campus_api/src/model/chat_create_request.dart';
 import 'package:campus_api/src/model/chat_membership_response.dart';
 import 'package:campus_api/src/model/chat_message_create_request.dart';
@@ -36,6 +38,7 @@ import 'package:campus_api/src/model/check_email_request.dart';
 import 'package:campus_api/src/model/check_email_response.dart';
 import 'package:campus_api/src/model/client_event_batch_request.dart';
 import 'package:campus_api/src/model/client_event_in.dart';
+import 'package:campus_api/src/model/confirm_email_change_request.dart';
 import 'package:campus_api/src/model/conversation_context.dart';
 import 'package:campus_api/src/model/conversation_create_request.dart';
 import 'package:campus_api/src/model/conversation_page_response.dart';
@@ -138,6 +141,8 @@ part 'serializers.g.dart';
   BanRequest,
   BehaviorDay,
   BehaviorResponse,
+  ChangeEmailRequest,
+  ChangePasswordRequest,
   ChatCreateRequest,
   ChatMembershipResponse,
   ChatMessageCreateRequest,
@@ -152,6 +157,7 @@ part 'serializers.g.dart';
   CheckEmailResponse,
   ClientEventBatchRequest,
   ClientEventIn,
+  ConfirmEmailChangeRequest,
   ConversationContext,
   ConversationCreateRequest,
   ConversationPageResponse,

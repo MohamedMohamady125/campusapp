@@ -92,6 +92,48 @@ class AuthRepository {
     );
   }
 
+  /// Authenticated password rotation — every other session is revoked and
+  /// the fresh token pair is stored so this device stays signed in.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final res = await _auth.changePasswordApiV1AuthChangePasswordPost(
+      changePasswordRequest: ChangePasswordRequest(
+        (b) => b
+          ..currentPassword = currentPassword
+          ..newPassword = newPassword,
+      ),
+    );
+    final tokens = res.data!;
+    await _storage.save(
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    );
+  }
+
+  /// Start an email change — a code is sent to the NEW campus address.
+  Future<void> requestEmailChange({
+    required String newEmail,
+    required String password,
+  }) async {
+    await _auth.changeEmailApiV1AuthChangeEmailPost(
+      changeEmailRequest: ChangeEmailRequest(
+        (b) => b
+          ..newEmail = newEmail
+          ..password = password,
+      ),
+    );
+  }
+
+  Future<void> confirmEmailChange({required String code}) async {
+    await _auth.confirmEmailChangeApiV1AuthConfirmEmailChangePost(
+      confirmEmailChangeRequest: ConfirmEmailChangeRequest(
+        (b) => b..code = code,
+      ),
+    );
+  }
+
   Future<void> logout() async {
     final refresh = await _storage.readRefreshToken();
     if (refresh != null) {

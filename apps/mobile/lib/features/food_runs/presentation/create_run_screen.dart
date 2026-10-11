@@ -387,8 +387,9 @@ class _CreateRunScreenState extends ConsumerState<CreateRunScreen> {
                         if (_paymentPrefs.isEmpty) {
                           for (final m in _savedMethods) {
                             final w = m.type.wireValue;
-                            if (!_paymentPrefs.contains(w))
+                            if (!_paymentPrefs.contains(w)) {
                               _paymentPrefs.add(w);
+                            }
                           }
                         }
                       } else if (_paymentPrefs.isEmpty) {

@@ -12,6 +12,8 @@ doc/AvatarUploadUrlResponse.md
 doc/BanRequest.md
 doc/BehaviorDay.md
 doc/BehaviorResponse.md
+doc/ChangeEmailRequest.md
+doc/ChangePasswordRequest.md
 doc/ChatCreateRequest.md
 doc/ChatMembershipResponse.md
 doc/ChatMessageCreateRequest.md
@@ -27,6 +29,7 @@ doc/CheckEmailRequest.md
 doc/CheckEmailResponse.md
 doc/ClientEventBatchRequest.md
 doc/ClientEventIn.md
+doc/ConfirmEmailChangeRequest.md
 doc/ConversationContext.md
 doc/ConversationCreateRequest.md
 doc/ConversationPageResponse.md
@@ -158,6 +161,8 @@ lib/src/model/avatar_upload_url_response.dart
 lib/src/model/ban_request.dart
 lib/src/model/behavior_day.dart
 lib/src/model/behavior_response.dart
+lib/src/model/change_email_request.dart
+lib/src/model/change_password_request.dart
 lib/src/model/chat_create_request.dart
 lib/src/model/chat_membership_response.dart
 lib/src/model/chat_message_create_request.dart
@@ -172,6 +177,7 @@ lib/src/model/check_email_request.dart
 lib/src/model/check_email_response.dart
 lib/src/model/client_event_batch_request.dart
 lib/src/model/client_event_in.dart
+lib/src/model/confirm_email_change_request.dart
 lib/src/model/conversation_context.dart
 lib/src/model/conversation_create_request.dart
 lib/src/model/conversation_page_response.dart
@@ -265,4 +271,6 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/actual_price_submit_request_test.dart
+test/change_email_request_test.dart
+test/change_password_request_test.dart
+test/confirm_email_change_request_test.dart

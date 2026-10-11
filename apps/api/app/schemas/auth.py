@@ -74,6 +74,22 @@ class ResetPasswordRequest(BaseModel):
     _complexity = field_validator("new_password")(_check_password_complexity)
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+    _complexity = field_validator("new_password")(_check_password_complexity)
+
+
+class ChangeEmailRequest(BaseModel):
+    new_email: EmailStr
+    password: str
+
+
+class ConfirmEmailChangeRequest(BaseModel):
+    code: str = Field(pattern=r"^\d{6}$")
+
+
 class CheckEmailRequest(BaseModel):
     email: EmailStr
 
