@@ -29,7 +29,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   void initState() {
     super.initState();
     _scroll.addListener(() {
-      if (_scroll.position.pixels > _scroll.position.maxScrollExtent - 400) {
+      if (_scroll.position.pixels > _scroll.position.maxScrollExtent - 1000) {
         ref.read(browseControllerProvider.notifier).loadMore().ignore();
       }
     });
@@ -74,6 +74,9 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
               return CustomScrollView(
                 controller: _scroll,
                 physics: const AlwaysScrollableScrollPhysics(),
+                // Pre-build a screenful ahead so fast flicks hit loaded
+                // tiles instead of blanks.
+                cacheExtent: 1200,
                 slivers: [
                   SliverToBoxAdapter(
                     child: SafeArea(

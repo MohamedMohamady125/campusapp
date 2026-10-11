@@ -78,6 +78,11 @@ class VerifiedAvatar extends StatelessWidget {
             : CachedNetworkImage(
                 imageUrl: imageUrl!,
                 fit: BoxFit.cover,
+                // Selfies are multi-MP; decode at the circle's size so a
+                // 40px avatar never costs a full-res decode mid-scroll.
+                memCacheWidth: (dp * MediaQuery.devicePixelRatioOf(context))
+                    .round(),
+                fadeInDuration: const Duration(milliseconds: 120),
                 placeholder: (_, _) =>
                     ColoredBox(color: colors.surfaceContainerHighest),
                 errorWidget: (_, _, _) => ColoredBox(

@@ -84,6 +84,11 @@ class ListingCard extends StatelessWidget {
           : CachedNetworkImage(
               imageUrl: imageUrl!,
               fit: BoxFit.cover,
+              // Grid tiles are ~half the screen wide: decode at tile size
+              // so fast scrolling never waits on full-res decodes.
+              memCacheWidth: (480 * MediaQuery.devicePixelRatioOf(context))
+                  .round(),
+              fadeInDuration: const Duration(milliseconds: 120),
               placeholder: (_, _) =>
                   ColoredBox(color: colors.surfaceContainerHighest),
               errorWidget: (_, _, _) =>

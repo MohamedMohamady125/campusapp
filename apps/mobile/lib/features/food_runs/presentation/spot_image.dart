@@ -15,6 +15,7 @@ class SpotImage extends StatelessWidget {
     this.imageUrl,
     this.fit = BoxFit.cover,
     this.monogramFontSize = 28,
+    this.decodeWidth = 800,
     super.key,
   });
 
@@ -23,15 +24,24 @@ class SpotImage extends StatelessWidget {
   final BoxFit fit;
   final double monogramFontSize;
 
+  /// Logical-pixel decode target. Catalog photos can be huge; decoding
+  /// them at display size (not full resolution) is what keeps fast
+  /// scrolling smooth — a full-res decode per card stalls the raster
+  /// thread and makes images pop in late.
+  final double decodeWidth;
+
   @override
   Widget build(BuildContext context) {
     final url = imageUrl;
     if (url == null || url.isEmpty) {
       return _Monogram(name: name, fontSize: monogramFontSize);
     }
+    final dpr = MediaQuery.devicePixelRatioOf(context);
     return CachedNetworkImage(
       imageUrl: url,
       fit: fit,
+      memCacheWidth: (decodeWidth * dpr).round(),
+      fadeInDuration: const Duration(milliseconds: 120),
       // Quiet brand-tinted placeholder while the photo streams in — never a
       // spinner on a card (spec §6.3: zero-jank images, blur-up feel).
       placeholder: (_, _) => const ColoredBox(color: AppColors.primaryBg),

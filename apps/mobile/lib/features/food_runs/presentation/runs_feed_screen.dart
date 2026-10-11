@@ -39,7 +39,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   void initState() {
     super.initState();
     _scroll.addListener(() {
-      if (_scroll.position.pixels > _scroll.position.maxScrollExtent - 400) {
+      if (_scroll.position.pixels > _scroll.position.maxScrollExtent - 1000) {
         ref.read(runsFeedControllerProvider.notifier).loadMore().ignore();
       }
     });
@@ -82,6 +82,9 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
           child: CustomScrollView(
             controller: _scroll,
             physics: const AlwaysScrollableScrollPhysics(),
+            // Build + start fetching cards well before they scroll into
+            // view, so a fast flick lands on ready images, not blanks.
+            cacheExtent: 1200,
             slivers: [
               const SliverToBoxAdapter(
                 child: SafeArea(bottom: false, child: _Header()),
