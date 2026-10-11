@@ -1,6 +1,22 @@
 {
   "components": {
     "schemas": {
+      "ActualPriceSubmitRequest": {
+        "description": "Runner enters the real receipt price after buying (settle-up truth-up).",
+        "properties": {
+          "actual_price_cents": {
+            "maximum": 50000.0,
+            "minimum": 0.0,
+            "title": "Actual Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "actual_price_cents"
+        ],
+        "title": "ActualPriceSubmitRequest",
+        "type": "object"
+      },
       "AvatarUploadUrlRequest": {
         "description": "Signed-URL request for a profile photo (required to post a run).",
         "properties": {
@@ -2589,6 +2605,13 @@
             "title": "Dropoff Location Id",
             "type": "string"
           },
+          "item_price_cents": {
+            "default": 0,
+            "maximum": 50000.0,
+            "minimum": 0.0,
+            "title": "Item Price Cents",
+            "type": "integer"
+          },
           "order_text": {
             "maxLength": 500,
             "minLength": 1,
@@ -2605,6 +2628,17 @@
       },
       "RunOrderResponse": {
         "properties": {
+          "actual_price_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Price Cents"
+          },
           "arrived_at": {
             "anyOf": [
               {
@@ -2652,6 +2686,11 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "item_price_cents": {
+            "default": 0,
+            "title": "Item Price Cents",
+            "type": "integer"
           },
           "no_show_eligible_at": {
             "anyOf": [
@@ -6769,6 +6808,75 @@
           }
         ],
         "summary": "Accept Order",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_id}/orders/{order_id}/actual-price": {
+      "post": {
+        "description": "Runner enters the real receipt price \u2014 drives the settle-up delta.",
+        "operationId": "set_actual_price_api_v1_runs__run_id__orders__order_id__actual_price_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualPriceSubmitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Actual Price",
         "tags": [
           "runs"
         ]

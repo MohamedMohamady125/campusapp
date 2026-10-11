@@ -53,9 +53,15 @@ def _payload(spot_id: str, **overrides: object) -> dict[str, object]:
     return body
 
 
-def _order_body(order_text: str = "food", *, dropoff_id: str) -> dict[str, str]:
-    """A requester's order body — order text plus a picked drop-off location id."""
-    return {"order_text": order_text, "dropoff_location_id": dropoff_id}
+def _order_body(
+    order_text: str = "food", *, dropoff_id: str, item_price_cents: int = 0
+) -> dict[str, object]:
+    """A requester's order body — text, item-price estimate and a drop-off id."""
+    return {
+        "order_text": order_text,
+        "item_price_cents": item_price_cents,
+        "dropoff_location_id": dropoff_id,
+    }
 
 
 async def _set_payment(client: httpx.AsyncClient, headers: dict[str, str]) -> None:
@@ -664,6 +670,79 @@ async def test_runner_confirms_payment_without_proof(client: httpx.AsyncClient) 
     async with async_session_factory() as session:
         types = (await session.execute(select(Notification.type))).scalars().all()
     assert "run_payment_confirmed" in types
+
+
+async def test_item_price_and_actual_price_settle_up(client: httpx.AsyncClient) -> None:
+    """Item-price estimate + runner receipt truth-up (option-1 pricing design):
+    the requester states what their items cost (incl. tax) when ordering, so
+    prepay is an exact number; after buying, the runner enters the real price
+    and the delta is notified loud to the requester."""
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    other = await make_user(client, "other@campus.edu")
+    spot_id = await _make_spot()
+    dropoff_id = await _make_dropoff()
+    await _set_payment(client, runner)
+    run = await _create_run(client, runner, spot_id, fee_cents=200, prepay_required=True)
+
+    # Estimate validation: negative / over-cap rejected.
+    bad = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("x", dropoff_id=dropoff_id, item_price_cents=60_000),
+        headers=req,
+    )
+    assert bad.status_code == 400
+
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("Spicy deluxe + fries", dropoff_id=dropoff_id, item_price_cents=1150),
+        headers=req,
+    )
+    assert resp.status_code == 201, resp.text
+    order = resp.json()["my_order"]
+    assert order["item_price_cents"] == 1150
+    assert order["actual_price_cents"] is None
+    oid = order["id"]
+    base = f"/api/v1/runs/{run['id']}/orders/{oid}"
+
+    # Actual price: only on an accepted order, and only by the runner.
+    early = await client.post(
+        f"{base}/actual-price", json={"actual_price_cents": 1230}, headers=runner
+    )
+    assert early.json()["error"]["code"] == "ORDER_NOT_ACCEPTED"
+    await client.post(f"{base}/accept", headers=runner)
+    forbidden = await client.post(
+        f"{base}/actual-price", json={"actual_price_cents": 1230}, headers=other
+    )
+    assert forbidden.status_code == 403
+    assert forbidden.json()["error"]["code"] == "NOT_RUNNER"
+
+    final = await client.post(
+        f"{base}/actual-price", json={"actual_price_cents": 1230}, headers=runner
+    )
+    assert final.status_code == 200, final.text
+    assert final.json()["orders"][0]["actual_price_cents"] == 1230
+
+    # Re-entry (typo fix) overwrites.
+    fixed = await client.post(
+        f"{base}/actual-price", json={"actual_price_cents": 1210}, headers=runner
+    )
+    assert fixed.json()["orders"][0]["actual_price_cents"] == 1210
+
+    # The requester was notified with the exact delta (loud money copy).
+    async with async_session_factory() as session:
+        payloads = (
+            (
+                await session.execute(
+                    select(Notification.payload).where(Notification.type == "run_price_final")
+                )
+            )
+            .scalars()
+            .all()
+        )
+    assert payloads, "requester must be notified of the final price"
+    assert payloads[-1]["actual_price_cents"] == "1210"
+    assert payloads[-1]["delta_cents"] == "60"
 
 
 async def _accepted_run(

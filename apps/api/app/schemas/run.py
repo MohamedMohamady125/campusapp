@@ -93,6 +93,13 @@ class RunOrderResponse(BaseModel):
     run_id: uuid.UUID
     requester: RunUserSummary
     order_text: str
+    # Requester's item-cost estimate (incl. tax), cents. 0 = not provided
+    # (legacy orders). Prepay amount = item_price_cents + run.fee_cents.
+    item_price_cents: int = 0
+    # Runner's final receipt price, cents — null until entered. The delta vs
+    # the estimate drives the settle-up copy ("you owe $0.80 more" / "refund
+    # $1.40"); the app never moves money.
+    actual_price_cents: int | None = None
     # Where this requester wants their food — name of the picked drop-off.
     dropoff: str
     # Drop-off coordinates for the runner's navigation (null if not geocoded).
@@ -159,9 +166,19 @@ class RunPageResponse(BaseModel):
 
 class RunOrderCreateRequest(BaseModel):
     order_text: str = Field(min_length=1, max_length=500)
+    # Requester's estimate of what their items cost (incl. tax), in cents.
+    # Capped at $500 — nobody's dorm order costs more. Default 0 keeps older
+    # clients working; the app requires it in the order sheet.
+    item_price_cents: int = Field(default=0, ge=0, le=50_000)
     # Requester picks a drop-off from the admin-curated catalog (no free text) —
     # the service resolves this to the location's name stored on the order.
     dropoff_location_id: uuid.UUID
+
+
+class ActualPriceSubmitRequest(BaseModel):
+    """Runner enters the real receipt price after buying (settle-up truth-up)."""
+
+    actual_price_cents: int = Field(ge=0, le=50_000)
 
 
 class PaymentProofSubmitRequest(BaseModel):

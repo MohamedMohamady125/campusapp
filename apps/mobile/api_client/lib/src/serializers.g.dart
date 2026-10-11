@@ -7,6 +7,7 @@ part of 'serializers.dart';
 // **************************************************************************
 
 Serializers _$serializers = (Serializers().toBuilder()
+      ..add(ActualPriceSubmitRequest.serializer)
       ..add(AppSchemasAuthMessageResponse.serializer)
       ..add(AppSchemasConversationMessageResponse.serializer)
       ..add(AvatarUploadUrlRequest.serializer)

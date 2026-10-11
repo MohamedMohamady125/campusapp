@@ -8,6 +8,8 @@ part of 'run_order_response.dart';
 
 class _$RunOrderResponse extends RunOrderResponse {
   @override
+  final int? actualPriceCents;
+  @override
   final DateTime? arrivedAt;
   @override
   final DateTime createdAt;
@@ -19,6 +21,8 @@ class _$RunOrderResponse extends RunOrderResponse {
   final num? dropoffLng;
   @override
   final String id;
+  @override
+  final int? itemPriceCents;
   @override
   final DateTime? noShowEligibleAt;
   @override
@@ -45,12 +49,14 @@ class _$RunOrderResponse extends RunOrderResponse {
       (RunOrderResponseBuilder()..update(updates))._build();
 
   _$RunOrderResponse._(
-      {this.arrivedAt,
+      {this.actualPriceCents,
+      this.arrivedAt,
       required this.createdAt,
       required this.dropoff,
       this.dropoffLat,
       this.dropoffLng,
       required this.id,
+      this.itemPriceCents,
       this.noShowEligibleAt,
       required this.orderText,
       this.paymentConfirmedAt,
@@ -74,12 +80,14 @@ class _$RunOrderResponse extends RunOrderResponse {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is RunOrderResponse &&
+        actualPriceCents == other.actualPriceCents &&
         arrivedAt == other.arrivedAt &&
         createdAt == other.createdAt &&
         dropoff == other.dropoff &&
         dropoffLat == other.dropoffLat &&
         dropoffLng == other.dropoffLng &&
         id == other.id &&
+        itemPriceCents == other.itemPriceCents &&
         noShowEligibleAt == other.noShowEligibleAt &&
         orderText == other.orderText &&
         paymentConfirmedAt == other.paymentConfirmedAt &&
@@ -95,12 +103,14 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, actualPriceCents.hashCode);
     _$hash = $jc(_$hash, arrivedAt.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
     _$hash = $jc(_$hash, dropoff.hashCode);
     _$hash = $jc(_$hash, dropoffLat.hashCode);
     _$hash = $jc(_$hash, dropoffLng.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
+    _$hash = $jc(_$hash, itemPriceCents.hashCode);
     _$hash = $jc(_$hash, noShowEligibleAt.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
     _$hash = $jc(_$hash, paymentConfirmedAt.hashCode);
@@ -118,12 +128,14 @@ class _$RunOrderResponse extends RunOrderResponse {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'RunOrderResponse')
+          ..add('actualPriceCents', actualPriceCents)
           ..add('arrivedAt', arrivedAt)
           ..add('createdAt', createdAt)
           ..add('dropoff', dropoff)
           ..add('dropoffLat', dropoffLat)
           ..add('dropoffLng', dropoffLng)
           ..add('id', id)
+          ..add('itemPriceCents', itemPriceCents)
           ..add('noShowEligibleAt', noShowEligibleAt)
           ..add('orderText', orderText)
           ..add('paymentConfirmedAt', paymentConfirmedAt)
@@ -141,6 +153,11 @@ class _$RunOrderResponse extends RunOrderResponse {
 class RunOrderResponseBuilder
     implements Builder<RunOrderResponse, RunOrderResponseBuilder> {
   _$RunOrderResponse? _$v;
+
+  int? _actualPriceCents;
+  int? get actualPriceCents => _$this._actualPriceCents;
+  set actualPriceCents(int? actualPriceCents) =>
+      _$this._actualPriceCents = actualPriceCents;
 
   DateTime? _arrivedAt;
   DateTime? get arrivedAt => _$this._arrivedAt;
@@ -165,6 +182,11 @@ class RunOrderResponseBuilder
   String? _id;
   String? get id => _$this._id;
   set id(String? id) => _$this._id = id;
+
+  int? _itemPriceCents;
+  int? get itemPriceCents => _$this._itemPriceCents;
+  set itemPriceCents(int? itemPriceCents) =>
+      _$this._itemPriceCents = itemPriceCents;
 
   DateTime? _noShowEligibleAt;
   DateTime? get noShowEligibleAt => _$this._noShowEligibleAt;
@@ -219,12 +241,14 @@ class RunOrderResponseBuilder
   RunOrderResponseBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _actualPriceCents = $v.actualPriceCents;
       _arrivedAt = $v.arrivedAt;
       _createdAt = $v.createdAt;
       _dropoff = $v.dropoff;
       _dropoffLat = $v.dropoffLat;
       _dropoffLng = $v.dropoffLng;
       _id = $v.id;
+      _itemPriceCents = $v.itemPriceCents;
       _noShowEligibleAt = $v.noShowEligibleAt;
       _orderText = $v.orderText;
       _paymentConfirmedAt = $v.paymentConfirmedAt;
@@ -258,6 +282,7 @@ class RunOrderResponseBuilder
     try {
       _$result = _$v ??
           _$RunOrderResponse._(
+            actualPriceCents: actualPriceCents,
             arrivedAt: arrivedAt,
             createdAt: BuiltValueNullFieldError.checkNotNull(
                 createdAt, r'RunOrderResponse', 'createdAt'),
@@ -267,6 +292,7 @@ class RunOrderResponseBuilder
             dropoffLng: dropoffLng,
             id: BuiltValueNullFieldError.checkNotNull(
                 id, r'RunOrderResponse', 'id'),
+            itemPriceCents: itemPriceCents,
             noShowEligibleAt: noShowEligibleAt,
             orderText: BuiltValueNullFieldError.checkNotNull(
                 orderText, r'RunOrderResponse', 'orderText'),

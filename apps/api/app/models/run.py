@@ -121,6 +121,15 @@ class RunOrder(TimestampedBase):
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     order_text: Mapped[str] = mapped_column(Text)
+    # Requester's own estimate of what their items cost (incl. tax), in cents.
+    # This is what makes prepay an exact number — "send estimate + fee" — and
+    # tells the runner what they're fronting at the counter. 0 = not provided
+    # (legacy orders predating the field).
+    item_price_cents: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # Runner-entered final price after buying (receipt truth-up). The delta vs
+    # the estimate is shown loud on both sides so settle-up is undeniable; the
+    # app itself never moves money. Null until the runner enters it.
+    actual_price_cents: Mapped[int | None] = mapped_column(Integer)
     # Where this requester wants their food dropped — a name picked from the
     # admin DropoffLocation catalog, denormalized here so read paths stay flat.
     dropoff: Mapped[str] = mapped_column(String(120))

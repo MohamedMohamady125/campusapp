@@ -134,6 +134,7 @@ Class | Method | HTTP request | Description
 [*RunsApi*](doc/RunsApi.md) | [**myRunsApiV1RunsMineGet**](doc/RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs
 [*RunsApi*](doc/RunsApi.md) | [**requestSpotApiV1RunsRunIdOrdersPost**](doc/RunsApi.md#requestspotapiv1runsrunidorderspost) | **POST** /api/v1/runs/{run_id}/orders | Request Spot
 [*RunsApi*](doc/RunsApi.md) | [**runFeedApiV1RunsGet**](doc/RunsApi.md#runfeedapiv1runsget) | **GET** /api/v1/runs | Run Feed
+[*RunsApi*](doc/RunsApi.md) | [**setActualPriceApiV1RunsRunIdOrdersOrderIdActualPricePost**](doc/RunsApi.md#setactualpriceapiv1runsrunidordersorderidactualpricepost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/actual-price | Set Actual Price
 [*RunsApi*](doc/RunsApi.md) | [**submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost**](doc/RunsApi.md#submitpaymentproofapiv1runsrunidordersorderidpaymentproofpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/payment-proof | Submit Payment Proof
 [*RunsApi*](doc/RunsApi.md) | [**updateLocationApiV1RunsRunIdLocationPost**](doc/RunsApi.md#updatelocationapiv1runsrunidlocationpost) | **POST** /api/v1/runs/{run_id}/location | Update Location
 [*RunsApi*](doc/RunsApi.md) | [**updateStatusApiV1RunsRunIdStatusPost**](doc/RunsApi.md#updatestatusapiv1runsrunidstatuspost) | **POST** /api/v1/runs/{run_id}/status | Update Status
@@ -153,6 +154,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [ActualPriceSubmitRequest](doc/ActualPriceSubmitRequest.md)
  - [AppSchemasAuthMessageResponse](doc/AppSchemasAuthMessageResponse.md)
  - [AppSchemasConversationMessageResponse](doc/AppSchemasConversationMessageResponse.md)
  - [AvatarUploadUrlRequest](doc/AvatarUploadUrlRequest.md)

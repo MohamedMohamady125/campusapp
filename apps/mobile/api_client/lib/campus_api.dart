@@ -25,6 +25,7 @@ export 'package:campus_api/src/api/runs_api.dart';
 export 'package:campus_api/src/api/tutoring_api.dart';
 export 'package:campus_api/src/api/users_api.dart';
 
+export 'package:campus_api/src/model/actual_price_submit_request.dart';
 export 'package:campus_api/src/model/app_schemas_auth_message_response.dart';
 export 'package:campus_api/src/model/app_schemas_conversation_message_response.dart';
 export 'package:campus_api/src/model/avatar_upload_url_request.dart';

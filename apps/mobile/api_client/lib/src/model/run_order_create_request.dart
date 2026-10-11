@@ -12,11 +12,15 @@ part 'run_order_create_request.g.dart';
 ///
 /// Properties:
 /// * [dropoffLocationId] 
+/// * [itemPriceCents] 
 /// * [orderText] 
 @BuiltValue()
 abstract class RunOrderCreateRequest implements Built<RunOrderCreateRequest, RunOrderCreateRequestBuilder> {
   @BuiltValueField(wireName: r'dropoff_location_id')
   String get dropoffLocationId;
+
+  @BuiltValueField(wireName: r'item_price_cents')
+  int? get itemPriceCents;
 
   @BuiltValueField(wireName: r'order_text')
   String get orderText;
@@ -26,7 +30,8 @@ abstract class RunOrderCreateRequest implements Built<RunOrderCreateRequest, Run
   factory RunOrderCreateRequest([void updates(RunOrderCreateRequestBuilder b)]) = _$RunOrderCreateRequest;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(RunOrderCreateRequestBuilder b) => b;
+  static void _defaults(RunOrderCreateRequestBuilder b) => b
+      ..itemPriceCents = 0;
 
   @BuiltValueSerializer(custom: true)
   static Serializer<RunOrderCreateRequest> get serializer => _$RunOrderCreateRequestSerializer();
@@ -49,6 +54,13 @@ class _$RunOrderCreateRequestSerializer implements PrimitiveSerializer<RunOrderC
       object.dropoffLocationId,
       specifiedType: const FullType(String),
     );
+    if (object.itemPriceCents != null) {
+      yield r'item_price_cents';
+      yield serializers.serialize(
+        object.itemPriceCents,
+        specifiedType: const FullType(int),
+      );
+    }
     yield r'order_text';
     yield serializers.serialize(
       object.orderText,
@@ -83,6 +95,13 @@ class _$RunOrderCreateRequestSerializer implements PrimitiveSerializer<RunOrderC
             specifiedType: const FullType(String),
           ) as String;
           result.dropoffLocationId = valueDes;
+          break;
+        case r'item_price_cents':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(int),
+          ) as int;
+          result.itemPriceCents = valueDes;
           break;
         case r'order_text':
           final valueDes = serializers.deserialize(

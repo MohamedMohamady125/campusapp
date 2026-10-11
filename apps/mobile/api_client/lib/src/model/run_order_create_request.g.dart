@@ -10,6 +10,8 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   @override
   final String dropoffLocationId;
   @override
+  final int? itemPriceCents;
+  @override
   final String orderText;
 
   factory _$RunOrderCreateRequest(
@@ -17,7 +19,9 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
       (RunOrderCreateRequestBuilder()..update(updates))._build();
 
   _$RunOrderCreateRequest._(
-      {required this.dropoffLocationId, required this.orderText})
+      {required this.dropoffLocationId,
+      this.itemPriceCents,
+      required this.orderText})
       : super._();
   @override
   RunOrderCreateRequest rebuild(
@@ -33,6 +37,7 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
     if (identical(other, this)) return true;
     return other is RunOrderCreateRequest &&
         dropoffLocationId == other.dropoffLocationId &&
+        itemPriceCents == other.itemPriceCents &&
         orderText == other.orderText;
   }
 
@@ -40,6 +45,7 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, dropoffLocationId.hashCode);
+    _$hash = $jc(_$hash, itemPriceCents.hashCode);
     _$hash = $jc(_$hash, orderText.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -49,6 +55,7 @@ class _$RunOrderCreateRequest extends RunOrderCreateRequest {
   String toString() {
     return (newBuiltValueToStringHelper(r'RunOrderCreateRequest')
           ..add('dropoffLocationId', dropoffLocationId)
+          ..add('itemPriceCents', itemPriceCents)
           ..add('orderText', orderText))
         .toString();
   }
@@ -63,6 +70,11 @@ class RunOrderCreateRequestBuilder
   set dropoffLocationId(String? dropoffLocationId) =>
       _$this._dropoffLocationId = dropoffLocationId;
 
+  int? _itemPriceCents;
+  int? get itemPriceCents => _$this._itemPriceCents;
+  set itemPriceCents(int? itemPriceCents) =>
+      _$this._itemPriceCents = itemPriceCents;
+
   String? _orderText;
   String? get orderText => _$this._orderText;
   set orderText(String? orderText) => _$this._orderText = orderText;
@@ -75,6 +87,7 @@ class RunOrderCreateRequestBuilder
     final $v = _$v;
     if ($v != null) {
       _dropoffLocationId = $v.dropoffLocationId;
+      _itemPriceCents = $v.itemPriceCents;
       _orderText = $v.orderText;
       _$v = null;
     }
@@ -99,6 +112,7 @@ class RunOrderCreateRequestBuilder
         _$RunOrderCreateRequest._(
           dropoffLocationId: BuiltValueNullFieldError.checkNotNull(
               dropoffLocationId, r'RunOrderCreateRequest', 'dropoffLocationId'),
+          itemPriceCents: itemPriceCents,
           orderText: BuiltValueNullFieldError.checkNotNull(
               orderText, r'RunOrderCreateRequest', 'orderText'),
         );

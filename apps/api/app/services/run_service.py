@@ -58,6 +58,7 @@ NOTIFICATION_TYPE_RUN_COMPLETED = "run_completed"
 NOTIFICATION_TYPE_RUN_PAYMENT = "run_payment_submitted"
 NOTIFICATION_TYPE_RUN_PAYMENT_CONFIRMED = "run_payment_confirmed"
 NOTIFICATION_TYPE_RUN_ARRIVED = "run_runner_arrived"
+NOTIFICATION_TYPE_RUN_PRICE = "run_price_final"
 NOTIFICATION_TYPE_RUN_NO_SHOW = "run_no_show"
 
 # Runner ghost protection: any active run hard-expires this long after leaving.
@@ -110,6 +111,8 @@ def _order_response(order: RunOrder, *, rated_by_me: bool = False) -> RunOrderRe
         run_id=order.run_id,
         requester=_user_summary(order.requester),
         order_text=order.order_text,
+        item_price_cents=order.item_price_cents,
+        actual_price_cents=order.actual_price_cents,
         dropoff=order.dropoff,
         dropoff_lat=order.dropoff_lat,
         dropoff_lng=order.dropoff_lng,
@@ -325,6 +328,7 @@ class RunService:
         run_id: uuid.UUID,
         user: User,
         order_text: str,
+        item_price_cents: int,
         dropoff_location_id: uuid.UUID,
     ) -> Run:
         run = await self._get_or_404(run_id, for_update=True)
@@ -347,6 +351,7 @@ class RunService:
             run_id=run.id,
             requester_id=user.id,
             order_text=order_text,
+            item_price_cents=item_price_cents,
             dropoff=location.name,
             dropoff_lat=location.lat,
             dropoff_lng=location.lng,
@@ -521,6 +526,40 @@ class RunService:
                 extra={"order_id": str(order.id)},
             )
             await self._session.commit()
+        return await self._get_or_404(run_id)
+
+    async def set_actual_price(
+        self, *, run_id: uuid.UUID, order_id: uuid.UUID, actor: User, actual_price_cents: int
+    ) -> Run:
+        """Runner enters the real receipt price after buying. The delta vs the
+        requester's estimate is the settle-up number both sides see — loud and
+        exact, so there's nothing to argue about at handoff. Re-entry is
+        allowed (typo fix); the requester is notified each time."""
+        run = await self._get_or_404(run_id)
+        self._assert_runner(run, actor)
+        order = self._order_in(run, order_id)
+        if order.status not in self._PAYABLE_STATUSES:
+            raise ConflictError(
+                "You can only set the price on an accepted order.",
+                code="ORDER_NOT_ACCEPTED",
+            )
+        order.actual_price_cents = actual_price_cents
+        # Self-orders don't notify — the runner is both parties.
+        if order.requester_id != run.runner_id:
+            delta = actual_price_cents - order.item_price_cents
+            await self._notify(
+                order.requester_id,
+                NOTIFICATION_TYPE_RUN_PRICE,
+                run=run,
+                dedup_key="order_id",
+                dedup_value=str(order.id),
+                extra={
+                    "order_id": str(order.id),
+                    "actual_price_cents": str(actual_price_cents),
+                    "delta_cents": str(delta),
+                },
+            )
+        await self._session.commit()
         return await self._get_or_404(run_id)
 
     # -- status ------------------------------------------------------------

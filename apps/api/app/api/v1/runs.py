@@ -14,6 +14,7 @@ from app.models import User
 from app.models.enums import UserRole
 from app.repositories.run_repo import RunRepository
 from app.schemas.run import (
+    ActualPriceSubmitRequest,
     DropoffLocationCreateRequest,
     DropoffLocationResponse,
     FoodSpotCreateRequest,
@@ -163,6 +164,7 @@ async def request_spot(
         run_id=run_id,
         user=user,
         order_text=body.order_text,
+        item_price_cents=body.item_price_cents,
         dropoff_location_id=body.dropoff_location_id,
     )
     return run_response(run, viewer_id=user.id)
@@ -224,6 +226,24 @@ async def confirm_payment(
 ) -> RunResponse:
     """Runner marks an order paid — covers payment sent without a screenshot."""
     run = await svc.confirm_payment(run_id=run_id, order_id=order_id, actor=user)
+    return run_response(run, viewer_id=user.id)
+
+
+@router.post("/{run_id}/orders/{order_id}/actual-price", response_model=RunResponse)
+async def set_actual_price(
+    run_id: uuid.UUID,
+    order_id: uuid.UUID,
+    body: ActualPriceSubmitRequest,
+    user: User = Depends(get_current_user),
+    svc: RunService = Depends(_service),
+) -> RunResponse:
+    """Runner enters the real receipt price — drives the settle-up delta."""
+    run = await svc.set_actual_price(
+        run_id=run_id,
+        order_id=order_id,
+        actor=user,
+        actual_price_cents=body.actual_price_cents,
+    )
     return run_response(run, viewer_id=user.id)
 
 

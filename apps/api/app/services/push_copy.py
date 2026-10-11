@@ -22,6 +22,7 @@ PUSH_TYPES: frozenset[str] = frozenset(
         "run_no_show",
         "run_payment_submitted",
         "run_payment_confirmed",
+        "run_price_final",
         "dm_message",
         "chat_mention",
     }
@@ -106,6 +107,10 @@ def render_push(type_: str, payload: dict[str, Any]) -> PushMessage | None:
         case "run_payment_confirmed":
             title = "Runner confirmed your payment"
             body = "You're all set."
+        case "run_price_final":
+            # Money copy stays loud (payment-terms rule): the exact delta vs
+            # the requester's estimate, in dollars, right in the banner.
+            title, body = _price_final_copy(payload, spot=spot)
         case "dm_message":
             sender = _str(payload, "sender_name")
             title = f"{sender} sent you a message" if sender else "New message"
@@ -126,6 +131,21 @@ def render_push(type_: str, payload: dict[str, Any]) -> PushMessage | None:
         collapse_key=_collapse_key(type_, payload),
         critical=type_ in CRITICAL_TYPES,
     )
+
+
+def _price_final_copy(payload: dict[str, Any], *, spot: str | None) -> tuple[str, str]:
+    title = f"Final price for your {spot} order" if spot else "Final price for your order"
+    try:
+        delta = int(payload.get("delta_cents", ""))
+        actual = int(payload.get("actual_price_cents", ""))
+    except ValueError:
+        return title, "Open your order for the settle-up amount."
+    actual_str = f"${actual / 100:.2f}"
+    if delta > 0:
+        return title, f"Items came to {actual_str} — you owe ${delta / 100:.2f} more."
+    if delta < 0:
+        return title, f"Items came to {actual_str} — the runner owes you ${-delta / 100:.2f} back."
+    return title, f"Items came to {actual_str} — exactly your estimate. You're all set."
 
 
 def _run_status_copy(

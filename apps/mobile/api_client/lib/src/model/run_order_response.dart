@@ -13,12 +13,14 @@ part 'run_order_response.g.dart';
 /// RunOrderResponse
 ///
 /// Properties:
+/// * [actualPriceCents] 
 /// * [arrivedAt] 
 /// * [createdAt] 
 /// * [dropoff] 
 /// * [dropoffLat] 
 /// * [dropoffLng] 
 /// * [id] 
+/// * [itemPriceCents] 
 /// * [noShowEligibleAt] 
 /// * [orderText] 
 /// * [paymentConfirmedAt] 
@@ -31,6 +33,9 @@ part 'run_order_response.g.dart';
 /// * [status] 
 @BuiltValue()
 abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderResponseBuilder> {
+  @BuiltValueField(wireName: r'actual_price_cents')
+  int? get actualPriceCents;
+
   @BuiltValueField(wireName: r'arrived_at')
   DateTime? get arrivedAt;
 
@@ -48,6 +53,9 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
 
   @BuiltValueField(wireName: r'id')
   String get id;
+
+  @BuiltValueField(wireName: r'item_price_cents')
+  int? get itemPriceCents;
 
   @BuiltValueField(wireName: r'no_show_eligible_at')
   DateTime? get noShowEligibleAt;
@@ -86,6 +94,7 @@ abstract class RunOrderResponse implements Built<RunOrderResponse, RunOrderRespo
 
   @BuiltValueHook(initializeBuilder: true)
   static void _defaults(RunOrderResponseBuilder b) => b
+      ..itemPriceCents = 0
       ..ratedByMe = false;
 
   @BuiltValueSerializer(custom: true)
@@ -104,6 +113,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
     RunOrderResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    if (object.actualPriceCents != null) {
+      yield r'actual_price_cents';
+      yield serializers.serialize(
+        object.actualPriceCents,
+        specifiedType: const FullType.nullable(int),
+      );
+    }
     if (object.arrivedAt != null) {
       yield r'arrived_at';
       yield serializers.serialize(
@@ -140,6 +156,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       object.id,
       specifiedType: const FullType(String),
     );
+    if (object.itemPriceCents != null) {
+      yield r'item_price_cents';
+      yield serializers.serialize(
+        object.itemPriceCents,
+        specifiedType: const FullType(int),
+      );
+    }
     if (object.noShowEligibleAt != null) {
       yield r'no_show_eligible_at';
       yield serializers.serialize(
@@ -225,6 +248,14 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'actual_price_cents':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
+          result.actualPriceCents = valueDes;
+          break;
         case r'arrived_at':
           final valueDes = serializers.deserialize(
             value,
@@ -269,6 +300,13 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
             specifiedType: const FullType(String),
           ) as String;
           result.id = valueDes;
+          break;
+        case r'item_price_cents':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(int),
+          ) as int;
+          result.itemPriceCents = valueDes;
           break;
         case r'no_show_eligible_at':
           final valueDes = serializers.deserialize(

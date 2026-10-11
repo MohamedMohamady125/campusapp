@@ -9,6 +9,7 @@ import 'package:campus_api/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **dropoffLocationId** | **String** |  | 
+**itemPriceCents** | **int** |  | [optional] [default to 0]
 **orderText** | **String** |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

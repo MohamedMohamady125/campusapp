@@ -1,6 +1,7 @@
 .gitignore
 README.md
 analysis_options.yaml
+doc/ActualPriceSubmitRequest.md
 doc/AdminApi.md
 doc/AnalyticsApi.md
 doc/AppSchemasAuthMessageResponse.md
@@ -149,6 +150,7 @@ lib/src/auth/basic_auth.dart
 lib/src/auth/bearer_auth.dart
 lib/src/auth/oauth.dart
 lib/src/date_serializer.dart
+lib/src/model/actual_price_submit_request.dart
 lib/src/model/app_schemas_auth_message_response.dart
 lib/src/model/app_schemas_conversation_message_response.dart
 lib/src/model/avatar_upload_url_request.dart
@@ -263,11 +265,4 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/analytics_api_test.dart
-test/behavior_day_test.dart
-test/behavior_response_test.dart
-test/client_event_batch_request_test.dart
-test/client_event_in_test.dart
-test/event_stat_test.dart
-test/properties_value_test.dart
-test/screen_stat_test.dart
+test/actual_price_submit_request_test.dart

@@ -26,6 +26,7 @@ Method | HTTP request | Description
 [**myRunsApiV1RunsMineGet**](RunsApi.md#myrunsapiv1runsmineget) | **GET** /api/v1/runs/mine | My Runs
 [**requestSpotApiV1RunsRunIdOrdersPost**](RunsApi.md#requestspotapiv1runsrunidorderspost) | **POST** /api/v1/runs/{run_id}/orders | Request Spot
 [**runFeedApiV1RunsGet**](RunsApi.md#runfeedapiv1runsget) | **GET** /api/v1/runs | Run Feed
+[**setActualPriceApiV1RunsRunIdOrdersOrderIdActualPricePost**](RunsApi.md#setactualpriceapiv1runsrunidordersorderidactualpricepost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/actual-price | Set Actual Price
 [**submitPaymentProofApiV1RunsRunIdOrdersOrderIdPaymentProofPost**](RunsApi.md#submitpaymentproofapiv1runsrunidordersorderidpaymentproofpost) | **POST** /api/v1/runs/{run_id}/orders/{order_id}/payment-proof | Submit Payment Proof
 [**updateLocationApiV1RunsRunIdLocationPost**](RunsApi.md#updatelocationapiv1runsrunidlocationpost) | **POST** /api/v1/runs/{run_id}/location | Update Location
 [**updateStatusApiV1RunsRunIdStatusPost**](RunsApi.md#updatestatusapiv1runsrunidstatuspost) | **POST** /api/v1/runs/{run_id}/status | Update Status
@@ -739,6 +740,53 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **setActualPriceApiV1RunsRunIdOrdersOrderIdActualPricePost**
+> RunResponse setActualPriceApiV1RunsRunIdOrdersOrderIdActualPricePost(runId, orderId, actualPriceSubmitRequest)
+
+Set Actual Price
+
+Runner enters the real receipt price — drives the settle-up delta.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getRunsApi();
+final String runId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String orderId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final ActualPriceSubmitRequest actualPriceSubmitRequest = ; // ActualPriceSubmitRequest | 
+
+try {
+    final response = api.setActualPriceApiV1RunsRunIdOrdersOrderIdActualPricePost(runId, orderId, actualPriceSubmitRequest);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling RunsApi->setActualPriceApiV1RunsRunIdOrdersOrderIdActualPricePost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **runId** | **String**|  | 
+ **orderId** | **String**|  | 
+ **actualPriceSubmitRequest** | [**ActualPriceSubmitRequest**](ActualPriceSubmitRequest.md)|  | 
+
+### Return type
+
+[**RunResponse**](RunResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
