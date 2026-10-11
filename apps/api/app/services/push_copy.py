@@ -141,6 +141,10 @@ def _price_final_copy(payload: dict[str, Any], *, spot: str | None) -> tuple[str
     except ValueError:
         return title, "Open your order for the settle-up amount."
     actual_str = f"${actual / 100:.2f}"
+    # No estimate on file (post-prepay flow): the receipt IS the news — the
+    # "you owe more" framing only makes sense against an estimate.
+    if delta == actual:
+        return title, f"Items came to {actual_str} — pay at handoff."
     if delta > 0:
         return title, f"Items came to {actual_str} — you owe ${delta / 100:.2f} more."
     if delta < 0:

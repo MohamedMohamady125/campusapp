@@ -25,13 +25,14 @@ import 'package:campusconnect/features/food_runs/presentation/runner_location_br
 import 'package:campusconnect/features/food_runs/presentation/runner_route_card.dart';
 import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
 import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
-import 'package:campusconnect/shared/image_normalizer.dart';
-import 'package:flutter/foundation.dart' show Uint8List;
+// PREPAY REMOVED: imports below served the payment-proof upload card.
+// import 'package:campusconnect/shared/image_normalizer.dart';
+// import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/services.dart'
     show Clipboard, ClipboardData, HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+// import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Run detail — one screen, three viewers (visitor / requester / runner),
@@ -272,12 +273,15 @@ class _RunDetailBody extends ConsumerWidget {
       ),
       if (accepted &&
           (run.feeCents > 0 ||
-              run.prepayRequired ||
-              (order.itemPriceCents ?? 0) > 0)) ...[
+              // PREPAY REMOVED: run.prepayRequired ||
+              (order.itemPriceCents ?? 0) > 0 ||
+              order.actualPriceCents != null)) ...[
         SizedBox(height: tokens.space3),
         _PaymentCard(run: run, order: order),
-        SizedBox(height: tokens.space3),
-        _PaymentProofCard(order: order, controller: controller),
+        // PREPAY REMOVED: screenshot proof upload is gone — payment is one
+        // exact amount at handoff; the runner stamps "paid" in person.
+        // SizedBox(height: tokens.space3),
+        // _PaymentProofCard(order: order, controller: controller),
       ],
       // Live "where's my runner" map — below the money widgets on purpose:
       // once accepted, paying the runner is the requester's job; tracking
@@ -433,30 +437,30 @@ class _RunDetailBody extends ConsumerWidget {
           run: run,
           unresolved: unresolved,
           onAdvance: (next) async {
-            // Prepay gate: heading to the store with unpaid accepted orders
-            // is the dasher's money on the line — surface it as an explicit
-            // choice (drop them / front the money), never an auto-drop,
-            // because payment happens off-app and only a human can judge it.
-            if (next == RunStatus.atStore && run.prepayRequired) {
-              final unpaid = deliveries
-                  // Paid = requester proof OR the runner's own confirm stamp.
-                  .where(
-                    (o) =>
-                        o.paymentSubmittedAt == null &&
-                        o.paymentConfirmedAt == null,
-                  )
-                  .toList();
-              if (unpaid.isNotEmpty) {
-                final choice = await _confirmUnpaid(context, unpaid);
-                if (choice == null) return; // backed out
-                if (choice == _UnpaidChoice.dropUnpaid) {
-                  for (final o in unpaid) {
-                    if (!context.mounted) return;
-                    await _act(context, () => controller.decline(o.id));
-                  }
-                }
-              }
-            }
+            // PREPAY REMOVED: the "drop unpaid before heading out" gate is
+            // gone — payment is one exact amount at handoff, so there is no
+            // unpaid state to police before the store.
+            // if (next == RunStatus.atStore && run.prepayRequired) {
+            //   final unpaid = deliveries
+            //       // Paid = requester proof OR the runner's own confirm
+            //       // stamp.
+            //       .where(
+            //         (o) =>
+            //             o.paymentSubmittedAt == null &&
+            //             o.paymentConfirmedAt == null,
+            //       )
+            //       .toList();
+            //   if (unpaid.isNotEmpty) {
+            //     final choice = await _confirmUnpaid(context, unpaid);
+            //     if (choice == null) return; // backed out
+            //     if (choice == _UnpaidChoice.dropUnpaid) {
+            //       for (final o in unpaid) {
+            //         if (!context.mounted) return;
+            //         await _act(context, () => controller.decline(o.id));
+            //       }
+            //     }
+            //   }
+            // }
             if (!context.mounted) return;
             final ok = await _act(
               context,
@@ -517,46 +521,48 @@ class _RunDetailBody extends ConsumerWidget {
     ];
   }
 
-  /// The prepay decision gate: lists everyone who hasn't paid and lets the
-  /// dasher drop them, knowingly front the money, or back out.
-  Future<_UnpaidChoice?> _confirmUnpaid(
-    BuildContext context,
-    List<RunOrderResponse> unpaid,
-  ) {
-    final names = unpaid.map((o) => o.requester.displayName).join(', ');
-    return showDialog<_UnpaidChoice>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          unpaid.length == 1
-              ? "1 person hasn't paid yet"
-              : "${unpaid.length} people haven't paid yet",
-        ),
-        content: Text(
-          // Payment terms stay explicit — this gate exists to prevent
-          // disputes, so name the choice plainly.
-          '$names. Prepay is required — drop them, or continue and '
-          'collect at drop-off.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Back'),
-          ),
-          TextButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(_UnpaidChoice.continueAnyway),
-            child: const Text('Continue anyway'),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(_UnpaidChoice.dropUnpaid),
-            child: const Text('Drop unpaid'),
-          ),
-        ],
-      ),
-    );
-  }
+  // PREPAY REMOVED: the prepay decision gate dialog (drop unpaid / front the
+  // money) is retired along with the gate that invoked it.
+  // /// The prepay decision gate: lists everyone who hasn't paid and lets the
+  // /// dasher drop them, knowingly front the money, or back out.
+  // Future<_UnpaidChoice?> _confirmUnpaid(
+  //   BuildContext context,
+  //   List<RunOrderResponse> unpaid,
+  // ) {
+  //   final names = unpaid.map((o) => o.requester.displayName).join(', ');
+  //   return showDialog<_UnpaidChoice>(
+  //     context: context,
+  //     builder: (dialogContext) => AlertDialog(
+  //       title: Text(
+  //         unpaid.length == 1
+  //             ? "1 person hasn't paid yet"
+  //             : "${unpaid.length} people haven't paid yet",
+  //       ),
+  //       content: Text(
+  //         // Payment terms stay explicit — this gate exists to prevent
+  //         // disputes, so name the choice plainly.
+  //         '$names. Prepay is required — drop them, or continue and '
+  //         'collect at drop-off.',
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.of(dialogContext).pop(),
+  //           child: const Text('Back'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () => Navigator.of(dialogContext)
+  //               .pop(_UnpaidChoice.continueAnyway),
+  //           child: const Text('Continue anyway'),
+  //         ),
+  //         FilledButton(
+  //           onPressed: () =>
+  //               Navigator.of(dialogContext).pop(_UnpaidChoice.dropUnpaid),
+  //           child: const Text('Drop unpaid'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   /// One labelled group of order cards ("NEW REQUESTS · 2"); renders nothing
   /// when the group is empty so the screen only shows sections that matter.
@@ -577,7 +583,8 @@ class _RunDetailBody extends ConsumerWidget {
       for (final order in group) ...[
         _OrderCard(
           order: order,
-          collectFeeCents: run.prepayRequired ? null : run.feeCents,
+          // PREPAY REMOVED: every run collects at handoff now.
+          collectFeeCents: run.feeCents,
           runDone: run.status == RunStatus.done,
           // Delivered/No-show only make sense once the dasher is actually
           // out (server rejects them earlier anyway).
@@ -585,40 +592,42 @@ class _RunDetailBody extends ConsumerWidget {
             RunStatus.atStore,
             RunStatus.delivering,
           }.contains(run.status),
-          awaitingPrepay:
-              run.prepayRequired &&
-              order.status == RunOrderStatus.accepted &&
-              order.paymentSubmittedAt == null &&
-              order.paymentConfirmedAt == null,
-          // The honest-payer escape hatch: they Venmo'd but forgot the
-          // screenshot — the runner vouches and the order stops looking
-          // unpaid (and can no longer be dropped at the prepay gate).
-          onConfirmPaid:
-              run.prepayRequired &&
-                  order.status == RunOrderStatus.accepted &&
-                  order.paymentSubmittedAt == null &&
-                  order.paymentConfirmedAt == null
-              ? () => _act(
-                  context,
-                  () => controller.confirmPayment(order.id),
-                  success: '${order.requester.displayName} marked as paid.',
-                )
-              : null,
-          onRemoveUnpaid:
-              run.prepayRequired &&
-                  order.status == RunOrderStatus.accepted &&
-                  order.paymentSubmittedAt == null &&
-                  order.paymentConfirmedAt == null &&
-                  const {
-                    RunStatus.open,
-                    RunStatus.locked,
-                  }.contains(run.status)
-              ? () => _act(
-                  context,
-                  () => controller.decline(order.id),
-                  success: '${order.requester.displayName} removed — unpaid.',
-                )
-              : null,
+          // PREPAY REMOVED: no awaiting-payment state, vouch button, or
+          // drop-unpaid action — collection happens face-to-face at handoff.
+          awaitingPrepay: false,
+          // awaitingPrepay:
+          //     run.prepayRequired &&
+          //     order.status == RunOrderStatus.accepted &&
+          //     order.paymentSubmittedAt == null &&
+          //     order.paymentConfirmedAt == null,
+          // onConfirmPaid:
+          //     run.prepayRequired &&
+          //         order.status == RunOrderStatus.accepted &&
+          //         order.paymentSubmittedAt == null &&
+          //         order.paymentConfirmedAt == null
+          //     ? () => _act(
+          //         context,
+          //         () => controller.confirmPayment(order.id),
+          //         success:
+          //             '${order.requester.displayName} marked as paid.',
+          //       )
+          //     : null,
+          // onRemoveUnpaid:
+          //     run.prepayRequired &&
+          //         order.status == RunOrderStatus.accepted &&
+          //         order.paymentSubmittedAt == null &&
+          //         order.paymentConfirmedAt == null &&
+          //         const {
+          //           RunStatus.open,
+          //           RunStatus.locked,
+          //         }.contains(run.status)
+          //     ? () => _act(
+          //         context,
+          //         () => controller.decline(order.id),
+          //         success:
+          //             '${order.requester.displayName} removed — unpaid.',
+          //       )
+          //     : null,
           // Receipt truth-up is legal once the dasher is buying (server's
           // _PAYABLE_STATUSES gate mirrored client-side).
           onSetPrice:
@@ -772,9 +781,10 @@ class _RunDetailBody extends ConsumerWidget {
   }
 }
 
-/// What the dasher chose at the prepay gate (heading to the store with
-/// unpaid accepted orders).
-enum _UnpaidChoice { dropUnpaid, continueAnyway }
+// PREPAY REMOVED: retired with the prepay gate dialog.
+// /// What the dasher chose at the prepay gate (heading to the store with
+// /// unpaid accepted orders).
+// enum _UnpaidChoice { dropUnpaid, continueAnyway }
 
 // ── Shared cards ─────────────────────────────────────────────────────────
 
@@ -898,25 +908,28 @@ class _RunHeaderCard extends StatelessWidget {
         SizedBox(height: tokens.space2),
         _InfoRow(
           icon: Icons.payments_outlined,
-          label: run.prepayRequired
-              ? switch (paymentPrefsLabel(run.paymentPrefs ?? const [])) {
-                  // Prepay runs carry rails only — show them so the
-                  // requester knows exactly how to send money up front.
-                  final String prefs =>
-                    '${runFeeLabel(run.feeCents)} · prepay via $prefs',
-                  null => '${runFeeLabel(run.feeCents)} · prepay required',
-                }
-              : switch (run.feeCents > 0
-                    ? paymentPrefsLabel(run.paymentPrefs ?? const [])
-                    : null) {
-                  // Pay-on-handoff methods the runner picked, so requesters
-                  // know what to have ready at the drop-off.
-                  final String prefs when prefs == 'Cash' =>
-                    '${runFeeLabel(run.feeCents)} · cash on handoff',
-                  final String prefs =>
-                    '${runFeeLabel(run.feeCents)} · pay with $prefs',
-                  null => runFeeLabel(run.feeCents),
-                },
+          // PREPAY REMOVED: every run is pay-on-handoff now; the prepay
+          // label branch below is retired, not deleted.
+          // label: run.prepayRequired
+          //     ? switch (paymentPrefsLabel(run.paymentPrefs ?? const [])) {
+          //         // Prepay runs carry rails only — show them so the
+          //         // requester knows exactly how to send money up front.
+          //         final String prefs =>
+          //           '${runFeeLabel(run.feeCents)} · prepay via $prefs',
+          //         null => '${runFeeLabel(run.feeCents)} · prepay required',
+          //       }
+          //     : ...
+          label: switch (run.feeCents > 0
+              ? paymentPrefsLabel(run.paymentPrefs ?? const [])
+              : null) {
+            // Pay-on-handoff methods the runner picked, so requesters
+            // know what to have ready at the drop-off.
+            final String prefs when prefs == 'Cash' =>
+              '${runFeeLabel(run.feeCents)} · cash on handoff',
+            final String prefs =>
+              '${runFeeLabel(run.feeCents)} · pay with $prefs',
+            null => runFeeLabel(run.feeCents),
+          },
         ),
         SizedBox(height: tokens.space2),
         _InfoRow(
@@ -1352,20 +1365,22 @@ class _PaymentCard extends StatelessWidget {
               SizedBox(height: tokens.space3),
               _PaymentMethodRow(method: m, amountCents: total),
             ],
-          if (run.prepayRequired) ...[
-            SizedBox(height: tokens.space3),
-            // Money copy stays loud: the consequence is real (the runner can
-            // drop unpaid orders at the "heading to the store" gate), so say
-            // it plainly instead of a polite nudge.
-            Text(
-              'Prepay required — pay before the runner heads to the store, '
-              'or they can drop your order.',
-              style: context.text.bodySmall?.copyWith(
-                color: tokens.warning,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+          // PREPAY REMOVED: the loud "pay before the store or get dropped"
+          // warning is retired with the prepay gate.
+          // if (run.prepayRequired) ...[
+          //   SizedBox(height: tokens.space3),
+          //   // Money copy stays loud: the consequence is real (the runner
+          //   // can drop unpaid orders at the "heading to the store" gate),
+          //   // so say it plainly instead of a polite nudge.
+          //   Text(
+          //     'Prepay required — pay before the runner heads to the '
+          //     'store, or they can drop your order.',
+          //     style: context.text.bodySmall?.copyWith(
+          //       color: tokens.warning,
+          //       fontWeight: FontWeight.w600,
+          //     ),
+          //   ),
+          // ],
         ],
       ),
     );
@@ -1454,12 +1469,14 @@ class _RunSummaryCard extends StatelessWidget {
     final declined = orders
         .where((o) => o.status == RunOrderStatus.declined)
         .length;
-    // Paid = requester proof OR the runner's own "payment received" stamp.
-    final proofs = orders
-        .where(
-          (o) => o.paymentSubmittedAt != null || o.paymentConfirmedAt != null,
-        )
-        .length;
+    // PREPAY REMOVED: proof counting retired with the prepay flow.
+    // // Paid = requester proof OR the runner's own "payment received" stamp.
+    // final proofs = orders
+    //     .where(
+    //       (o) =>
+    //           o.paymentSubmittedAt != null || o.paymentConfirmedAt != null,
+    //     )
+    //     .length;
     final collectedCents = delivered * run.feeCents;
     // Items money on delivered orders — receipt price when entered,
     // otherwise the requester's estimate.
@@ -1521,12 +1538,13 @@ class _RunSummaryCard extends StatelessWidget {
                   : '$declined'
                         ' requests declined',
             ),
-          if (run.prepayRequired && orders.isNotEmpty)
-            _summaryRow(
-              context,
-              Icons.receipt_long_outlined,
-              'Payment proofs: $proofs of ${orders.length}',
-            ),
+          // PREPAY REMOVED: proof tally line retired.
+          // if (run.prepayRequired && orders.isNotEmpty)
+          //   _summaryRow(
+          //     context,
+          //     Icons.receipt_long_outlined,
+          //     'Payment proofs: $proofs of ${orders.length}',
+          //   ),
           if ((run.feeCents > 0 && delivered > 0) || itemsCents > 0) ...[
             SizedBox(height: tokens.space2),
             Divider(height: 1, color: colors.outlineVariant),
@@ -1854,8 +1872,8 @@ class _OrderCard extends StatelessWidget {
     required this.onImHere,
     required this.onNoShow,
     required this.onRate,
-    this.onRemoveUnpaid,
-    this.onConfirmPaid,
+    // PREPAY REMOVED: this.onRemoveUnpaid,
+    // PREPAY REMOVED: this.onConfirmPaid,
     this.onSetPrice,
     this.collectFeeCents,
   });
@@ -1882,12 +1900,13 @@ class _OrderCard extends StatelessWidget {
   final VoidCallback onNoShow;
   final VoidCallback onRate;
 
-  /// Drop an accepted-but-unpaid order on a prepay run (open/locked only).
-  final VoidCallback? onRemoveUnpaid;
-
-  /// Runner vouches "I got the money" for a prepay order with no proof —
-  /// the honest payer who forgot the screenshot stops looking unpaid.
-  final VoidCallback? onConfirmPaid;
+  // PREPAY REMOVED: drop-unpaid and vouch callbacks retired with prepay.
+  // /// Drop an accepted-but-unpaid order on a prepay run (open/locked only).
+  // final VoidCallback? onRemoveUnpaid;
+  //
+  // /// Runner vouches "I got the money" for a prepay order with no proof —
+  // /// the honest payer who forgot the screenshot stops looking unpaid.
+  // final VoidCallback? onConfirmPaid;
 
   /// Runner enters the real receipt price after buying (settle-up truth-up);
   /// non-null only while the run is at the store or later.
@@ -2058,13 +2077,14 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
           ),
-          // Payment state — one glance: green receipt panel when paid,
-          // green "you confirmed it" row when the runner vouched, loud
-          // amber strip while the dasher is still owed.
-          if (order.paymentSubmittedAt != null) ...[
-            SizedBox(height: tokens.space3),
-            _PaymentProofReview(order: order),
-          ] else if (order.paymentConfirmedAt != null) ...[
+          // PREPAY REMOVED: the screenshot-proof review panel is retired —
+          // only the runner's own "payment received" stamp still renders on
+          // legacy orders.
+          // if (order.paymentSubmittedAt != null) ...[
+          //   SizedBox(height: tokens.space3),
+          //   _PaymentProofReview(order: order),
+          // ] else ...
+          if (order.paymentConfirmedAt != null) ...[
             SizedBox(height: tokens.space3),
             Row(
               children: [
@@ -2112,23 +2132,22 @@ class _OrderCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  // Honest-payer escape hatch: the money arrived but no
-                  // screenshot — the runner settles it with one tap.
-                  if (onConfirmPaid != null) ...[
-                    SizedBox(height: tokens.space2),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: onConfirmPaid,
-                        style: TextButton.styleFrom(
-                          foregroundColor: colors.primary,
-                          backgroundColor: colors.primaryContainer,
-                        ),
-                        icon: const Icon(Icons.check_rounded, size: 18),
-                        label: const Text('Payment received'),
-                      ),
-                    ),
-                  ],
+                  // PREPAY REMOVED: honest-payer vouch button retired.
+                  // if (onConfirmPaid != null) ...[
+                  //   SizedBox(height: tokens.space2),
+                  //   Align(
+                  //     alignment: Alignment.centerRight,
+                  //     child: TextButton.icon(
+                  //       onPressed: onConfirmPaid,
+                  //       style: TextButton.styleFrom(
+                  //         foregroundColor: colors.primary,
+                  //         backgroundColor: colors.primaryContainer,
+                  //       ),
+                  //       icon: const Icon(Icons.check_rounded, size: 18),
+                  //       label: const Text('Payment received'),
+                  //     ),
+                  //   ),
+                  // ],
                 ],
               ),
             ),
@@ -2198,8 +2217,8 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
             // Accepted but not out yet: no Delivered/No-show (the server
-            // rejects them before at_store) — just the state, plus the
-            // drop-unpaid escape hatch on prepay runs.
+            // rejects them before at_store) — just the state.
+            // PREPAY REMOVED: the "Remove — unpaid" escape hatch is retired.
             RunOrderStatus.accepted => Row(
               children: [
                 Expanded(
@@ -2208,16 +2227,19 @@ class _OrderCard extends StatelessWidget {
                     child: _OrderStatusPill(status: order.status),
                   ),
                 ),
-                if (onRemoveUnpaid != null)
-                  TextButton.icon(
-                    onPressed: onRemoveUnpaid,
-                    style: TextButton.styleFrom(
-                      foregroundColor: colors.onErrorContainer,
-                      backgroundColor: colors.errorContainer,
-                    ),
-                    icon: const Icon(Icons.person_remove_outlined, size: 18),
-                    label: const Text('Remove — unpaid'),
-                  ),
+                // if (onRemoveUnpaid != null)
+                //   TextButton.icon(
+                //     onPressed: onRemoveUnpaid,
+                //     style: TextButton.styleFrom(
+                //       foregroundColor: colors.onErrorContainer,
+                //       backgroundColor: colors.errorContainer,
+                //     ),
+                //     icon: const Icon(
+                //       Icons.person_remove_outlined,
+                //       size: 18,
+                //     ),
+                //     label: const Text('Remove — unpaid'),
+                //   ),
               ],
             ),
             _ => Row(
@@ -2310,6 +2332,9 @@ class _OrderStatusPill extends StatelessWidget {
   }
 }
 
+// PREPAY REMOVED: screenshot-proof review retired — payment is one exact
+// amount at handoff now. Kept commented in case in-app payments revive it.
+/*
 /// Runner-side view of a submitted payment proof: the screenshot (tap to
 /// enlarge) + any note the requester attached.
 class _PaymentProofReview extends StatelessWidget {
@@ -2385,6 +2410,7 @@ class _PaymentProofReview extends StatelessWidget {
     );
   }
 }
+*/
 
 /// Parses a dollars string ("11.50", "$11.5") into cents; null when invalid.
 int? _parsePriceCents(String raw) {
@@ -2430,9 +2456,11 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
   /// stays loud; payment terms ride along).
   String _totalLine() {
     final run = widget.run;
-    final suffix = run.prepayRequired
-        ? 'prepay before pickup'
-        : 'pay at handoff';
+    // PREPAY REMOVED: every run is pay-at-handoff now.
+    // final suffix = run.prepayRequired
+    //     ? 'prepay before pickup'
+    //     : 'pay at handoff';
+    const suffix = 'pay at handoff';
     final cents = _parsePriceCents(_price.text) ?? 0;
     if (cents <= 0) return '${runFeeLabel(run.feeCents)} · $suffix';
     final total = cents + run.feeCents;
@@ -2518,23 +2546,26 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
               hintText: 'e.g. Medium iced latte, oat milk, no sugar',
             ),
           ),
-          SizedBox(height: tokens.space4),
-          Text('What will it cost?', style: AppTextStyles.label),
-          SizedBox(height: tokens.space2),
-          TextField(
-            controller: _price,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-            ),
-            onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              prefixText: r'$ ',
-              hintText: '0.00',
-              // Honest expectation-setting: the runner trues it up from the
-              // receipt later, so a rough number is fine.
-              helperText: 'Your items incl. tax — add ~10% if unsure.',
-            ),
-          ),
+          // PREPAY REMOVED: the estimate field existed to make prepay
+          // amounts exact. With one exact payment at handoff (runner enters
+          // the receipt price), guessing up front is pure friction — gone.
+          // SizedBox(height: tokens.space4),
+          // Text('What will it cost?', style: AppTextStyles.label),
+          // SizedBox(height: tokens.space2),
+          // TextField(
+          //   controller: _price,
+          //   keyboardType: const TextInputType.numberWithOptions(
+          //     decimal: true,
+          //   ),
+          //   onChanged: (_) => setState(() {}),
+          //   decoration: const InputDecoration(
+          //     prefixText: r'$ ',
+          //     hintText: '0.00',
+          //     // Honest expectation-setting: the runner trues it up from
+          //     // the receipt later, so a rough number is fine.
+          //     helperText: 'Your items incl. tax — add ~10% if unsure.',
+          //   ),
+          // ),
           SizedBox(height: tokens.space4),
           Text('Where should they drop it?', style: AppTextStyles.label),
           SizedBox(height: tokens.space2),
@@ -2578,22 +2609,26 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
                 _snack('Add your order first.');
                 return;
               }
-              final cents = _parsePriceCents(_price.text);
-              if (cents == null || cents <= 0) {
-                _snack('Add what your items cost (a rough number is fine).');
-                return;
-              }
-              if (cents > 50000) {
-                _snack(r'Price must be under $500.');
-                return;
-              }
+              // PREPAY REMOVED: no up-front estimate — the runner enters
+              // the exact receipt price later, so orders submit with 0.
+              // final cents = _parsePriceCents(_price.text);
+              // if (cents == null || cents <= 0) {
+              //   _snack(
+              //     'Add what your items cost (a rough number is fine).',
+              //   );
+              //   return;
+              // }
+              // if (cents > 50000) {
+              //   _snack(r'Price must be under $500.');
+              //   return;
+              // }
               if (_dropoffId == null) {
                 _snack('Pick a drop-off spot.');
                 return;
               }
               Navigator.of(context).pop();
               unawaited(HapticFeedback.selectionClick());
-              widget.onSubmit(order, _dropoffId!, cents).ignore();
+              widget.onSubmit(order, _dropoffId!, 0).ignore();
             },
             child: const Text('Send request'),
           ),
@@ -2603,6 +2638,10 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
   }
 }
 
+// PREPAY REMOVED: the requester's screenshot-proof upload card is retired —
+// payment is one exact amount at handoff. Kept commented (not deleted) in
+// case a real in-app payment rail ever revives the flow.
+/*
 /// Requester's payment-proof card: send a transaction screenshot + note so
 /// the runner can confirm off-app payment. Least-friction — one tap picks
 /// the screenshot, an optional note, one tap submits. Once submitted it
@@ -2767,6 +2806,7 @@ class _PaymentProofCardState extends ConsumerState<_PaymentProofCard> {
     );
   }
 }
+*/
 
 /// Skeleton matching the header-card geometry (spec §13.1).
 class _DetailSkeleton extends StatelessWidget {

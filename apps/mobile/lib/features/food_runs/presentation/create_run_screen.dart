@@ -703,14 +703,18 @@ class _DealCard extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(height: tokens.space3),
-          SwitchListTile(
-            value: prepay,
-            onChanged: onPrepayChanged,
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Require prepay'),
-            subtitle: const Text('People pay you before you order'),
-          ),
+          // PREPAY REMOVED: prepay was unenforceable screenshot-theater on an
+          // off-app money model — payment is now one exact amount at handoff
+          // (food is the collateral). Toggle stays commented, not deleted, in
+          // case a real in-app payment rail (Stripe) ever revives it.
+          // SizedBox(height: tokens.space3),
+          // SwitchListTile(
+          //   value: prepay,
+          //   onChanged: onPrepayChanged,
+          //   contentPadding: EdgeInsets.zero,
+          //   title: const Text('Require prepay'),
+          //   subtitle: const Text('People pay you before you order'),
+          // ),
           Divider(height: tokens.space4, color: colors.outlineVariant),
           // Live payoff — the reason to run at all.
           Row(

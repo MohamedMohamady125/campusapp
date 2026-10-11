@@ -84,6 +84,11 @@ String _priceFinalTitle(NotificationResponse n) {
   String money(int cents) => cents % 100 == 0
       ? '\$${cents ~/ 100}'
       : '\$${(cents / 100).toStringAsFixed(2)}';
+  // No estimate on file (post-prepay flow): delta == actual, so the
+  // "more than your estimate" framing would mislead — just state the total.
+  if (delta == actual) {
+    return 'Items came to ${money(actual)} — pay at handoff';
+  }
   if (delta > 0) {
     return 'Items came to ${money(actual)} — you owe ${money(delta)} more';
   }
