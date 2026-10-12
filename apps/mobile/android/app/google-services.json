@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "435412871250",
+    "project_id": "trot-campus",
+    "storage_bucket": "trot-campus.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435412871250:android:aaee8f4c029311c6e8178b",
+        "android_client_info": {
+          "package_name": "edu.campus.campusconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1xDknfQXqCkcgdLYr4MvgmvRkCkDUCDc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
