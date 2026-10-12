@@ -183,6 +183,17 @@ class _NotificationRow extends StatelessWidget {
                         color: colors.onSurface,
                       ),
                     ),
+                    if (notificationBody(notification) case final body?) ...[
+                      SizedBox(height: tokens.space1),
+                      Text(
+                        body,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.text.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                     SizedBox(height: tokens.space1),
                     Text(
                       notificationRelativeTime(notification.createdAt),

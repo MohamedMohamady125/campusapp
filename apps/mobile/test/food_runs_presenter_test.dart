@@ -122,6 +122,22 @@ void main() {
       );
     });
 
+    test('admin_message renders the staff copy verbatim', () {
+      final n = _notif('admin_message', {
+        'broadcast_id': 'b-1',
+        'title': 'Free pizza at the union',
+        'body': 'First 50 students, 6pm today.',
+      });
+      expect(notificationTitle(n), 'Free pizza at the union');
+      expect(notificationBody(n), 'First 50 students, 6pm today.');
+      expect(notificationTitle(_notif('admin_message', {})), 'Announcement');
+      expect(notificationBody(_notif('admin_message', {})), isNull);
+      expect(
+        notificationBody(_notif('run_completed', {'run_id': 'r'})),
+        isNull,
+      );
+    });
+
     test('rating_received names the rater and stars', () {
       final n = _notif('rating_received', {
         'rating_id': 'rt-1',

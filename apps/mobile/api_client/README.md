@@ -66,6 +66,7 @@ All URIs are relative to *http://localhost*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 [*AdminApi*](doc/AdminApi.md) | [**adminMetricsApiV1AdminMetricsGet**](doc/AdminApi.md#adminmetricsapiv1adminmetricsget) | **GET** /api/v1/admin/metrics | Admin Metrics
+[*AdminApi*](doc/AdminApi.md) | [**sendBroadcastApiV1AdminNotificationsPost**](doc/AdminApi.md#sendbroadcastapiv1adminnotificationspost) | **POST** /api/v1/admin/notifications | Send Broadcast
 [*AnalyticsApi*](doc/AnalyticsApi.md) | [**adminBehaviorApiV1AdminBehaviorGet**](doc/AnalyticsApi.md#adminbehaviorapiv1adminbehaviorget) | **GET** /api/v1/admin/behavior | Admin Behavior
 [*AnalyticsApi*](doc/AnalyticsApi.md) | [**ingestEventsApiV1AnalyticsEventsPost**](doc/AnalyticsApi.md#ingesteventsapiv1analyticseventspost) | **POST** /api/v1/analytics/events | Ingest Events
 [*AuthApi*](doc/AuthApi.md) | [**changeEmailApiV1AuthChangeEmailPost**](doc/AuthApi.md#changeemailapiv1authchangeemailpost) | **POST** /api/v1/auth/change-email | Change Email
@@ -158,6 +159,8 @@ Class | Method | HTTP request | Description
 ## Documentation For Models
 
  - [ActualPriceSubmitRequest](doc/ActualPriceSubmitRequest.md)
+ - [AdminBroadcastRequest](doc/AdminBroadcastRequest.md)
+ - [AdminBroadcastResponse](doc/AdminBroadcastResponse.md)
  - [AppSchemasAuthMessageResponse](doc/AppSchemasAuthMessageResponse.md)
  - [AppSchemasConversationMessageResponse](doc/AppSchemasConversationMessageResponse.md)
  - [AvatarUploadUrlRequest](doc/AvatarUploadUrlRequest.md)

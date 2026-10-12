@@ -11,8 +11,23 @@ from app.core.deps import require_role
 from app.db.session import get_session
 from app.models import DailyMetric, Listing, Message, User
 from app.models.enums import ListingStatus, UserRole
+from app.schemas.chat import AdminBroadcastRequest, AdminBroadcastResponse
+from app.services.broadcast_service import send_admin_broadcast
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+@router.post("/notifications", response_model=AdminBroadcastResponse, status_code=201)
+async def send_broadcast(
+    body: AdminBroadcastRequest,
+    admin: User = require_role(UserRole.admin),
+    session: AsyncSession = Depends(get_session),
+) -> AdminBroadcastResponse:
+    """Send a custom announcement (in-app feed + push) to chosen users or everyone."""
+    sent, unknown = await send_admin_broadcast(
+        session, actor=admin, title=body.title, body=body.body, emails=body.emails
+    )
+    return AdminBroadcastResponse(sent=sent, unknown_emails=unknown)
 
 
 class DailyMetricItem(BaseModel):

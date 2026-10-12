@@ -119,3 +119,17 @@ class DeviceRegisterRequest(BaseModel):
 
 class DeviceUnregisterRequest(BaseModel):
     token: str = Field(min_length=8, max_length=512)
+
+
+class AdminBroadcastRequest(BaseModel):
+    """Staff announcement: free-form title/body, optional email targeting."""
+
+    title: str = Field(min_length=1, max_length=80)
+    body: str = Field(default="", max_length=300)
+    # None/empty = everyone active (except the sender).
+    emails: list[str] | None = Field(default=None, max_length=200)
+
+
+class AdminBroadcastResponse(BaseModel):
+    sent: int
+    unknown_emails: list[str]

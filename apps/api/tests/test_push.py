@@ -125,3 +125,68 @@ def test_push_copy_policy() -> None:
     assert "cancelled" in cancelled.title
     # Money copy stays loud: prepaid users are told how to settle up.
     assert "paid" in cancelled.body
+
+
+async def test_admin_broadcast(client: httpx.AsyncClient) -> None:
+    """Admin sends a custom announcement: targeted users get feed + push,
+    students are forbidden from the endpoint, unknown emails are reported."""
+    from sqlalchemy import update
+
+    from app.db.session import async_session_factory
+    from app.models import User
+    from app.models.enums import UserRole
+
+    stub = _stub()
+    admin = await make_user(client, "boss@campus.edu")
+    alice = await make_user(client, "alice@campus.edu")
+    bob = await make_user(client, "bob@campus.edu")
+    await _register(client, alice, "token-alice")
+    await _register(client, bob, "token-bob")
+
+    # Students (and even moderators) cannot broadcast.
+    resp = await client.post(
+        "/api/v1/admin/notifications",
+        json={"title": "Hi", "body": "x"},
+        headers=alice,
+    )
+    assert resp.status_code == 403
+
+    async with async_session_factory() as session:
+        await session.execute(
+            update(User).where(User.email == "boss@campus.edu").values(role=UserRole.admin)
+        )
+        await session.commit()
+
+    # Targeted send: alice only; a typo email is reported, not an error.
+    resp = await client.post(
+        "/api/v1/admin/notifications",
+        json={
+            "title": "Free pizza at the union",
+            "body": "First 50 students, 6pm today.",
+            "emails": ["alice@campus.edu", "ghost@campus.edu"],
+        },
+        headers=admin,
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json() == {"sent": 1, "unknown_emails": ["ghost@campus.edu"]}
+    assert len(stub.sent) == 1
+    assert stub.sent[0]["tokens"] == ["token-alice"]
+    assert str(stub.sent[0]["title"]) == "Free pizza at the union"
+    assert "First 50 students" in str(stub.sent[0]["body"])
+
+    # Feed notification renders the admin's copy verbatim.
+    feed = (await client.get("/api/v1/notifications", headers=alice)).json()
+    assert feed["items"][0]["type"] == "admin_message"
+    assert feed["items"][0]["payload"]["title"] == "Free pizza at the union"
+
+    # Broadcast to everyone: both students get it; the sender does not.
+    stub.sent.clear()
+    resp = await client.post(
+        "/api/v1/admin/notifications",
+        json={"title": "Maintenance tonight", "body": ""},
+        headers=admin,
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["sent"] == 2
+    pushed = sorted(t for m in stub.sent for t in m["tokens"])
+    assert pushed == ["token-alice", "token-bob"]

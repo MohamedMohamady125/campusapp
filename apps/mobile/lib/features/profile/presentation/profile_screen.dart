@@ -94,6 +94,18 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () => context.go('/profile/insights'),
                         ),
                       ],
+                      // Admin only: the announcement megaphone (the API
+                      // rejects everyone else; the row just stays hidden).
+                      if (user.role == UserRole.admin) ...[
+                        const Divider(height: 1, indent: 56),
+                        ListTile(
+                          leading: const Icon(Icons.campaign_outlined),
+                          title: const Text('Send announcement'),
+                          subtitle: const Text('Push + in-app, to anyone'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.go('/profile/broadcast'),
+                        ),
+                      ],
                     ],
                   ),
                 ),

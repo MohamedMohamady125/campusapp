@@ -15,6 +15,8 @@ import 'package:campus_api/src/date_serializer.dart';
 import 'package:campus_api/src/model/date.dart';
 
 import 'package:campus_api/src/model/actual_price_submit_request.dart';
+import 'package:campus_api/src/model/admin_broadcast_request.dart';
+import 'package:campus_api/src/model/admin_broadcast_response.dart';
 import 'package:campus_api/src/model/app_schemas_auth_message_response.dart';
 import 'package:campus_api/src/model/app_schemas_conversation_message_response.dart';
 import 'package:campus_api/src/model/avatar_upload_url_request.dart';
@@ -134,6 +136,8 @@ part 'serializers.g.dart';
 
 @SerializersFor([
   ActualPriceSubmitRequest,
+  AdminBroadcastRequest,
+  AdminBroadcastResponse,
   AppSchemasAuthMessageResponse,
   AppSchemasConversationMessageResponse,
   AvatarUploadUrlRequest,

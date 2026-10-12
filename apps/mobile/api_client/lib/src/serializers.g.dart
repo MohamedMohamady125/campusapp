@@ -8,6 +8,8 @@ part of 'serializers.dart';
 
 Serializers _$serializers = (Serializers().toBuilder()
       ..add(ActualPriceSubmitRequest.serializer)
+      ..add(AdminBroadcastRequest.serializer)
+      ..add(AdminBroadcastResponse.serializer)
       ..add(AppSchemasAuthMessageResponse.serializer)
       ..add(AppSchemasConversationMessageResponse.serializer)
       ..add(AvatarUploadUrlRequest.serializer)
@@ -207,6 +209,12 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(RunResponse)]),
           () => ListBuilder<RunResponse>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => ListBuilder<String>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
           () => ListBuilder<String>())

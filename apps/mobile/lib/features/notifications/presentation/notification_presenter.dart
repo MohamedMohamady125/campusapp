@@ -83,8 +83,19 @@ String notificationTitle(NotificationResponse n) {
       final stars = _str(n, 'stars');
       if (rater == null || stars == null) return 'You got a new rating';
       return '$rater rated you $stars★';
+    case 'admin_message':
+      // Staff announcement: render the admin's copy verbatim.
+      return _str(n, 'title') ?? 'Announcement';
   }
   return 'You have a new notification';
+}
+
+/// Secondary line under the title, or null when the type has none.
+/// Announcements carry free-form staff copy worth showing in the feed.
+String? notificationBody(NotificationResponse n) {
+  if (n.type != 'admin_message') return null;
+  final body = _str(n, 'body');
+  return body == null || body.isEmpty ? null : body;
 }
 
 /// Settle-up headline: exact dollars, loud (payment-terms rule — money
@@ -193,6 +204,7 @@ IconData notificationIcon(NotificationResponse n) => switch (n.type) {
   'run_settle_reminder' => Icons.account_balance_wallet_outlined,
   'run_order_withdrawn' => Icons.undo_rounded,
   'rating_received' => Icons.star_outline_rounded,
+  'admin_message' => Icons.campaign_outlined,
   _ => Icons.notifications_none,
 };
 

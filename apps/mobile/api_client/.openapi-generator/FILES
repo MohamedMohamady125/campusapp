@@ -3,6 +3,8 @@ README.md
 analysis_options.yaml
 doc/ActualPriceSubmitRequest.md
 doc/AdminApi.md
+doc/AdminBroadcastRequest.md
+doc/AdminBroadcastResponse.md
 doc/AnalyticsApi.md
 doc/AppSchemasAuthMessageResponse.md
 doc/AppSchemasConversationMessageResponse.md
@@ -154,6 +156,8 @@ lib/src/auth/bearer_auth.dart
 lib/src/auth/oauth.dart
 lib/src/date_serializer.dart
 lib/src/model/actual_price_submit_request.dart
+lib/src/model/admin_broadcast_request.dart
+lib/src/model/admin_broadcast_response.dart
 lib/src/model/app_schemas_auth_message_response.dart
 lib/src/model/app_schemas_conversation_message_response.dart
 lib/src/model/avatar_upload_url_request.dart
@@ -271,6 +275,5 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/change_email_request_test.dart
-test/change_password_request_test.dart
-test/confirm_email_change_request_test.dart
+test/admin_broadcast_request_test.dart
+test/admin_broadcast_response_test.dart

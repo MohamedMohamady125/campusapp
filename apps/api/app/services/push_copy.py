@@ -27,6 +27,7 @@ PUSH_TYPES: frozenset[str] = frozenset(
         "run_settle_reminder",
         "dm_message",
         "chat_mention",
+        "admin_message",
     }
 )
 
@@ -47,6 +48,9 @@ def _collapse_key(type_: str, payload: dict[str, Any]) -> str | None:
     if type_ == "chat_mention":
         cid = _str(payload, "chat_id")
         return f"chat:{cid}" if cid else None
+    if type_ == "admin_message":
+        bid = _str(payload, "broadcast_id")
+        return f"broadcast:{bid}" if bid else None
     rid = _str(payload, "run_id")
     return f"run:{rid}" if rid else None
 
@@ -133,6 +137,10 @@ def render_push(type_: str, payload: dict[str, Any]) -> PushMessage | None:
             chat = _str(payload, "chat_name")
             title = f"{sender} mentioned you in {chat}" if sender and chat else "You were mentioned"
             body = "Jump back into the conversation."
+        case "admin_message":
+            # Staff-authored announcement: deliver the admin's copy verbatim.
+            title = _str(payload, "title")
+            body = _str(payload, "body") or ""
     if title is None:
         return None
     data = {k: v for k, v in payload.items() if isinstance(v, str)}

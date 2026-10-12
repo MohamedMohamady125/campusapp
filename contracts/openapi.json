@@ -17,6 +17,64 @@
         "title": "ActualPriceSubmitRequest",
         "type": "object"
       },
+      "AdminBroadcastRequest": {
+        "description": "Staff announcement: free-form title/body, optional email targeting.",
+        "properties": {
+          "body": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Body",
+            "type": "string"
+          },
+          "emails": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emails"
+          },
+          "title": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "AdminBroadcastRequest",
+        "type": "object"
+      },
+      "AdminBroadcastResponse": {
+        "properties": {
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          },
+          "unknown_emails": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknown Emails",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sent",
+          "unknown_emails"
+        ],
+        "title": "AdminBroadcastResponse",
+        "type": "object"
+      },
       "AvatarUploadUrlRequest": {
         "description": "Signed-URL request for a profile photo (required to post a run).",
         "properties": {
@@ -3704,6 +3762,53 @@
           }
         ],
         "summary": "Admin Metrics",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/notifications": {
+      "post": {
+        "description": "Send a custom announcement (in-app feed + push) to chosen users or everyone.",
+        "operationId": "send_broadcast_api_v1_admin_notifications_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminBroadcastRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBroadcastResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Send Broadcast",
         "tags": [
           "admin"
         ]
