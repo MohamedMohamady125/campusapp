@@ -16,6 +16,7 @@ dist/
 .env
 .env.*
 !.env.example
+*.p8
 
 # Flutter/Dart
 apps/mobile/.dart_tool/
