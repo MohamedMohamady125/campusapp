@@ -23,6 +23,10 @@ celery_app.conf.update(
             "task": "app.workers.tasks.expire_runs",
             "schedule": crontab(minute="*/5"),
         },
+        "settle-up-reminders-every-15-min": {
+            "task": "app.workers.tasks.settle_up_reminders",
+            "schedule": crontab(minute="*/15"),
+        },
         "expire-listings-nightly": {
             "task": "app.workers.tasks.expire_listings",
             "schedule": crontab(hour=3, minute=0),

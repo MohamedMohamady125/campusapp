@@ -60,6 +60,9 @@ NOTIFICATION_TYPE_RUN_PAYMENT_CONFIRMED = "run_payment_confirmed"
 NOTIFICATION_TYPE_RUN_ARRIVED = "run_runner_arrived"
 NOTIFICATION_TYPE_RUN_PRICE = "run_price_final"
 NOTIFICATION_TYPE_RUN_NO_SHOW = "run_no_show"
+NOTIFICATION_TYPE_RUN_WITHDRAWN = "run_order_withdrawn"
+# Sent by the maintenance loop (workers/jobs.settle_up_reminder_job), not here.
+NOTIFICATION_TYPE_SETTLE_REMINDER = "run_settle_reminder"
 
 # Runner ghost protection: any active run hard-expires this long after leaving.
 RUN_HARD_EXPIRY = timedelta(minutes=90)
@@ -389,6 +392,17 @@ class RunService:
         if order.status != RunOrderStatus.requested:
             raise ConflictError("Only pending requests can be withdrawn.", code="ORDER_NOT_PENDING")
         order.status = RunOrderStatus.cancelled
+        # The runner was pushed "X wants in" — tell them to stand down so they
+        # don't act on a stale request (self-orders have no counterparty).
+        if order.requester_id != run.runner_id:
+            await self._notify(
+                run.runner_id,
+                NOTIFICATION_TYPE_RUN_WITHDRAWN,
+                run=run,
+                dedup_key="order_id",
+                dedup_value=str(order.id),
+                extra={"order_id": str(order.id), "requester_name": user.display_name},
+            )
         await self._session.commit()
 
     async def accept_order(self, *, run_id: uuid.UUID, order_id: uuid.UUID, actor: User) -> Run:

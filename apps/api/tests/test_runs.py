@@ -17,7 +17,7 @@ from app.models import (
     User,
 )
 from app.models.enums import FoodSpotCategory, UserRole
-from app.workers.jobs import expire_runs_job
+from app.workers.jobs import expire_runs_job, settle_up_reminder_job
 from tests.helpers import make_user
 
 
@@ -452,6 +452,98 @@ async def test_reorder_after_withdraw_and_decline(client: httpx.AsyncClient) -> 
     resp = await order()
     assert resp.status_code == 201, resp.text
     assert (await order()).json()["error"]["code"] == "DUPLICATE_ORDER"
+
+
+async def test_withdraw_notifies_runner(client: httpx.AsyncClient) -> None:
+    """Withdrawing a pending request tells the runner to stand down."""
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    spot_id = await _make_spot()
+    run = await _create_run(client, runner, spot_id)
+    dropoff_id = await _make_dropoff()
+
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("food", dropoff_id=dropoff_id),
+        headers=req,
+    )
+    oid = resp.json()["my_order"]["id"]
+    resp = await client.delete(f"/api/v1/runs/{run['id']}/orders/{oid}", headers=req)
+    assert resp.status_code == 204
+
+    async with async_session_factory() as session:
+        rows = (
+            (
+                await session.execute(
+                    select(Notification).where(Notification.type == "run_order_withdrawn")
+                )
+            )
+            .scalars()
+            .all()
+        )
+    assert len(rows) == 1
+    assert rows[0].payload["order_id"] == oid
+    assert rows[0].payload["requester_name"]
+
+
+async def test_settle_up_reminder_job(client: httpx.AsyncClient) -> None:
+    """One-time nudge ~2h after done when payment is still unconfirmed."""
+    runner = await make_user(client, "runner@campus.edu")
+    req = await make_user(client, "req@campus.edu")
+    spot_id = await _make_spot()
+    dropoff_id = await _make_dropoff()
+    run = await _create_run(client, runner, spot_id, fee_cents=200)
+    resp = await client.post(
+        f"/api/v1/runs/{run['id']}/orders",
+        json=_order_body("food", dropoff_id=dropoff_id, item_price_cents=1150),
+        headers=req,
+    )
+    oid = resp.json()["my_order"]["id"]
+    base = f"/api/v1/runs/{run['id']}"
+    await client.post(f"{base}/orders/{oid}/accept", headers=runner)
+    for status in ("at_store", "delivering"):
+        await client.post(f"{base}/status", json={"status": status}, headers=runner)
+    await client.post(f"{base}/orders/{oid}/delivered", headers=runner)
+    resp = await client.post(f"{base}/status", json={"status": "done"}, headers=runner)
+    assert resp.status_code == 200, resp.text
+
+    # Fresh done run: still inside the 2h grace window — no nudge yet.
+    async with async_session_factory() as session:
+        assert await settle_up_reminder_job(session) == 0
+
+    async with async_session_factory() as session:
+        await session.execute(
+            update(Run)
+            .where(Run.id == run["id"])
+            .values(updated_at=datetime.now(UTC) - timedelta(hours=3))
+        )
+        await session.commit()
+
+    async with async_session_factory() as session:
+        assert await settle_up_reminder_job(session) == 1
+        assert await settle_up_reminder_job(session) == 0  # once-only stamp
+
+    async with async_session_factory() as session:
+        note = (
+            (
+                await session.execute(
+                    select(Notification).where(Notification.type == "run_settle_reminder")
+                )
+            )
+            .scalars()
+            .one()
+        )
+        order = await session.get(RunOrder, oid)
+    # Loud money copy: estimate (1150) + fee (200), exact cents in payload.
+    assert note.payload["owed_cents"] == "1350"
+    assert note.user_id == uuid.UUID(await _user_id_by_email("req@campus.edu"))
+    assert order is not None and order.settle_reminder_sent_at is not None
+
+
+async def _user_id_by_email(email: str) -> str:
+    async with async_session_factory() as session:
+        user = (await session.execute(select(User).where(User.email == email))).scalars().one()
+        return str(user.id)
 
 
 async def test_visitor_sees_counts_only(client: httpx.AsyncClient) -> None:

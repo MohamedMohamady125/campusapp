@@ -23,6 +23,8 @@ PUSH_TYPES: frozenset[str] = frozenset(
         "run_payment_submitted",
         "run_payment_confirmed",
         "run_price_final",
+        "run_order_withdrawn",
+        "run_settle_reminder",
         "dm_message",
         "chat_mention",
     }
@@ -111,6 +113,17 @@ def render_push(type_: str, payload: dict[str, Any]) -> PushMessage | None:
             # Money copy stays loud (payment-terms rule): the exact delta vs
             # the requester's estimate, in dollars, right in the banner.
             title, body = _price_final_copy(payload, spot=spot)
+        case "run_order_withdrawn":
+            requester = _str(payload, "requester_name")
+            title = (
+                f"{requester} withdrew their {spot} order"
+                if requester and spot
+                else "An order was withdrawn"
+            )
+            body = "No action needed — the request was pulled before you accepted."
+        case "run_settle_reminder":
+            # Money copy stays loud (payment-terms rule): exact dollars owed.
+            title, body = _settle_reminder_copy(payload, spot=spot, runner=runner)
         case "dm_message":
             sender = _str(payload, "sender_name")
             title = f"{sender} sent you a message" if sender else "New message"
@@ -150,6 +163,18 @@ def _price_final_copy(payload: dict[str, Any], *, spot: str | None) -> tuple[str
     if delta < 0:
         return title, f"Items came to {actual_str} — the runner owes you ${-delta / 100:.2f} back."
     return title, f"Items came to {actual_str} — exactly your estimate. You're all set."
+
+
+def _settle_reminder_copy(
+    payload: dict[str, Any], *, spot: str | None, runner: str | None
+) -> tuple[str, str]:
+    title = f"Settle up for your {spot} run" if spot else "Settle up for your run"
+    who = runner or "your runner"
+    try:
+        owed = int(payload.get("owed_cents", ""))
+    except ValueError:
+        return title, f"You still owe {who} for the delivery. Pay them when you can."
+    return title, f"You still owe {who} ${owed / 100:.2f}. Pay them when you can."
 
 
 def _run_status_copy(

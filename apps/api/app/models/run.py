@@ -162,6 +162,9 @@ class RunOrder(TimestampedBase):
     # drop-off, stamping this and notifying the requester. No-show is only
     # legal NO_SHOW_WAIT after this stamp — never an instant surprise.
     arrived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Stamp for the one-time "settle up" nudge (~2h after the run is done with
+    # payment still unconfirmed) so the maintenance loop never re-sends it.
+    settle_reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     run: Mapped[Run] = relationship(back_populates="orders")
     requester: Mapped[User] = relationship()

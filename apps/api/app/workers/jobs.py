@@ -75,6 +75,78 @@ async def expire_runs_job(session: AsyncSession) -> dict[str, int]:
     return {"expired": expired, "locked": locked}
 
 
+SETTLE_REMINDER_AFTER = timedelta(hours=2)
+
+
+async def settle_up_reminder_job(session: AsyncSession) -> int:
+    """One-time "settle up" nudge ~2h after a run is done with payment still
+    unconfirmed (neither requester proof nor runner confirmation). Idempotent
+    via run_orders.settle_reminder_sent_at. Money copy stays loud: the push
+    carries the exact dollars owed (estimate-or-actual + fee).
+    """
+    from sqlalchemy.orm import selectinload
+
+    from app.models import Run, RunOrder
+    from app.repositories.chat_repo import NotificationRepository
+    from app.services.notification_dispatch import upsert_deduped_notification
+    from app.services.run_service import NOTIFICATION_TYPE_SETTLE_REMINDER
+
+    now = datetime.now(UTC)
+    cutoff = now - SETTLE_REMINDER_AFTER
+    rows = (
+        await session.execute(
+            select(RunOrder, Run)
+            .join(Run, RunOrder.run_id == Run.id)
+            .options(selectinload(Run.food_spot), selectinload(Run.runner))
+            .where(
+                Run.status == RunStatus.done,
+                Run.updated_at < cutoff,
+                RunOrder.status.in_(
+                    (RunOrderStatus.accepted, RunOrderStatus.delivered, RunOrderStatus.received)
+                ),
+                RunOrder.requester_id != Run.runner_id,  # self-orders owe nobody
+                RunOrder.payment_confirmed_at.is_(None),
+                RunOrder.payment_submitted_at.is_(None),
+                RunOrder.settle_reminder_sent_at.is_(None),
+            )
+        )
+    ).all()
+    notifications = NotificationRepository(session)
+    sent = 0
+    for order, run in rows:
+        order.settle_reminder_sent_at = now  # stamp first — never re-nag on error
+        opted_out = await notifications.disabled_types_for(
+            [order.requester_id], NOTIFICATION_TYPE_SETTLE_REMINDER
+        )
+        if order.requester_id in opted_out:
+            continue
+        owed = (
+            order.actual_price_cents
+            if order.actual_price_cents is not None
+            else order.item_price_cents
+        ) + run.fee_cents
+        payload: dict[str, str] = {
+            "run_id": str(run.id),
+            "order_id": str(order.id),
+            "owed_cents": str(owed),
+            "spot_name": run.food_spot.name,
+            "runner_name": run.runner.display_name,
+        }
+        await upsert_deduped_notification(
+            notifications,
+            user_id=order.requester_id,
+            type_=NOTIFICATION_TYPE_SETTLE_REMINDER,
+            dedup_key="order_id",
+            dedup_value=str(order.id),
+            payload=payload,
+            now=now,
+        )
+        sent += 1
+    await session.commit()
+    log.info("jobs.settle_up_reminder", sent=sent, scanned=len(rows))
+    return sent
+
+
 async def recompute_global_mean_job(session: AsyncSession) -> float:
     """Recompute global mean rating m (spec §5.2), seeded to 4.0 when no data."""
     mean = (

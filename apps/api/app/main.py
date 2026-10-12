@@ -41,15 +41,22 @@ def _init_sentry(dsn: str, environment: str) -> None:
 
 @asynccontextmanager
 async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """Optional in-process background work (prod runs no Celery worker)."""
-    keepalive: asyncio.Task[None] | None = None
-    if get_settings().demo_runs_keepalive:
+    """In-process background work (prod runs no Celery worker)."""
+    settings = get_settings()
+    tasks: list[asyncio.Task[None]] = []
+    # Always-on maintenance (expire sweep + settle-up nudges) — skipped in
+    # tests so background ticks never race transactional test fixtures.
+    if settings.app_env != "test":
+        from app.workers.maintenance import maintenance_loop
+
+        tasks.append(asyncio.create_task(maintenance_loop()))
+    if settings.demo_runs_keepalive:
         from app.workers.demo_keepalive import demo_keepalive_loop
 
-        keepalive = asyncio.create_task(demo_keepalive_loop())
+        tasks.append(asyncio.create_task(demo_keepalive_loop()))
     yield
-    if keepalive is not None:
-        keepalive.cancel()
+    for task in tasks:
+        task.cancel()
 
 
 def create_app() -> FastAPI:

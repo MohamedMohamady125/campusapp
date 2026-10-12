@@ -5,7 +5,7 @@ profiles and seller cards never show a stale score after a new rating lands.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,8 +17,14 @@ from app.integrations.analytics.base import EVENT_RATING_SUBMITTED
 from app.integrations.analytics.provider import get_analytics_provider
 from app.models import AuditLog, Listing, Rating, Report, RunOrder, User
 from app.models.enums import RatingContext, ReportStatus, RunStatus
+from app.repositories.chat_repo import NotificationRepository
 from app.repositories.user_repo import UserRepository
 from app.schemas.rating import RatingCreateRequest, ReportCreateRequest
+from app.services.notification_dispatch import upsert_deduped_notification
+
+# Feed-only (not in push_copy.PUSH_TYPES): a star landing is nice-to-know,
+# never worth interrupting the phone for.
+NOTIFICATION_TYPE_RATING_RECEIVED = "rating_received"
 
 
 class RatingService:
@@ -71,6 +77,27 @@ class RatingService:
             ratings_sum=float(rated_sum), ratings_count=int(rated_n)
         )
         rated.rating_count = int(rated_n)
+
+        # Feed notification for the rated user (same transaction as the insert).
+        notifications = NotificationRepository(self._session)
+        opted_out = await notifications.disabled_types_for(
+            [rated.id], NOTIFICATION_TYPE_RATING_RECEIVED
+        )
+        if rated.id not in opted_out:
+            await upsert_deduped_notification(
+                notifications,
+                user_id=rated.id,
+                type_=NOTIFICATION_TYPE_RATING_RECEIVED,
+                dedup_key="rating_id",
+                dedup_value=str(rating.id),
+                payload={
+                    "rating_id": str(rating.id),
+                    "rater_name": rater.display_name,
+                    "stars": str(body.stars),
+                },
+                now=datetime.now(UTC),
+            )
+
         await get_analytics_provider().track(
             self._session,
             name=EVENT_RATING_SUBMITTED,

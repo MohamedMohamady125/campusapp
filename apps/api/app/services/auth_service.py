@@ -219,9 +219,30 @@ class AuthService:
             raise UnauthenticatedError("Invalid or expired code.", code="CODE_INVALID")
         user.password_hash = hash_password(new_password)
         await self._repo.revoke_all_for_user(user.id, datetime.now(UTC))
+        await self._send_security_notice(
+            to=user.email,
+            subject="Your Trot password was changed",
+            what="Your Trot password was just reset.",
+        )
         await self._session.commit()
 
     # --- Authenticated account changes ---
+
+    async def _send_security_notice(self, *, to: str, subject: str, what: str) -> None:
+        """Security notice after a sensitive account change (spec §8).
+
+        Goes to the address that could be a victim's — e.g. the OLD email on
+        an email change — so a hijacked account can still be flagged.
+        """
+        await self._email.send(
+            to=to,
+            subject=subject,
+            body=(
+                f"{what} If this was you, no action is needed. "
+                "If it wasn't, reset your password immediately and "
+                "reply to this email to reach support."
+            ),
+        )
 
     async def change_password(
         self, user: User, *, current_password: str, new_password: str
@@ -239,6 +260,11 @@ class AuthService:
                 target_type="user",
                 target_id=user.id,
             )
+        )
+        await self._send_security_notice(
+            to=user.email,
+            subject="Your Trot password was changed",
+            what="Your Trot password was just changed.",
         )
         await self._session.commit()
         return tokens
@@ -281,6 +307,12 @@ class AuthService:
                 target_id=user.id,
                 metadata_={"old_email": old_email, "new_email": user.email},
             )
+        )
+        # Notify the OLD address: it's the one a hijack victim still controls.
+        await self._send_security_notice(
+            to=old_email,
+            subject="Your Trot email address was changed",
+            what=f"Your Trot account email was just changed to {user.email}.",
         )
         await self._session.commit()
         return user.email

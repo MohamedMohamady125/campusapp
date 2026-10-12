@@ -199,6 +199,17 @@ async def test_change_password_flow(client: httpx.AsyncClient) -> None:
     )
     assert resp.status_code == 200
 
+    # Security notice landed in the inbox (spec §8).
+    assert _last_subject_for(EMAIL) == "Your Trot password was changed"
+
+
+def _last_subject_for(email: str) -> str:
+    provider = get_email_provider()
+    assert isinstance(provider, StubEmailProvider)
+    sent = [m for m in provider.sent if m["to"] == email]
+    assert sent, f"no email sent to {email}"
+    return str(sent[-1]["subject"])
+
 
 async def test_change_email_flow(client: httpx.AsyncClient) -> None:
     await _register_and_verify(client)
@@ -240,3 +251,7 @@ async def test_change_email_flow(client: httpx.AsyncClient) -> None:
     assert resp.status_code == 200
     resp = await client.post("/api/v1/auth/login", json={"email": EMAIL, "password": PASSWORD})
     assert resp.status_code == 401
+
+    # Security notice goes to the OLD address — the one a hijack victim
+    # still controls (spec §8).
+    assert _last_subject_for(EMAIL) == "Your Trot email address was changed"

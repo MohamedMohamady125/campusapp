@@ -11,6 +11,7 @@ from app.workers.jobs import (
     expire_runs_job,
     purge_verification_codes_job,
     recompute_global_mean_job,
+    settle_up_reminder_job,
 )
 
 
@@ -30,6 +31,11 @@ def expire_listings() -> int:
 @celery_app.task  # type: ignore[untyped-decorator]
 def expire_runs() -> dict[str, int]:
     return dict(_run(expire_runs_job))
+
+
+@celery_app.task  # type: ignore[untyped-decorator]
+def settle_up_reminders() -> int:
+    return int(_run(settle_up_reminder_job))
 
 
 @celery_app.task  # type: ignore[untyped-decorator]

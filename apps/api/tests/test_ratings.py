@@ -2,11 +2,11 @@
 
 import httpx
 import pytest
-from sqlalchemy import update
+from sqlalchemy import select, update
 
 from app.core.scoring import GLOBAL_MEAN_SEED, bayesian_reputation, display_reputation
 from app.db.session import async_session_factory
-from app.models import User
+from app.models import Notification, User
 from app.models.enums import UserRole
 from tests.helpers import make_user
 
@@ -89,6 +89,36 @@ async def test_rating_updates_cached_score_in_transaction(client: httpx.AsyncCli
     # Ratings listable on the profile endpoint.
     ratings = (await client.get(f"/api/v1/users/{seller_id}/ratings", headers=buyer)).json()
     assert [r["stars"] for r in ratings["items"]] == [5]
+
+
+async def test_rating_creates_feed_notification(client: httpx.AsyncClient) -> None:
+    """The rated user gets a feed-only `rating_received` notification."""
+    _seller, buyer, listing_id, seller_id = await _setup_listing(client)
+    resp = await client.post(
+        "/api/v1/ratings",
+        json={
+            "rated_user_id": seller_id,
+            "context_type": "listing",
+            "context_id": listing_id,
+            "stars": 4,
+        },
+        headers=buyer,
+    )
+    assert resp.status_code == 201, resp.text
+
+    async with async_session_factory() as session:
+        note = (
+            (
+                await session.execute(
+                    select(Notification).where(Notification.type == "rating_received")
+                )
+            )
+            .scalars()
+            .one()
+        )
+    assert str(note.user_id) == seller_id
+    assert note.payload["stars"] == "4"
+    assert note.payload["rater_name"]
 
 
 async def test_double_rating_conflicts(client: httpx.AsyncClient) -> None:

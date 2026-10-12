@@ -71,6 +71,18 @@ String notificationTitle(NotificationResponse n) {
       return 'Runner confirmed your payment';
     case 'run_price_final':
       return _priceFinalTitle(n);
+    case 'run_order_withdrawn':
+      final requester = _str(n, 'requester_name');
+      final spot = _str(n, 'spot_name');
+      if (requester == null || spot == null) return 'An order was withdrawn';
+      return '$requester withdrew their $spot order';
+    case 'run_settle_reminder':
+      return _settleReminderTitle(n);
+    case 'rating_received':
+      final rater = _str(n, 'rater_name');
+      final stars = _str(n, 'stars');
+      if (rater == null || stars == null) return 'You got a new rating';
+      return '$rater rated you $stars★';
   }
   return 'You have a new notification';
 }
@@ -97,6 +109,18 @@ String _priceFinalTitle(NotificationResponse n) {
         '${money(-delta)} back to you';
   }
   return 'Items came to ${money(actual)} — exactly your estimate';
+}
+
+/// Settle-up nudge: exact dollars, loud (payment-terms rule — money copy
+/// is exempt from the copy diet).
+String _settleReminderTitle(NotificationResponse n) {
+  final runner = _str(n, 'runner_name') ?? 'your runner';
+  final owed = int.tryParse(_str(n, 'owed_cents') ?? '');
+  if (owed == null) return 'Settle up — you still owe $runner';
+  final money = owed % 100 == 0
+      ? '\$${owed ~/ 100}'
+      : '\$${(owed / 100).toStringAsFixed(2)}';
+  return 'Settle up — you still owe $runner $money';
 }
 
 /// Friendly copy per run-status update payload.
@@ -139,10 +163,15 @@ NotificationRoute? notificationRoute(NotificationResponse n) {
         'run_no_show' ||
         'run_payment_submitted' ||
         'run_payment_confirmed' ||
-        'run_price_final':
+        'run_price_final' ||
+        'run_order_withdrawn' ||
+        'run_settle_reminder':
       final runId = _str(n, 'run_id');
       if (runId == null) return null;
       return ('/runs/run/$runId', _str(n, 'spot_name'));
+    case 'rating_received':
+      // Your own profile is where the new star shows up.
+      return ('/profile', null);
   }
   return null;
 }
@@ -160,7 +189,10 @@ IconData notificationIcon(NotificationResponse n) => switch (n.type) {
   'run_no_show' => Icons.timer_off_outlined,
   'run_payment_submitted' ||
   'run_payment_confirmed' ||
-  'run_price_final' => Icons.account_balance_wallet_outlined,
+  'run_price_final' ||
+  'run_settle_reminder' => Icons.account_balance_wallet_outlined,
+  'run_order_withdrawn' => Icons.undo_rounded,
+  'rating_received' => Icons.star_outline_rounded,
   _ => Icons.notifications_none,
 };
 
