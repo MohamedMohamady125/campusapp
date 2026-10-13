@@ -21,6 +21,9 @@ class User(TimestampedBase):
     # Email-change flow: new address awaiting code confirmation (sent to it).
     pending_email: Mapped[str | None] = mapped_column(String(255))
     display_name: Mapped[str] = mapped_column(String(80))
+    # One-time rename stamp: display name is changeable exactly once per
+    # lifetime (trust: your name is your identity on campus).
+    display_name_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     year: Mapped[str | None] = mapped_column(String(20))
     major: Mapped[str | None] = mapped_column(String(120))
     bio: Mapped[str | None] = mapped_column(Text)
@@ -47,6 +50,11 @@ class User(TimestampedBase):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     verification_codes: Mapped[list["VerificationCode"]] = relationship(back_populates="user")
+
+    @property
+    def name_locked(self) -> bool:
+        """True once the lifetime rename has been used (read by UserMeResponse)."""
+        return self.display_name_changed_at is not None
 
 
 class VerificationCode(TimestampedBase):

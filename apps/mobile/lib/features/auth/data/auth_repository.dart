@@ -112,28 +112,6 @@ class AuthRepository {
     );
   }
 
-  /// Start an email change — a code is sent to the NEW campus address.
-  Future<void> requestEmailChange({
-    required String newEmail,
-    required String password,
-  }) async {
-    await _auth.changeEmailApiV1AuthChangeEmailPost(
-      changeEmailRequest: ChangeEmailRequest(
-        (b) => b
-          ..newEmail = newEmail
-          ..password = password,
-      ),
-    );
-  }
-
-  Future<void> confirmEmailChange({required String code}) async {
-    await _auth.confirmEmailChangeApiV1AuthConfirmEmailChangePost(
-      confirmEmailChangeRequest: ConfirmEmailChangeRequest(
-        (b) => b..code = code,
-      ),
-    );
-  }
-
   /// Permanently delete the account (App Store 5.1.1(v)). The server
   /// re-checks the password, scrubs PII and revokes every session; a wrong
   /// password throws 401 before anything is touched.
@@ -168,22 +146,11 @@ class AuthRepository {
     return res.data!;
   }
 
-  /// Edit-profile save (QA M-06) — PATCH /users/me. Only the identity
-  /// fields; payment methods have their own screen.
-  Future<UserMeResponse> updateProfile({
-    required String displayName,
-    String? year,
-    String? major,
-    String? bio,
-  }) async {
+  /// Edit-profile save — PATCH /users/me. Name only (changeable once per
+  /// lifetime, enforced server-side); email is immutable.
+  Future<UserMeResponse> updateProfile({required String displayName}) async {
     final res = await _api.getUsersApi().updateMeApiV1UsersMePatch(
-      userUpdateRequest: UserUpdateRequest(
-        (b) => b
-          ..displayName = displayName
-          ..year = year
-          ..major = major
-          ..bio = bio,
-      ),
+      userUpdateRequest: UserUpdateRequest((b) => b..displayName = displayName),
     );
     return res.data!;
   }

@@ -22,6 +22,7 @@ part 'user_me_response.g.dart';
 /// * [email] 
 /// * [id] 
 /// * [major] 
+/// * [nameLocked] 
 /// * [paymentMethods] 
 /// * [ratingCount] 
 /// * [reputationScore] 
@@ -53,6 +54,9 @@ abstract class UserMeResponse implements Built<UserMeResponse, UserMeResponseBui
   @BuiltValueField(wireName: r'major')
   String? get major;
 
+  @BuiltValueField(wireName: r'name_locked')
+  bool? get nameLocked;
+
   @BuiltValueField(wireName: r'payment_methods')
   BuiltList<PaymentMethod> get paymentMethods;
 
@@ -74,7 +78,8 @@ abstract class UserMeResponse implements Built<UserMeResponse, UserMeResponseBui
   factory UserMeResponse([void updates(UserMeResponseBuilder b)]) = _$UserMeResponse;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(UserMeResponseBuilder b) => b;
+  static void _defaults(UserMeResponseBuilder b) => b
+      ..nameLocked = false;
 
   @BuiltValueSerializer(custom: true)
   static Serializer<UserMeResponse> get serializer => _$UserMeResponseSerializer();
@@ -134,6 +139,13 @@ class _$UserMeResponseSerializer implements PrimitiveSerializer<UserMeResponse> 
       object.major,
       specifiedType: const FullType.nullable(String),
     );
+    if (object.nameLocked != null) {
+      yield r'name_locked';
+      yield serializers.serialize(
+        object.nameLocked,
+        specifiedType: const FullType(bool),
+      );
+    }
     yield r'payment_methods';
     yield serializers.serialize(
       object.paymentMethods,
@@ -241,6 +253,14 @@ class _$UserMeResponseSerializer implements PrimitiveSerializer<UserMeResponse> 
           ) as String?;
           if (valueDes == null) continue;
           result.major = valueDes;
+          break;
+        case r'name_locked':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(bool),
+          ) as bool?;
+          if (valueDes == null) continue;
+          result.nameLocked = valueDes;
           break;
         case r'payment_methods':
           final valueDes = serializers.deserialize(

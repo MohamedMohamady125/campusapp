@@ -286,3 +286,39 @@ async def test_delete_account_scrubs_and_locks_out(client: httpx.AsyncClient) ->
         json={"email": "deleteme@campus.edu", "password": PASSWORD, "display_name": "Again"},
     )
     assert resp.status_code == 201
+
+
+async def test_display_name_changes_once_per_lifetime(client: httpx.AsyncClient) -> None:
+    """Name is identity: one lifetime rename, then the field locks (422)."""
+    await _register_and_verify(client)
+    tokens = await _login(client)
+    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+    me = await client.get("/api/v1/users/me", headers=headers)
+    assert me.json()["name_locked"] is False
+
+    # Re-sending the SAME name is a no-op and must not burn the rename.
+    same = await client.patch(
+        "/api/v1/users/me", json={"display_name": me.json()["display_name"]}, headers=headers
+    )
+    assert same.status_code == 200
+    assert same.json()["name_locked"] is False
+
+    # The one allowed rename.
+    first = await client.patch(
+        "/api/v1/users/me", json={"display_name": "New Name"}, headers=headers
+    )
+    assert first.status_code == 200
+    assert first.json()["display_name"] == "New Name"
+    assert first.json()["name_locked"] is True
+
+    # Second rename is rejected with a stable machine code.
+    second = await client.patch(
+        "/api/v1/users/me", json={"display_name": "Another Name"}, headers=headers
+    )
+    assert second.status_code == 422
+    assert second.json()["error"]["code"] == "NAME_CHANGE_USED"
+
+    # Non-name fields still editable after the lock.
+    bio = await client.patch("/api/v1/users/me", json={"bio": "still editable"}, headers=headers)
+    assert bio.status_code == 200

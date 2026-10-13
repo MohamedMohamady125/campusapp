@@ -6,9 +6,9 @@ import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Edit profile (QA M-06): display name + optional year/major/bio via
-/// PATCH /users/me. Empty optional fields are sent as '' (not omitted) so
-/// clearing a field actually clears it server-side.
+/// Edit profile: name + email only. Email is immutable (verified campus
+/// identity). Name is changeable exactly once per lifetime — enforced
+/// server-side (`name_locked`); the field locks here after the rename.
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -19,9 +19,6 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
-  late final TextEditingController _year;
-  late final TextEditingController _major;
-  late final TextEditingController _bio;
   bool _saving = false;
 
   @override
@@ -29,17 +26,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.initState();
     final user = ref.read(authControllerProvider).user;
     _name = TextEditingController(text: user?.displayName ?? '');
-    _year = TextEditingController(text: user?.year ?? '');
-    _major = TextEditingController(text: user?.major ?? '');
-    _bio = TextEditingController(text: user?.bio ?? '');
   }
 
   @override
   void dispose() {
     _name.dispose();
-    _year.dispose();
-    _major.dispose();
-    _bio.dispose();
     super.dispose();
   }
 
@@ -49,12 +40,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       await ref
           .read(authRepositoryProvider)
-          .updateProfile(
-            displayName: _name.text.trim(),
-            year: _year.text.trim(),
-            major: _major.text.trim(),
-            bio: _bio.text.trim(),
-          );
+          .updateProfile(displayName: _name.text.trim());
       await ref.read(authControllerProvider.notifier).refreshProfile();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,6 +61,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
+    final user = ref.watch(authControllerProvider).user;
+    final nameLocked = user?.nameLocked ?? false;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Edit profile')),
@@ -88,11 +76,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               children: [
                 TextFormField(
                   controller: _name,
+                  enabled: !nameLocked,
                   textCapitalization: TextCapitalization.words,
                   maxLength: 80,
-                  decoration: const InputDecoration(
-                    labelText: 'Display name',
+                  decoration: InputDecoration(
+                    labelText: 'Name',
                     counterText: '',
+                    helperText: nameLocked
+                        ? 'Name was changed once — now locked.'
+                        : 'You can change your name once.',
+                    suffixIcon: nameLocked
+                        ? const Icon(Icons.lock_outline, size: 20)
+                        : null,
                   ),
                   validator: (v) => (v ?? '').trim().length < 2
                       ? 'Use at least 2 characters'
@@ -100,40 +95,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
                 SizedBox(height: tokens.space4),
                 TextFormField(
-                  controller: _year,
-                  maxLength: 20,
+                  initialValue: user?.email ?? '',
+                  enabled: false,
                   decoration: const InputDecoration(
-                    labelText: 'Year (optional)',
-                    hintText: 'e.g. Junior',
-                    counterText: '',
-                  ),
-                ),
-                SizedBox(height: tokens.space4),
-                TextFormField(
-                  controller: _major,
-                  textCapitalization: TextCapitalization.words,
-                  maxLength: 120,
-                  decoration: const InputDecoration(
-                    labelText: 'Major (optional)',
-                    hintText: 'e.g. Computer Science',
-                    counterText: '',
-                  ),
-                ),
-                SizedBox(height: tokens.space4),
-                TextFormField(
-                  controller: _bio,
-                  maxLength: 1000,
-                  maxLines: 4,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Bio (optional)',
-                    hintText: 'A line or two about you',
-                    alignLabelWithHint: true,
+                    labelText: 'Campus email',
+                    helperText: 'Verified identity — cannot change.',
+                    suffixIcon: Icon(Icons.lock_outline, size: 20),
                   ),
                 ),
                 SizedBox(height: tokens.space6),
                 FilledButton(
-                  onPressed: _saving ? null : _save,
+                  onPressed: (_saving || nameLocked) ? null : _save,
                   child: _saving
                       ? SizedBox.square(
                           dimension: 22,

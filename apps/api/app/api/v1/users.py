@@ -1,12 +1,13 @@
 """User endpoints (spec §4.1 Users)."""
 
 import uuid
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user
-from app.core.errors import NotFoundError, ValidationAppError
+from app.core.errors import BusinessRuleError, NotFoundError, ValidationAppError
 from app.db.session import get_session
 from app.integrations.email.provider import get_email_provider
 from app.integrations.storage.base import ALLOWED_CONTENT_TYPES
@@ -39,10 +40,21 @@ async def update_me(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> User:
+    data = body.model_dump(mode="json", exclude_unset=True)
+    # Display name is changeable exactly once per lifetime (your name is your
+    # identity on campus). A no-op "change" to the same name doesn't burn it.
+    new_name = data.get("display_name")
+    if new_name is not None and new_name != user.display_name:
+        if user.display_name_changed_at is not None:
+            raise BusinessRuleError(
+                "Your name was already changed once — it's locked now.",
+                code="NAME_CHANGE_USED",
+            )
+        user.display_name_changed_at = datetime.now(UTC)
     # mode="json" coerces PaymentMethod enums to their string values so the
     # JSONB column stores plain {type, handle, qr_key} dicts. qr_url is
     # derived from qr_key at read time — never persist it.
-    for field, value in body.model_dump(mode="json", exclude_unset=True).items():
+    for field, value in data.items():
         if field == "payment_methods" and value is not None:
             for method in value:
                 method.pop("qr_url", None)

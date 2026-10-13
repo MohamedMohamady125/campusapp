@@ -24,6 +24,8 @@ class _$UserMeResponse extends UserMeResponse {
   @override
   final String? major;
   @override
+  final bool? nameLocked;
+  @override
   final BuiltList<PaymentMethod> paymentMethods;
   @override
   final int ratingCount;
@@ -46,6 +48,7 @@ class _$UserMeResponse extends UserMeResponse {
       required this.email,
       required this.id,
       this.major,
+      this.nameLocked,
       required this.paymentMethods,
       required this.ratingCount,
       required this.reputationScore,
@@ -71,6 +74,7 @@ class _$UserMeResponse extends UserMeResponse {
         email == other.email &&
         id == other.id &&
         major == other.major &&
+        nameLocked == other.nameLocked &&
         paymentMethods == other.paymentMethods &&
         ratingCount == other.ratingCount &&
         reputationScore == other.reputationScore &&
@@ -89,6 +93,7 @@ class _$UserMeResponse extends UserMeResponse {
     _$hash = $jc(_$hash, email.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, major.hashCode);
+    _$hash = $jc(_$hash, nameLocked.hashCode);
     _$hash = $jc(_$hash, paymentMethods.hashCode);
     _$hash = $jc(_$hash, ratingCount.hashCode);
     _$hash = $jc(_$hash, reputationScore.hashCode);
@@ -109,6 +114,7 @@ class _$UserMeResponse extends UserMeResponse {
           ..add('email', email)
           ..add('id', id)
           ..add('major', major)
+          ..add('nameLocked', nameLocked)
           ..add('paymentMethods', paymentMethods)
           ..add('ratingCount', ratingCount)
           ..add('reputationScore', reputationScore)
@@ -154,6 +160,10 @@ class UserMeResponseBuilder
   String? get major => _$this._major;
   set major(String? major) => _$this._major = major;
 
+  bool? _nameLocked;
+  bool? get nameLocked => _$this._nameLocked;
+  set nameLocked(bool? nameLocked) => _$this._nameLocked = nameLocked;
+
   ListBuilder<PaymentMethod>? _paymentMethods;
   ListBuilder<PaymentMethod> get paymentMethods =>
       _$this._paymentMethods ??= ListBuilder<PaymentMethod>();
@@ -192,6 +202,7 @@ class UserMeResponseBuilder
       _email = $v.email;
       _id = $v.id;
       _major = $v.major;
+      _nameLocked = $v.nameLocked;
       _paymentMethods = $v.paymentMethods.toBuilder();
       _ratingCount = $v.ratingCount;
       _reputationScore = $v.reputationScore;
@@ -232,6 +243,7 @@ class UserMeResponseBuilder
             id: BuiltValueNullFieldError.checkNotNull(
                 id, r'UserMeResponse', 'id'),
             major: major,
+            nameLocked: nameLocked,
             paymentMethods: paymentMethods.build(),
             ratingCount: BuiltValueNullFieldError.checkNotNull(
                 ratingCount, r'UserMeResponse', 'ratingCount'),

@@ -16,6 +16,7 @@ Name | Type | Description | Notes
 **email** | **String** |  | 
 **id** | **String** |  | 
 **major** | **String** |  | 
+**nameLocked** | **bool** |  | [optional] [default to false]
 **paymentMethods** | [**BuiltList&lt;PaymentMethod&gt;**](PaymentMethod.md) |  | 
 **ratingCount** | **int** |  | 
 **reputationScore** | **num** |  | 

@@ -3312,6 +3312,11 @@
             ],
             "title": "Major"
           },
+          "name_locked": {
+            "default": false,
+            "title": "Name Locked",
+            "type": "boolean"
+          },
           "payment_methods": {
             "items": {
               "$ref": "#/components/schemas/PaymentMethod"

@@ -66,6 +66,8 @@ class UserMeResponse(BaseModel):
     id: uuid.UUID
     email: str
     display_name: str
+    # True once the lifetime rename has been used — the app locks the field.
+    name_locked: bool = False
     year: str | None
     major: str | None
     bio: str | None
