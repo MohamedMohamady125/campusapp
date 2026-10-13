@@ -98,6 +98,7 @@ Class | Method | HTTP request | Description
 [*ConversationsApi*](doc/ConversationsApi.md) | [**listMessagesApiV1ConversationsConversationIdMessagesGet**](doc/ConversationsApi.md#listmessagesapiv1conversationsconversationidmessagesget) | **GET** /api/v1/conversations/{conversation_id}/messages | List Messages
 [*ConversationsApi*](doc/ConversationsApi.md) | [**markReadApiV1ConversationsConversationIdReadPost**](doc/ConversationsApi.md#markreadapiv1conversationsconversationidreadpost) | **POST** /api/v1/conversations/{conversation_id}/read | Mark Read
 [*ConversationsApi*](doc/ConversationsApi.md) | [**sendMessageApiV1ConversationsConversationIdMessagesPost**](doc/ConversationsApi.md#sendmessageapiv1conversationsconversationidmessagespost) | **POST** /api/v1/conversations/{conversation_id}/messages | Send Message
+[*EmailsApi*](doc/EmailsApi.md) | [**unsubscribeApiV1EmailsUnsubscribeGet**](doc/EmailsApi.md#unsubscribeapiv1emailsunsubscribeget) | **GET** /api/v1/emails/unsubscribe | Unsubscribe
 [*ImagesApi*](doc/ImagesApi.md) | [**getImageApiV1ImagesImageIdGet**](doc/ImagesApi.md#getimageapiv1imagesimageidget) | **GET** /api/v1/images/{image_id} | Get Image
 [*ImagesApi*](doc/ImagesApi.md) | [**uploadImageApiV1ImagesPost**](doc/ImagesApi.md#uploadimageapiv1imagespost) | **POST** /api/v1/images | Upload Image
 [*ListingsApi*](doc/ListingsApi.md) | [**createListingApiV1ListingsPost**](doc/ListingsApi.md#createlistingapiv1listingspost) | **POST** /api/v1/listings | Create Listing

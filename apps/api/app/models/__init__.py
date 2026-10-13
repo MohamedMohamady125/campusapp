@@ -3,6 +3,7 @@
 from app.models.analytics import AnalyticsEvent, DailyMetric
 from app.models.chat import Chat, ChatMembership, ChatMessage
 from app.models.course import Course, TutorOffering
+from app.models.email_log import EmailLog
 from app.models.flag import Flag
 from app.models.listing import Listing, ListingImage
 from app.models.messaging import Conversation, ConversationParticipant, Message
@@ -25,6 +26,7 @@ __all__ = [
     "DailyMetric",
     "DeviceToken",
     "DropoffLocation",
+    "EmailLog",
     "Flag",
     "FoodSpot",
     "Listing",

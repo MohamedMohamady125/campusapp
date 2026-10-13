@@ -44,6 +44,7 @@ doc/DeviceRegisterRequest.md
 doc/DeviceUnregisterRequest.md
 doc/DropoffLocationCreateRequest.md
 doc/DropoffLocationResponse.md
+doc/EmailsApi.md
 doc/EventStat.md
 doc/FlagItem.md
 doc/FoodSpotCategory.md
@@ -140,6 +141,7 @@ lib/src/api/analytics_api.dart
 lib/src/api/auth_api.dart
 lib/src/api/chats_api.dart
 lib/src/api/conversations_api.dart
+lib/src/api/emails_api.dart
 lib/src/api/images_api.dart
 lib/src/api/listings_api.dart
 lib/src/api/meta_api.dart
@@ -277,3 +279,4 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/emails_api_test.dart

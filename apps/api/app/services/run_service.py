@@ -48,6 +48,7 @@ from app.schemas.run import (
     RunUserSummary,
 )
 from app.schemas.user import PaymentMethod
+from app.services import email_program
 from app.services.notification_dispatch import upsert_deduped_notification
 
 NOTIFICATION_TYPE_RUN_REQUEST = "run_request"
@@ -275,7 +276,12 @@ class RunService:
         )
         self._repo.add(run)
         await self._session.commit()
-        return await self._get_or_404(run.id)
+        created = await self._get_or_404(run.id)
+        # Email past customers of this spot (email program T1 "new run";
+        # capped + per-user rate-limited + unsubscribable in email_program).
+        await email_program.send_run_posted_emails(self._session, run=created)
+        await self._session.commit()
+        return created
 
     async def create_spot(self, *, body: FoodSpotCreateRequest) -> FoodSpot:
         """Admin-only: register a new food-spot destination in the catalog."""
@@ -381,6 +387,10 @@ class RunService:
                 dedup_key="run_id",
                 extra={"requester_name": user.display_name},
             )
+            # Transactional record of what was ordered + the loud money line.
+            await email_program.send_order_confirmed_email(
+                self._session, order=order, run=run, requester=user
+            )
         await self._session.commit()
         return await self._get_or_404(run_id)
 
@@ -427,6 +437,7 @@ class RunService:
             dedup_value=str(order.id),
             extra={"order_id": str(order.id)},
         )
+        await email_program.send_order_accepted_email(self._session, order=order, run=run)
         await self._session.commit()
         return await self._get_or_404(run_id)
 
@@ -643,6 +654,10 @@ class RunService:
                     dedup_key="run_id",
                     extra={"run_status": str(status), "order_id": str(order.id)},
                 )
+                # Run finished → delivered receipt (pure transactional, money
+                # loud). Self-orders owe nobody — no receipt.
+                if status == RunStatus.done and order.requester_id != run.runner_id:
+                    await email_program.send_run_receipt_email(self._session, order=order, run=run)
         await self._session.commit()
         return await self._get_or_404(run_id)
 

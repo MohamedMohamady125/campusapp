@@ -15,6 +15,7 @@ export 'package:campus_api/src/api/analytics_api.dart';
 export 'package:campus_api/src/api/auth_api.dart';
 export 'package:campus_api/src/api/chats_api.dart';
 export 'package:campus_api/src/api/conversations_api.dart';
+export 'package:campus_api/src/api/emails_api.dart';
 export 'package:campus_api/src/api/images_api.dart';
 export 'package:campus_api/src/api/listings_api.dart';
 export 'package:campus_api/src/api/meta_api.dart';

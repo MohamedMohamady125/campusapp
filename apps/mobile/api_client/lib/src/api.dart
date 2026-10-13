@@ -14,6 +14,7 @@ import 'package:campus_api/src/api/analytics_api.dart';
 import 'package:campus_api/src/api/auth_api.dart';
 import 'package:campus_api/src/api/chats_api.dart';
 import 'package:campus_api/src/api/conversations_api.dart';
+import 'package:campus_api/src/api/emails_api.dart';
 import 'package:campus_api/src/api/images_api.dart';
 import 'package:campus_api/src/api/listings_api.dart';
 import 'package:campus_api/src/api/meta_api.dart';
@@ -146,6 +147,12 @@ class CampusApi {
   /// by doing that all interceptors will not be executed
   ConversationsApi getConversationsApi() {
     return ConversationsApi(dio, serializers);
+  }
+
+  /// Get EmailsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  EmailsApi getEmailsApi() {
+    return EmailsApi(dio, serializers);
   }
 
   /// Get ImagesApi instance, base route and serializer can be overridden by a given but be careful,

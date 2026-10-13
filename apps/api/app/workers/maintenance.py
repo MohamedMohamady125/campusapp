@@ -28,6 +28,7 @@ from app.workers.jobs import (
     aggregate_daily_metrics_job,
     expire_listings_job,
     expire_runs_job,
+    marketing_emails_job,
     purge_notifications_job,
     purge_verification_codes_job,
     recompute_global_mean_job,
@@ -67,6 +68,7 @@ async def maintenance_tick(session: AsyncSession) -> None:
             await purge_verification_codes_job(session)
             await purge_notifications_job(session)
             await recompute_global_mean_job(session)
+            await marketing_emails_job(session)
             # Last on purpose: it writes the done-marker rows, so a failure
             # above leaves the batch due and it retries next tick.
             await aggregate_daily_metrics_job(session)

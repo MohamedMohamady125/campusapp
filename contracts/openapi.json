@@ -5549,6 +5549,48 @@
         ]
       }
     },
+    "/api/v1/emails/unsubscribe": {
+      "get": {
+        "operationId": "unsubscribe_api_v1_emails_unsubscribe_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unsubscribe",
+        "tags": [
+          "emails"
+        ]
+      }
+    },
     "/api/v1/flags": {
       "get": {
         "operationId": "get_flags_api_v1_flags_get",

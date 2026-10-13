@@ -13,6 +13,7 @@ from app.api.v1.analytics import router as analytics_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.chats import router as chats_router
 from app.api.v1.conversations import router as conversations_router
+from app.api.v1.emails import router as emails_router
 from app.api.v1.flags import router as flags_router
 from app.api.v1.health import router as health_router
 from app.api.v1.images import router as images_router
@@ -92,6 +93,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router, prefix="/api/v1")
     app.include_router(flags_router, prefix="/api/v1")
+    app.include_router(emails_router, prefix="/api/v1")
     app.include_router(ws_router, prefix="/api/v1")
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")

@@ -130,6 +130,10 @@ class AuthService:
         await get_analytics_provider().track(
             self._session, name=EVENT_SIGNUP_COMPLETED, user_id=user.id
         )
+        # Welcome email at the moment of highest attention (email program T1).
+        from app.services.email_program import send_welcome_email
+
+        await send_welcome_email(self._session, user=user)
         await self._session.commit()
 
     async def _consume_code(
