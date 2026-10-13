@@ -3,7 +3,7 @@
 Display name can be changed exactly once per account; the stamp records
 when the rename was used and locks the field afterwards.
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: 6117fccd01d6
 Revises: d4e5f6a7b8c9
 Create Date: 2026-10-13
 
@@ -14,7 +14,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = 'a1b2c3d4e5f6'
+revision: str = '6117fccd01d6'
 down_revision: Union[str, None] = 'd4e5f6a7b8c9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

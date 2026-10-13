@@ -1,11 +1,11 @@
 {
-    "name": "campusconnect",
-    "short_name": "campusconnect",
+    "name": "Trot",
+    "short_name": "Trot",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
-    "theme_color": "#FF5A3C",
-    "description": "A new Flutter project.",
+    "theme_color": "#F0532E",
+    "description": "Food, trotted over by a fellow student.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
