@@ -89,7 +89,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
       GoRoute(
         path: '/verify',
-        builder: (_, state) => VerifyScreen(email: state.extra! as String),
+        builder: (_, state) {
+          final extra = state.extra! as (String, String);
+          return VerifyScreen(email: extra.$1, password: extra.$2);
+        },
       ),
       GoRoute(
         path: '/forgot-password',

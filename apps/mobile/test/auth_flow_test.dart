@@ -55,9 +55,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Create account'), findsWidgets);
 
+    // Field order: first name, last name, email, password, confirm.
     final fields = find.byType(TextFormField);
-    await tester.enterText(fields.at(1), 'me@gmail.com');
-    await tester.enterText(fields.at(2), 'short');
+    await tester.enterText(fields.at(2), 'me@gmail.com');
+    await tester.enterText(fields.at(3), 'short');
     await tester.pumpAndSettle();
     // No errors while typing — validation waits for the first submit.
     expect(find.text('Use your .edu campus email'), findsNothing);

@@ -240,7 +240,7 @@ class _FeePill extends StatelessWidget {
         ],
       ),
       child: Text(
-        free ? 'Free' : runFeeAmount(feeCents),
+        free ? 'No runner fee' : runFeeLabel(feeCents),
         style: AppTextStyles.titleSmall.copyWith(
           color: free ? context.tokens.success : AppColors.primaryDark,
         ),

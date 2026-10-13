@@ -3,13 +3,17 @@ import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// Email verification: 6-digit code (spec §3 VerificationCode, 10-min expiry).
+/// After a correct code the user is logged in immediately — no separate login
+/// step required (the verify endpoint proves identity, so we can issue tokens
+/// right away by calling login() with the password carried from the register
+/// screen through the route extra).
 class VerifyScreen extends ConsumerStatefulWidget {
-  const VerifyScreen({required this.email, super.key});
+  const VerifyScreen({required this.email, required this.password, super.key});
 
   final String email;
+  final String password;
 
   @override
   ConsumerState<VerifyScreen> createState() => _VerifyScreenState();
@@ -34,18 +38,19 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .verify(email: widget.email, code: _code.text.trim());
-      if (!mounted) return;
-      _toast('Email verified — sign in to continue.');
-      context.go('/login');
+      final repo = ref.read(authRepositoryProvider);
+      // 1. Verify the code — marks email_verified_at on the server.
+      await repo.verify(email: widget.email, code: _code.text.trim());
+      // 2. Log in immediately so the user lands straight in the app.
+      await repo.login(email: widget.email, password: widget.password);
+      // The router's auth guard detects the new session and redirects to /runs.
     } on Object catch (e) {
       if (!mounted) return;
       _toast(apiErrorMessage(e));
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+      setState(() => _submitting = false);
     }
+    // No setState(_submitting = false) on success — the route is replaced
+    // by the guard before the widget would rebuild.
   }
 
   Future<void> _resend() async {

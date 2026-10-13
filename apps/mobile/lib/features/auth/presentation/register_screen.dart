@@ -23,12 +23,15 @@ class RegisterScreen extends ConsumerStatefulWidget {
 class _RegisterScreenState extends ConsumerState<RegisterScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
+  final _firstName = TextEditingController();
+  final _lastName = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _confirmPassword = TextEditingController();
   final _emailFocus = FocusNode();
   bool _submitting = false;
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
   // Errors appear only after the first submit attempt — typing in one
   // field must never flash "empty" errors on the others.
   bool _triedSubmit = false;
@@ -72,9 +75,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   void dispose() {
     _emailFocus.dispose();
     _fadeCtrl.dispose();
-    _name.dispose();
+    _firstName.dispose();
+    _lastName.dispose();
     _email.dispose();
     _password.dispose();
+    _confirmPassword.dispose();
     super.dispose();
   }
 
@@ -83,16 +88,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     final email = _email.text.trim();
+    final displayName = '${_firstName.text.trim()} ${_lastName.text.trim()}'
+        .trim();
     try {
       await ref
           .read(authRepositoryProvider)
           .register(
             email: email,
             password: _password.text,
-            displayName: _name.text.trim(),
+            displayName: displayName,
           );
       if (!mounted) return;
-      context.go('/verify', extra: email);
+      context.go('/verify', extra: (email, _password.text));
     } on Object catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -167,23 +174,43 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: tokens.space12),
-                      // --- Display name ---
-                      TextFormField(
-                        controller: _name,
-                        textCapitalization: TextCapitalization.words,
-                        textInputAction: TextInputAction.next,
-                        decoration: InputDecoration(
-                          labelText: 'Display name',
-                          hintText: 'How others see you',
-                          prefixIcon: Icon(
-                            Icons.person_outline_rounded,
-                            color: colors.onSurfaceVariant,
-                            size: 20,
+                      // --- First name + Last name (side by side) ---
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _firstName,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                labelText: 'First name',
+                                prefixIcon: Icon(
+                                  Icons.person_outline_rounded,
+                                  color: colors.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Required'
+                                  : null,
+                            ),
                           ),
-                        ),
-                        validator: (v) => (v == null || v.trim().length < 2)
-                            ? 'Enter your name'
-                            : null,
+                          SizedBox(width: tokens.space3),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _lastName,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              decoration: const InputDecoration(
+                                labelText: 'Last name',
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Required'
+                                  : null,
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: tokens.space4),
                       // --- Email ---
@@ -235,7 +262,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       TextFormField(
                         controller: _password,
                         obscureText: _obscurePassword,
-                        textInputAction: TextInputAction.done,
+                        textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.newPassword],
                         onChanged: (v) => setState(() => _passwordValue = v),
                         decoration: InputDecoration(
@@ -280,11 +307,50 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           }
                           return null;
                         },
-                        onFieldSubmitted: (_) => _submitting ? null : _submit(),
                       ),
                       SizedBox(height: tokens.space3),
                       // --- Live password requirements checklist ---
                       _PasswordRequirements(password: _passwordValue),
+                      SizedBox(height: tokens.space4),
+                      // --- Confirm password ---
+                      TextFormField(
+                        controller: _confirmPassword,
+                        obscureText: _obscureConfirm,
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm password',
+                          prefixIcon: Icon(
+                            Icons.lock_outline_rounded,
+                            color: colors.onSurfaceVariant,
+                            size: 20,
+                          ),
+                          suffixIcon: IconButton(
+                            tooltip: _obscureConfirm
+                                ? 'Show password'
+                                : 'Hide password',
+                            icon: Icon(
+                              _obscureConfirm
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: colors.onSurfaceVariant,
+                              size: 20,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscureConfirm = !_obscureConfirm,
+                            ),
+                          ),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) {
+                            return 'Please confirm your password';
+                          }
+                          if (v != _password.text) {
+                            return "Passwords don't match";
+                          }
+                          return null;
+                        },
+                        onFieldSubmitted: (_) => _submitting ? null : _submit(),
+                      ),
                       SizedBox(height: tokens.space6),
                       // --- Terms notice ---
                       Padding(

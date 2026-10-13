@@ -954,13 +954,13 @@ class _RunHeaderCard extends StatelessWidget {
           label: switch (run.feeCents > 0
               ? paymentPrefsLabel(run.paymentPrefs ?? const [])
               : null) {
-            // Pay-on-handoff methods the runner picked, so requesters
-            // know what to have ready at the drop-off.
+            // Always lead with "food +" so requesters know they owe the
+            // runner for the food AND the fee, not just the fee.
             final String prefs when prefs == 'Cash' =>
-              '${runFeeLabel(run.feeCents)} · cash on handoff',
+              'Food + ${runFeeAmount(run.feeCents)} fee · cash on handoff',
             final String prefs =>
-              '${runFeeLabel(run.feeCents)} · pay with $prefs',
-            null => runFeeLabel(run.feeCents),
+              'Food + ${runFeeAmount(run.feeCents)} fee · pay with $prefs',
+            null => 'You pay for food at handoff · no runner fee',
           },
         ),
         SizedBox(height: tokens.space2),
@@ -2484,26 +2484,6 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
     super.dispose();
   }
 
-  /// The live "items + fee = total" line under the price field — the
-  /// requester sees exactly what they'll owe before committing (money copy
-  /// stays loud; payment terms ride along).
-  String _totalLine() {
-    final run = widget.run;
-    // PREPAY REMOVED: every run is pay-at-handoff now.
-    // final suffix = run.prepayRequired
-    //     ? 'prepay before pickup'
-    //     : 'pay at handoff';
-    const suffix = 'pay at handoff';
-    final cents = _parsePriceCents(_price.text) ?? 0;
-    if (cents <= 0) return '${runFeeLabel(run.feeCents)} · $suffix';
-    final total = cents + run.feeCents;
-    if (run.feeCents == 0) {
-      return '${runFeeAmount(total)} total · $suffix';
-    }
-    return '${runFeeAmount(cents)} + ${runFeeAmount(run.feeCents)} fee '
-        '= ${runFeeAmount(total)} · $suffix';
-  }
-
   void _snack(String message) {
     ScaffoldMessenger.of(
       context,
@@ -2647,15 +2627,10 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
             ),
           ),
           SizedBox(height: tokens.space4),
-          Text(
-            // Payment terms at the point of commitment — money copy stays
-            // loud (copy-diet exemption, UX audit #18): full-contrast ink.
-            _totalLine(),
-            style: context.text.bodyMedium?.copyWith(
-              color: context.colors.onSurface,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          // Payment breakdown card — sits directly above the submit button
+          // so the requester can't miss the "you owe food + fee at drop-off"
+          // message before committing.
+          _PaymentBreakdownCard(run: run),
           SizedBox(height: tokens.space4),
           FilledButton(
             onPressed: () {
