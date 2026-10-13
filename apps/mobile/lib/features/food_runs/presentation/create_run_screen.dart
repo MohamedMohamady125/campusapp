@@ -972,6 +972,16 @@ class _SpotPickerSheetState extends State<_SpotPickerSheet> {
   String _query = '';
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Warm every catalog thumbnail up front — the list is small (~30 tiny
+    // 96px images) so fast scrolling never shows placeholder tiles.
+    for (final s in widget.spots) {
+      precacheSpotImage(context, s.imageUrl, decodeWidth: 96);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final colors = context.colors;
@@ -1047,6 +1057,8 @@ class _SpotPickerSheetState extends State<_SpotPickerSheet> {
             name: spot.name,
             imageUrl: spot.imageUrl,
             monogramFontSize: 18,
+            // Thumbnail: fetch/decode at tile size, not banner size.
+            decodeWidth: 96,
           ),
         ),
       ),

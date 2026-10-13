@@ -58,6 +58,15 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Warm the image cache for every loaded card the moment the feed data
+    // lands, so a fast fling scrolls over already-downloaded photos instead
+    // of a wall of placeholders.
+    ref.listen(runsFeedControllerProvider, (prev, next) {
+      if (identical(prev?.items, next.items)) return;
+      for (final run in next.items) {
+        precacheSpotImage(context, run.foodSpot.imageUrl);
+      }
+    });
     final state = ref.watch(runsFeedControllerProvider);
     final liveCount = state.items.length;
     // Empty feed shows a full EmptyState with its own "Post a run" CTA —
@@ -87,7 +96,7 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             // Build + start fetching cards well before they scroll into
             // view, so a fast flick lands on ready images, not blanks.
-            cacheExtent: 1200,
+            cacheExtent: 2400,
             slivers: [
               const SliverToBoxAdapter(
                 child: SafeArea(bottom: false, child: _Header()),

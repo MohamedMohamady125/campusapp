@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_colors.dart';
@@ -37,10 +39,11 @@ class SpotImage extends StatelessWidget {
       return _Monogram(name: name, fontSize: monogramFontSize);
     }
     final dpr = MediaQuery.devicePixelRatioOf(context);
+    final physicalWidth = (decodeWidth * dpr).round();
     return CachedNetworkImage(
-      imageUrl: url,
+      imageUrl: sizedSpotImageUrl(url, physicalWidth),
       fit: fit,
-      memCacheWidth: (decodeWidth * dpr).round(),
+      memCacheWidth: physicalWidth,
       fadeInDuration: const Duration(milliseconds: 120),
       // Quiet brand-tinted placeholder while the photo streams in — never a
       // spinner on a card (spec §6.3: zero-jank images, blur-up feel).
@@ -49,6 +52,44 @@ class SpotImage extends StatelessWidget {
           _Monogram(name: name, fontSize: monogramFontSize),
     );
   }
+}
+
+/// Rewrites a CDN image URL to request no more pixels than [physicalWidth].
+///
+/// The catalog ships Unsplash URLs at w=1000 — fetching that for a 44px
+/// thumbnail wastes ~10× the bytes and makes fast scrolling feel slow on
+/// cellular. Only shrinks (never upscales), keeps the crop aspect by scaling
+/// `h` proportionally, and leaves non-Unsplash URLs untouched.
+String sizedSpotImageUrl(String url, int physicalWidth) {
+  final uri = Uri.tryParse(url);
+  if (uri == null || uri.host != 'images.unsplash.com') return url;
+  final params = Map<String, String>.from(uri.queryParameters);
+  final w = int.tryParse(params['w'] ?? '');
+  if (w == null || w <= physicalWidth) return url;
+  params['w'] = '$physicalWidth';
+  final h = int.tryParse(params['h'] ?? '');
+  if (h != null) params['h'] = '${(h * physicalWidth / w).round()}';
+  return uri.replace(queryParameters: params).toString();
+}
+
+/// Warm the image cache for a spot photo before its card scrolls into view.
+/// Fire-and-forget; errors are swallowed (the card's monogram fallback
+/// handles genuinely broken URLs).
+void precacheSpotImage(
+  BuildContext context,
+  String? url, {
+  double decodeWidth = 800,
+}) {
+  if (url == null || url.isEmpty) return;
+  final physicalWidth = (decodeWidth * MediaQuery.devicePixelRatioOf(context))
+      .round();
+  unawaited(
+    precacheImage(
+      CachedNetworkImageProvider(sizedSpotImageUrl(url, physicalWidth)),
+      context,
+      onError: (_, _) {},
+    ),
+  );
 }
 
 /// Branded gradient tile with the spot's initial — the pre-imagery look,

@@ -190,6 +190,8 @@ class _RunOrderHeader extends StatelessWidget {
                 name: context_.spotName,
                 imageUrl: context_.spotImageUrl,
                 monogramFontSize: 16,
+                // Thumbnail: fetch/decode at tile size, not banner size.
+                decodeWidth: 64,
               ),
             ),
           ),
