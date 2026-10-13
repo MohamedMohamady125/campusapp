@@ -2,6 +2,7 @@ import 'package:campusconnect/core/error/api_error.dart';
 import 'package:campusconnect/design_system/material.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
 import 'package:campusconnect/features/auth/data/auth_repository.dart';
+import 'package:campusconnect/features/auth/presentation/auth_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Email verification: 6-digit code (spec §3 VerificationCode, 10-min expiry).
@@ -38,12 +39,17 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     try {
-      final repo = ref.read(authRepositoryProvider);
       // 1. Verify the code — marks email_verified_at on the server.
-      await repo.verify(email: widget.email, code: _code.text.trim());
-      // 2. Log in immediately so the user lands straight in the app.
-      await repo.login(email: widget.email, password: widget.password);
-      // The router's auth guard detects the new session and redirects to /runs.
+      await ref
+          .read(authRepositoryProvider)
+          .verify(email: widget.email, code: _code.text.trim());
+      // 2. Log in through the controller (NOT the bare repository) so auth
+      // state flips to authenticated and the router guard redirects to /runs.
+      // Calling repo.login() directly stores tokens but never updates state —
+      // the screen would spin forever.
+      await ref
+          .read(authControllerProvider.notifier)
+          .logIn(email: widget.email, password: widget.password);
     } on Object catch (e) {
       if (!mounted) return;
       _toast(apiErrorMessage(e));
