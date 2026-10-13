@@ -9,21 +9,17 @@ import 'package:built_value/serializer.dart';
 
 part 'payment_method_type.g.dart';
 
+/// Off-app peer payment rails a runner can advertise (food-runs spec).  CampusConnect never moves money — these are just handles a requester uses to pay the runner in the corresponding third-party app.
 class PaymentMethodType extends EnumClass {
 
-  /// Off-app peer payment rails a runner can advertise (food-runs spec).  CampusConnect never moves money — these are just handles a requester uses to pay the runner in the corresponding third-party app.
   @BuiltValueEnumConst(wireName: r'venmo')
   static const PaymentMethodType venmo = _$venmo;
-  /// Off-app peer payment rails a runner can advertise (food-runs spec).  CampusConnect never moves money — these are just handles a requester uses to pay the runner in the corresponding third-party app.
   @BuiltValueEnumConst(wireName: r'zelle')
   static const PaymentMethodType zelle = _$zelle;
-  /// Off-app peer payment rails a runner can advertise (food-runs spec).  CampusConnect never moves money — these are just handles a requester uses to pay the runner in the corresponding third-party app.
   @BuiltValueEnumConst(wireName: r'cashapp')
   static const PaymentMethodType cashapp = _$cashapp;
-  /// Off-app peer payment rails a runner can advertise (food-runs spec).  CampusConnect never moves money — these are just handles a requester uses to pay the runner in the corresponding third-party app.
   @BuiltValueEnumConst(wireName: r'paypal')
   static const PaymentMethodType paypal = _$paypal;
-  /// Off-app peer payment rails a runner can advertise (food-runs spec).  CampusConnect never moves money — these are just handles a requester uses to pay the runner in the corresponding third-party app.
   @BuiltValueEnumConst(wireName: r'apple_cash')
   static const PaymentMethodType appleCash = _$appleCash;
 

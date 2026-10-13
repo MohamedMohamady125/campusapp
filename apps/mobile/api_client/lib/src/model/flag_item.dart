@@ -136,3 +136,4 @@ class _$FlagItemSerializer implements PrimitiveSerializer<FlagItem> {
   }
 }
 
+

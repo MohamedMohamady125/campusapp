@@ -212,3 +212,4 @@ class _$FoodSpotResponseSerializer implements PrimitiveSerializer<FoodSpotRespon
   }
 }
 
+

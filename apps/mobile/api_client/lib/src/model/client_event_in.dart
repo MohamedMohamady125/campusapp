@@ -137,8 +137,9 @@ class _$ClientEventInSerializer implements PrimitiveSerializer<ClientEventIn> {
         case r'properties':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(BuiltMap, [FullType(String), FullType.nullable(PropertiesValue)]),
-          ) as BuiltMap<String, PropertiesValue?>;
+            specifiedType: const FullType.nullable(BuiltMap, [FullType(String), FullType.nullable(PropertiesValue)]),
+          ) as BuiltMap<String, PropertiesValue?>?;
+          if (valueDes == null) continue;
           result.properties.replace(valueDes);
           break;
         case r'screen':
@@ -177,4 +178,5 @@ class _$ClientEventInSerializer implements PrimitiveSerializer<ClientEventIn> {
     return result.build();
   }
 }
+
 

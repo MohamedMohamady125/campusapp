@@ -137,3 +137,4 @@ class _$AvatarUploadUrlResponseSerializer implements PrimitiveSerializer<AvatarU
   }
 }
 
+

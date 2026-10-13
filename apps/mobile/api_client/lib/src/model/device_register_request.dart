@@ -122,6 +122,7 @@ class _$DeviceRegisterRequestSerializer implements PrimitiveSerializer<DeviceReg
   }
 }
 
+
 class DeviceRegisterRequestPlatformEnum extends EnumClass {
 
   @BuiltValueEnumConst(wireName: r'ios')

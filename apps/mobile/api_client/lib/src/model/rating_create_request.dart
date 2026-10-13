@@ -173,3 +173,4 @@ class _$RatingCreateRequestSerializer implements PrimitiveSerializer<RatingCreat
   }
 }
 
+

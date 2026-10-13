@@ -304,8 +304,9 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
         case r'item_price_cents':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.itemPriceCents = valueDes;
           break;
         case r'no_show_eligible_at':
@@ -358,8 +359,9 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
         case r'rated_by_me':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(bool),
-          ) as bool;
+            specifiedType: const FullType.nullable(bool),
+          ) as bool?;
+          if (valueDes == null) continue;
           result.ratedByMe = valueDes;
           break;
         case r'requester':
@@ -411,4 +413,5 @@ class _$RunOrderResponseSerializer implements PrimitiveSerializer<RunOrderRespon
     return result.build();
   }
 }
+
 

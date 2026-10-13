@@ -420,12 +420,12 @@ class ListingsApi {
     );
 
     final _queryParameters = <String, dynamic>{
-      r'q': encodeQueryParameter(_serializers, q, const FullType(String)),
-      r'category': encodeQueryParameter(_serializers, category, const FullType(ListingCategory)),
-      r'condition': encodeQueryParameter(_serializers, condition, const FullType(ListingCondition)),
-      r'min_price': encodeQueryParameter(_serializers, minPrice, const FullType(int)),
-      r'max_price': encodeQueryParameter(_serializers, maxPrice, const FullType(int)),
-      r'cursor': encodeQueryParameter(_serializers, cursor, const FullType(String)),
+      if (q != null) r'q': encodeQueryParameter(_serializers, q, const FullType(String)),
+      if (category != null) r'category': encodeQueryParameter(_serializers, category, const FullType(ListingCategory)),
+      if (condition != null) r'condition': encodeQueryParameter(_serializers, condition, const FullType(ListingCondition)),
+      if (minPrice != null) r'min_price': encodeQueryParameter(_serializers, minPrice, const FullType(int)),
+      if (maxPrice != null) r'max_price': encodeQueryParameter(_serializers, maxPrice, const FullType(int)),
+      if (cursor != null) r'cursor': encodeQueryParameter(_serializers, cursor, const FullType(String)),
       if (limit != null) r'limit': encodeQueryParameter(_serializers, limit, const FullType(int)),
     };
 

@@ -168,3 +168,4 @@ class _$ScreenStatSerializer implements PrimitiveSerializer<ScreenStat> {
   }
 }
 
+

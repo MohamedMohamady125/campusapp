@@ -106,3 +106,4 @@ class _$ReportUpdateRequestSerializer implements PrimitiveSerializer<ReportUpdat
   }
 }
 
+

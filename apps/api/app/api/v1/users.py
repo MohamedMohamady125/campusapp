@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user
 from app.core.errors import NotFoundError, ValidationAppError
 from app.db.session import get_session
+from app.integrations.email.provider import get_email_provider
 from app.integrations.storage.base import ALLOWED_CONTENT_TYPES
 from app.integrations.storage.provider import get_storage_provider
 from app.models import User
@@ -15,12 +16,14 @@ from app.repositories.user_repo import UserRepository
 from app.schemas.user import (
     AvatarUploadUrlRequest,
     AvatarUploadUrlResponse,
+    DeleteAccountRequest,
     PaymentQrUploadUrlRequest,
     PaymentQrUploadUrlResponse,
     UserMeResponse,
     UserPublicResponse,
     UserUpdateRequest,
 )
+from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -47,6 +50,18 @@ async def update_me(
     await session.commit()
     await session.refresh(user)
     return user
+
+
+@router.post("/me/delete", status_code=204)
+async def delete_me(
+    body: DeleteAccountRequest,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    """Self-serve account deletion (App Store 5.1.1(v)). POST (not DELETE)
+    because the password confirmation rides in the body and intermediaries
+    routinely drop DELETE bodies."""
+    await AuthService(session, get_email_provider()).delete_account(user, password=body.password)
 
 
 @router.post("/me/payment-qr-upload-url", response_model=PaymentQrUploadUrlResponse)

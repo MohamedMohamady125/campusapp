@@ -74,6 +74,17 @@ class AuthController extends Notifier<AuthState> {
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
+  /// Delete the account, then tear the session down locally. The server
+  /// already scrubbed PII, revoked all sessions and dropped push tokens —
+  /// so after a successful call only local cleanup remains. A wrong
+  /// password throws before anything changes.
+  Future<void> deleteAccount({required String password}) async {
+    await _repo.deleteAccount(password: password);
+    await ref.read(analyticsServiceProvider).stop();
+    await _repo.logout();
+    state = const AuthState(status: AuthStatus.unauthenticated);
+  }
+
   Future<void> refreshProfile() async {
     if (state.status != AuthStatus.authenticated) return;
     state = state.copyWith(user: await _repo.fetchMe());

@@ -218,3 +218,4 @@ class _$OfferingResponseSerializer implements PrimitiveSerializer<OfferingRespon
   }
 }
 
+

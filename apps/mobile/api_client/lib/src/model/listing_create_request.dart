@@ -172,3 +172,4 @@ class _$ListingCreateRequestSerializer implements PrimitiveSerializer<ListingCre
   }
 }
 
+

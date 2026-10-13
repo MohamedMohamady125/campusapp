@@ -235,3 +235,4 @@ class _$ChatResponseSerializer implements PrimitiveSerializer<ChatResponse> {
   }
 }
 
+

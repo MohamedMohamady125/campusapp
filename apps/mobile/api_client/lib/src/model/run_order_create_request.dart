@@ -99,8 +99,9 @@ class _$RunOrderCreateRequestSerializer implements PrimitiveSerializer<RunOrderC
         case r'item_price_cents':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.itemPriceCents = valueDes;
           break;
         case r'order_text':
@@ -138,4 +139,5 @@ class _$RunOrderCreateRequestSerializer implements PrimitiveSerializer<RunOrderC
     return result.build();
   }
 }
+
 

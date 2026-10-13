@@ -161,3 +161,9 @@ class UserUpdateRequest(BaseModel):
             if len(types) != len(set(types)):
                 raise ValueError("Only one handle per payment type.")
         return value
+
+
+class DeleteAccountRequest(BaseModel):
+    """Password re-entry guards the irreversible delete (spec §8)."""
+
+    password: str = Field(min_length=1)

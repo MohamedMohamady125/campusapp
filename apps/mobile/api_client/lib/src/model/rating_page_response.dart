@@ -123,3 +123,4 @@ class _$RatingPageResponseSerializer implements PrimitiveSerializer<RatingPageRe
   }
 }
 
+

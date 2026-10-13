@@ -106,6 +106,7 @@ class _$HealthResponseSerializer implements PrimitiveSerializer<HealthResponse> 
   }
 }
 
+
 class HealthResponseStatusEnum extends EnumClass {
 
   @BuiltValueEnumConst(wireName: r'ok')

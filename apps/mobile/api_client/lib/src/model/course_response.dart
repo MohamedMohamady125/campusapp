@@ -152,3 +152,4 @@ class _$CourseResponseSerializer implements PrimitiveSerializer<CourseResponse> 
   }
 }
 
+

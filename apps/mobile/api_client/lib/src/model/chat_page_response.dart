@@ -123,3 +123,4 @@ class _$ChatPageResponseSerializer implements PrimitiveSerializer<ChatPageRespon
   }
 }
 
+

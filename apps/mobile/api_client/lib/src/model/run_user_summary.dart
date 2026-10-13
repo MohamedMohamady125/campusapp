@@ -145,8 +145,9 @@ class _$RunUserSummarySerializer implements PrimitiveSerializer<RunUserSummary> 
         case r'payment_methods':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(BuiltList, [FullType(PaymentMethod)]),
-          ) as BuiltList<PaymentMethod>;
+            specifiedType: const FullType.nullable(BuiltList, [FullType(PaymentMethod)]),
+          ) as BuiltList<PaymentMethod>?;
+          if (valueDes == null) continue;
           result.paymentMethods.replace(valueDes);
           break;
         case r'rating_count':
@@ -191,4 +192,5 @@ class _$RunUserSummarySerializer implements PrimitiveSerializer<RunUserSummary> 
     return result.build();
   }
 }
+
 

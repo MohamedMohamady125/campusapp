@@ -152,3 +152,4 @@ class _$SubscriptionResponseSerializer implements PrimitiveSerializer<Subscripti
   }
 }
 
+

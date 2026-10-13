@@ -120,3 +120,4 @@ class _$RunLocationUpdateRequestSerializer implements PrimitiveSerializer<RunLoc
   }
 }
 
+

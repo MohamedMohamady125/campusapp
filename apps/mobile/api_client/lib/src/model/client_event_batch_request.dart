@@ -139,6 +139,7 @@ class _$ClientEventBatchRequestSerializer implements PrimitiveSerializer<ClientE
   }
 }
 
+
 class ClientEventBatchRequestPlatformEnum extends EnumClass {
 
   @BuiltValueEnumConst(wireName: r'ios')

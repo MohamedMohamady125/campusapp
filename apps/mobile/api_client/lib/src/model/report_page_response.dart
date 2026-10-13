@@ -123,3 +123,4 @@ class _$ReportPageResponseSerializer implements PrimitiveSerializer<ReportPageRe
   }
 }
 
+

@@ -138,6 +138,7 @@ class _$ReadyResponseSerializer implements PrimitiveSerializer<ReadyResponse> {
   }
 }
 
+
 class ReadyResponseStatusEnum extends EnumClass {
 
   @BuiltValueEnumConst(wireName: r'ok')

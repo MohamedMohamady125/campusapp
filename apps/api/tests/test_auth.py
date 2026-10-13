@@ -255,3 +255,34 @@ async def test_change_email_flow(client: httpx.AsyncClient) -> None:
     # Security notice goes to the OLD address — the one a hijack victim
     # still controls (spec §8).
     assert _last_subject_for(EMAIL) == "Your Trot email address was changed"
+
+
+async def test_delete_account_scrubs_and_locks_out(client: httpx.AsyncClient) -> None:
+    """Spec §8 + App Store 5.1.1(v): delete scrubs PII, kills sessions,
+    frees the email for re-registration."""
+    from tests.helpers import make_user
+
+    headers = await make_user(client, "deleteme@campus.edu")
+    # Wrong password is rejected.
+    resp = await client.post(
+        "/api/v1/users/me/delete", json={"password": "wrong!!"}, headers=headers
+    )
+    assert resp.status_code == 401
+    # Correct password deletes.
+    resp = await client.post(
+        "/api/v1/users/me/delete", json={"password": PASSWORD}, headers=headers
+    )
+    assert resp.status_code == 204
+    # Access token no longer works (status != active).
+    assert (await client.get("/api/v1/users/me", headers=headers)).status_code == 401
+    # Login with old credentials is dead.
+    resp = await client.post(
+        "/api/v1/auth/login", json={"email": "deleteme@campus.edu", "password": PASSWORD}
+    )
+    assert resp.status_code == 401
+    # The email is free again for a fresh signup.
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "deleteme@campus.edu", "password": PASSWORD, "display_name": "Again"},
+    )
+    assert resp.status_code == 201

@@ -171,3 +171,4 @@ class _$NotificationResponseSerializer implements PrimitiveSerializer<Notificati
   }
 }
 
+

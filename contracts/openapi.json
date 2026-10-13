@@ -889,6 +889,21 @@
         "title": "DailyMetricItem",
         "type": "object"
       },
+      "DeleteAccountRequest": {
+        "description": "Password re-entry guards the irreversible delete (spec \u00a78).",
+        "properties": {
+          "password": {
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "DeleteAccountRequest",
+        "type": "object"
+      },
       "DeviceRegisterRequest": {
         "properties": {
           "platform": {
@@ -7953,6 +7968,46 @@
           }
         ],
         "summary": "Avatar Upload Url",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/delete": {
+      "post": {
+        "description": "Self-serve account deletion (App Store 5.1.1(v)). POST (not DELETE)\nbecause the password confirmation rides in the body and intermediaries\nroutinely drop DELETE bodies.",
+        "operationId": "delete_me_api_v1_users_me_delete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Me",
         "tags": [
           "users"
         ]

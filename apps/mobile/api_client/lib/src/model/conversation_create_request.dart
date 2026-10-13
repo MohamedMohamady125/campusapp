@@ -104,8 +104,9 @@ class _$ConversationCreateRequestSerializer implements PrimitiveSerializer<Conve
         case r'context_type':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(ConversationContext),
-          ) as ConversationContext;
+            specifiedType: const FullType.nullable(ConversationContext),
+          ) as ConversationContext?;
+          if (valueDes == null) continue;
           result.contextType = valueDes;
           break;
         case r'recipient_id':
@@ -143,4 +144,5 @@ class _$ConversationCreateRequestSerializer implements PrimitiveSerializer<Conve
     return result.build();
   }
 }
+
 

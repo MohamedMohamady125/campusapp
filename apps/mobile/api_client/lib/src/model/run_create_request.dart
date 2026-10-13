@@ -139,8 +139,9 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
         case r'fee_cents':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.feeCents = valueDes;
           break;
         case r'food_spot_id':
@@ -168,22 +169,25 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
         case r'payment_prefs':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(BuiltList, [FullType(String)]),
-          ) as BuiltList<String>;
+            specifiedType: const FullType.nullable(BuiltList, [FullType(String)]),
+          ) as BuiltList<String>?;
+          if (valueDes == null) continue;
           result.paymentPrefs.replace(valueDes);
           break;
         case r'prepay_required':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(bool),
-          ) as bool;
+            specifiedType: const FullType.nullable(bool),
+          ) as bool?;
+          if (valueDes == null) continue;
           result.prepayRequired = valueDes;
           break;
         case r'spots_max':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.spotsMax = valueDes;
           break;
         default:
@@ -214,4 +218,5 @@ class _$RunCreateRequestSerializer implements PrimitiveSerializer<RunCreateReque
     return result.build();
   }
 }
+
 

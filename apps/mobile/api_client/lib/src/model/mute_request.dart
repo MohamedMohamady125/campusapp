@@ -83,8 +83,9 @@ class _$MuteRequestSerializer implements PrimitiveSerializer<MuteRequest> {
         case r'minutes':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.minutes = valueDes;
           break;
         case r'reason':
@@ -122,4 +123,5 @@ class _$MuteRequestSerializer implements PrimitiveSerializer<MuteRequest> {
     return result.build();
   }
 }
+
 

@@ -106,8 +106,9 @@ class _$TokenResponseSerializer implements PrimitiveSerializer<TokenResponse> {
         case r'token_type':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.tokenType = valueDes;
           break;
         default:
@@ -138,4 +139,5 @@ class _$TokenResponseSerializer implements PrimitiveSerializer<TokenResponse> {
     return result.build();
   }
 }
+
 

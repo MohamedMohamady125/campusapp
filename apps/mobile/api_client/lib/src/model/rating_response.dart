@@ -219,3 +219,4 @@ class _$RatingResponseSerializer implements PrimitiveSerializer<RatingResponse> 
   }
 }
 
+

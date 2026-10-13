@@ -137,8 +137,9 @@ class _$RankedTutorResponseSerializer implements PrimitiveSerializer<RankedTutor
         case r'premium':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(bool),
-          ) as bool;
+            specifiedType: const FullType.nullable(bool),
+          ) as bool?;
+          if (valueDes == null) continue;
           result.premium = valueDes;
           break;
         case r'recency_norm':
@@ -204,4 +205,5 @@ class _$RankedTutorResponseSerializer implements PrimitiveSerializer<RankedTutor
     return result.build();
   }
 }
+
 

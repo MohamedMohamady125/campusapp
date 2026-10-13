@@ -134,6 +134,17 @@ class AuthRepository {
     );
   }
 
+  /// Permanently delete the account (App Store 5.1.1(v)). The server
+  /// re-checks the password, scrubs PII and revokes every session; a wrong
+  /// password throws 401 before anything is touched.
+  Future<void> deleteAccount({required String password}) async {
+    await _api.getUsersApi().deleteMeApiV1UsersMeDeletePost(
+      deleteAccountRequest: DeleteAccountRequest(
+        (b) => b..password = password,
+      ),
+    );
+  }
+
   Future<void> logout() async {
     final refresh = await _storage.readRefreshToken();
     if (refresh != null) {

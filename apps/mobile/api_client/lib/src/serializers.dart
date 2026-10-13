@@ -47,6 +47,7 @@ import 'package:campus_api/src/model/conversation_page_response.dart';
 import 'package:campus_api/src/model/conversation_response.dart';
 import 'package:campus_api/src/model/course_response.dart';
 import 'package:campus_api/src/model/daily_metric_item.dart';
+import 'package:campus_api/src/model/delete_account_request.dart';
 import 'package:campus_api/src/model/device_register_request.dart';
 import 'package:campus_api/src/model/device_unregister_request.dart';
 import 'package:campus_api/src/model/dropoff_location_create_request.dart';
@@ -168,6 +169,7 @@ part 'serializers.g.dart';
   ConversationResponse,
   CourseResponse,
   DailyMetricItem,
+  DeleteAccountRequest,
   DeviceRegisterRequest,
   DeviceUnregisterRequest,
   DropoffLocationCreateRequest,
@@ -255,6 +257,82 @@ part 'serializers.g.dart';
 ])
 Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(
+        const FullType(BuiltMap, [FullType(String), FullType(String)]),
+        () => MapBuilder<String, String>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ConversationResponse)]),
+        () => ListBuilder<ConversationResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(EventStat)]),
+        () => ListBuilder<EventStat>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltMap, [FullType(String), FullType.nullable(PropertiesValue)]),
+        () => MapBuilder<String, PropertiesValue?>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(BehaviorDay)]),
+        () => ListBuilder<BehaviorDay>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ClientEventIn)]),
+        () => ListBuilder<ClientEventIn>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ChatMessageResponse)]),
+        () => ListBuilder<ChatMessageResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(RatingResponse)]),
+        () => ListBuilder<RatingResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(LocationInner)]),
+        () => ListBuilder<LocationInner>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ListingImageResponse)]),
+        () => ListBuilder<ListingImageResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltMap, [FullType(String), FullType(int)]),
+        () => MapBuilder<String, int>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(PaymentMethod)]),
+        () => ListBuilder<PaymentMethod>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(CourseResponse)]),
+        () => ListBuilder<CourseResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(AppSchemasConversationMessageResponse)]),
+        () => ListBuilder<AppSchemasConversationMessageResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(FlagItem)]),
+        () => ListBuilder<FlagItem>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(NotificationResponse)]),
+        () => ListBuilder<NotificationResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(DailyMetricItem)]),
+        () => ListBuilder<DailyMetricItem>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ReportResponse)]),
+        () => ListBuilder<ReportResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(RunResponse)]),
+        () => ListBuilder<RunResponse>(),
+      )
+      ..addBuilderFactory(
         const FullType(BuiltList, [FullType(DropoffLocationResponse)]),
         () => ListBuilder<DropoffLocationResponse>(),
       )
@@ -263,16 +341,44 @@ Serializers serializers = (_$serializers.toBuilder()
         () => ListBuilder<NotificationPreferenceItem>(),
       )
       ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(RunOrderResponse)]),
+        () => ListBuilder<RunOrderResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ScreenStat)]),
+        () => ListBuilder<ScreenStat>(),
+      )
+      ..addBuilderFactory(
         const FullType(BuiltList, [FullType(FoodSpotResponse)]),
         () => ListBuilder<FoodSpotResponse>(),
       )
       ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(CourseResponse)]),
-        () => ListBuilder<CourseResponse>(),
+        const FullType(BuiltList, [FullType(ListingResponse)]),
+        () => ListBuilder<ListingResponse>(),
       )
       ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(FlagItem)]),
-        () => ListBuilder<FlagItem>(),
+        const FullType(BuiltList, [FullType(RankedTutorResponse)]),
+        () => ListBuilder<RankedTutorResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ChatResponse)]),
+        () => ListBuilder<ChatResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ValidationError)]),
+        () => ListBuilder<ValidationError>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltMap, [FullType(String), FullType.nullable(JsonObject)]),
+        () => MapBuilder<String, JsonObject?>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(String)]),
+        () => ListBuilder<String>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(UserPublicResponse)]),
+        () => ListBuilder<UserPublicResponse>(),
       )
       ..add(const OneOfSerializer())
       ..add(const AnyOfSerializer())

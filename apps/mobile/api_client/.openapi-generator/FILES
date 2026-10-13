@@ -39,6 +39,7 @@ doc/ConversationResponse.md
 doc/ConversationsApi.md
 doc/CourseResponse.md
 doc/DailyMetricItem.md
+doc/DeleteAccountRequest.md
 doc/DeviceRegisterRequest.md
 doc/DeviceUnregisterRequest.md
 doc/DropoffLocationCreateRequest.md
@@ -189,6 +190,7 @@ lib/src/model/conversation_response.dart
 lib/src/model/course_response.dart
 lib/src/model/daily_metric_item.dart
 lib/src/model/date.dart
+lib/src/model/delete_account_request.dart
 lib/src/model/device_register_request.dart
 lib/src/model/device_unregister_request.dart
 lib/src/model/dropoff_location_create_request.dart
@@ -275,5 +277,4 @@ lib/src/model/validation_error.dart
 lib/src/model/verify_request.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/admin_broadcast_request_test.dart
-test/admin_broadcast_response_test.dart
+test/delete_account_request_test.dart

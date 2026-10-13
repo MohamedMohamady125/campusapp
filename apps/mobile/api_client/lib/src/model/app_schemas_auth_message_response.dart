@@ -104,3 +104,4 @@ class _$AppSchemasAuthMessageResponseSerializer implements PrimitiveSerializer<A
   }
 }
 
+

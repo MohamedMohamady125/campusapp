@@ -120,3 +120,4 @@ class _$RegisterResponseSerializer implements PrimitiveSerializer<RegisterRespon
   }
 }
 
+

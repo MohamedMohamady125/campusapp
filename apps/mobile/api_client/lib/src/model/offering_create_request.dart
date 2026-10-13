@@ -157,6 +157,7 @@ class _$OfferingCreateRequestSerializer implements PrimitiveSerializer<OfferingC
   }
 }
 
+
 class OfferingCreateRequestGradeReceivedEnum extends EnumClass {
 
   @BuiltValueEnumConst(wireName: r'A+')

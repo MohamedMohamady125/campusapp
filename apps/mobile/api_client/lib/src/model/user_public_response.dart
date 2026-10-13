@@ -255,3 +255,4 @@ class _$UserPublicResponseSerializer implements PrimitiveSerializer<UserPublicRe
   }
 }
 
+

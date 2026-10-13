@@ -104,3 +104,4 @@ class _$PaymentQrUploadUrlRequestSerializer implements PrimitiveSerializer<Payme
   }
 }
 
+

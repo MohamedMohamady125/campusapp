@@ -116,8 +116,9 @@ class _$ChatCreateRequestSerializer implements PrimitiveSerializer<ChatCreateReq
         case r'member_cap':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.memberCap = valueDes;
           break;
         case r'name':
@@ -130,8 +131,9 @@ class _$ChatCreateRequestSerializer implements PrimitiveSerializer<ChatCreateReq
         case r'visibility':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(ChatVisibility),
-          ) as ChatVisibility;
+            specifiedType: const FullType.nullable(ChatVisibility),
+          ) as ChatVisibility?;
+          if (valueDes == null) continue;
           result.visibility = valueDes;
           break;
         default:
@@ -162,4 +164,5 @@ class _$ChatCreateRequestSerializer implements PrimitiveSerializer<ChatCreateReq
     return result.build();
   }
 }
+
 

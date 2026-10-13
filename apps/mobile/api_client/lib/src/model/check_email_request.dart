@@ -104,3 +104,4 @@ class _$CheckEmailRequestSerializer implements PrimitiveSerializer<CheckEmailReq
   }
 }
 
+

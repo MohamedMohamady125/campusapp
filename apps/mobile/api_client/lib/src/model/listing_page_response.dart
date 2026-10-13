@@ -123,3 +123,4 @@ class _$ListingPageResponseSerializer implements PrimitiveSerializer<ListingPage
   }
 }
 
+

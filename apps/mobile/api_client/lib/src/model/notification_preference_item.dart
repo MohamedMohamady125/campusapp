@@ -120,3 +120,4 @@ class _$NotificationPreferenceItemSerializer implements PrimitiveSerializer<Noti
   }
 }
 
+

@@ -129,8 +129,9 @@ class _$FoodSpotCreateRequestSerializer implements PrimitiveSerializer<FoodSpotC
         case r'category':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(FoodSpotCategory),
-          ) as FoodSpotCategory;
+            specifiedType: const FullType.nullable(FoodSpotCategory),
+          ) as FoodSpotCategory?;
+          if (valueDes == null) continue;
           result.category = valueDes;
           break;
         case r'description':
@@ -200,4 +201,5 @@ class _$FoodSpotCreateRequestSerializer implements PrimitiveSerializer<FoodSpotC
     return result.build();
   }
 }
+
 

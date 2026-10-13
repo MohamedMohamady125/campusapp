@@ -58,6 +58,7 @@ export 'package:campus_api/src/model/conversation_page_response.dart';
 export 'package:campus_api/src/model/conversation_response.dart';
 export 'package:campus_api/src/model/course_response.dart';
 export 'package:campus_api/src/model/daily_metric_item.dart';
+export 'package:campus_api/src/model/delete_account_request.dart';
 export 'package:campus_api/src/model/device_register_request.dart';
 export 'package:campus_api/src/model/device_unregister_request.dart';
 export 'package:campus_api/src/model/dropoff_location_create_request.dart';

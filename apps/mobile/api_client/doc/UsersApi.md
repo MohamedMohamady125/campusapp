@@ -10,6 +10,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**avatarUploadUrlApiV1UsersMeAvatarUploadUrlPost**](UsersApi.md#avataruploadurlapiv1usersmeavataruploadurlpost) | **POST** /api/v1/users/me/avatar-upload-url | Avatar Upload Url
+[**deleteMeApiV1UsersMeDeletePost**](UsersApi.md#deletemeapiv1usersmedeletepost) | **POST** /api/v1/users/me/delete | Delete Me
 [**getMeApiV1UsersMeGet**](UsersApi.md#getmeapiv1usersmeget) | **GET** /api/v1/users/me | Get Me
 [**getPublicProfileApiV1UsersUserIdGet**](UsersApi.md#getpublicprofileapiv1usersuseridget) | **GET** /api/v1/users/{user_id} | Get Public Profile
 [**paymentQrUploadUrlApiV1UsersMePaymentQrUploadUrlPost**](UsersApi.md#paymentqruploadurlapiv1usersmepaymentqruploadurlpost) | **POST** /api/v1/users/me/payment-qr-upload-url | Payment Qr Upload Url
@@ -47,6 +48,48 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**AvatarUploadUrlResponse**](AvatarUploadUrlResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **deleteMeApiV1UsersMeDeletePost**
+> deleteMeApiV1UsersMeDeletePost(deleteAccountRequest)
+
+Delete Me
+
+Self-serve account deletion (App Store 5.1.1(v)). POST (not DELETE) because the password confirmation rides in the body and intermediaries routinely drop DELETE bodies.
+
+### Example
+```dart
+import 'package:campus_api/api.dart';
+
+final api = CampusApi().getUsersApi();
+final DeleteAccountRequest deleteAccountRequest = ; // DeleteAccountRequest | 
+
+try {
+    api.deleteMeApiV1UsersMeDeletePost(deleteAccountRequest);
+} on DioException catch (e) {
+    print('Exception when calling UsersApi->deleteMeApiV1UsersMeDeletePost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **deleteAccountRequest** | [**DeleteAccountRequest**](DeleteAccountRequest.md)|  | 
+
+### Return type
+
+void (empty response body)
 
 ### Authorization
 

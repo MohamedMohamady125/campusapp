@@ -106,3 +106,4 @@ class _$NotificationPreferencesUpdateRequestSerializer implements PrimitiveSeria
   }
 }
 
+

@@ -114,8 +114,9 @@ class _$ValidationErrorSerializer implements PrimitiveSerializer<ValidationError
         case r'ctx':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(JsonObject),
-          ) as JsonObject;
+            specifiedType: const FullType.nullable(JsonObject),
+          ) as JsonObject?;
+          if (valueDes == null) continue;
           result.ctx = valueDes;
           break;
         case r'input':
@@ -175,4 +176,5 @@ class _$ValidationErrorSerializer implements PrimitiveSerializer<ValidationError
     return result.build();
   }
 }
+
 

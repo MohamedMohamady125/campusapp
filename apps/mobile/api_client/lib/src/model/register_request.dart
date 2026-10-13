@@ -136,3 +136,4 @@ class _$RegisterRequestSerializer implements PrimitiveSerializer<RegisterRequest
   }
 }
 
+

@@ -108,3 +108,4 @@ class _$NotificationsReadRequestSerializer implements PrimitiveSerializer<Notifi
   }
 }
 
+

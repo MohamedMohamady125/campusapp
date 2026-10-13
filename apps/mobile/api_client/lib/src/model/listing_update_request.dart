@@ -187,3 +187,4 @@ class _$ListingUpdateRequestSerializer implements PrimitiveSerializer<ListingUpd
   }
 }
 
+

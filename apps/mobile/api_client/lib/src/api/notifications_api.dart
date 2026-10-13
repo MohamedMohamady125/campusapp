@@ -71,7 +71,7 @@ class NotificationsApi {
     );
 
     final _queryParameters = <String, dynamic>{
-      r'cursor': encodeQueryParameter(_serializers, cursor, const FullType(String)),
+      if (cursor != null) r'cursor': encodeQueryParameter(_serializers, cursor, const FullType(String)),
       if (limit != null) r'limit': encodeQueryParameter(_serializers, limit, const FullType(int)),
     };
 

@@ -10,6 +10,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import structlog
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -28,7 +29,7 @@ from app.core.security import (
 from app.integrations.analytics.base import EVENT_SIGNUP_COMPLETED
 from app.integrations.analytics.provider import get_analytics_provider
 from app.integrations.email.base import EmailProvider
-from app.models import AuditLog, RefreshToken, User, VerificationCode
+from app.models import AuditLog, DeviceToken, RefreshToken, User, VerificationCode
 from app.models.enums import UserStatus, VerificationPurpose
 from app.repositories.user_repo import UserRepository
 
@@ -316,3 +317,51 @@ class AuthService:
         )
         await self._session.commit()
         return user.email
+
+    # --- Account deletion (spec §8; App Store Guideline 5.1.1(v)) ---
+
+    async def delete_account(self, user: User, *, password: str) -> None:
+        """Self-serve account deletion: soft-delete + immediate PII scrub.
+
+        The row survives because ratings, runs and messages reference it
+        (they render as "Deleted user"), but everything personal is blanked
+        in the same transaction: email freed for re-registration, password
+        randomized, sessions and push tokens revoked, pending codes purged.
+        """
+        if not verify_password(password, user.password_hash):
+            raise UnauthenticatedError("Password is wrong.", code="INVALID_CREDENTIALS")
+        old_email = user.email
+        now = datetime.now(UTC)
+        user.email = f"deleted-{user.id}@deleted.invalid"
+        user.password_hash = hash_password(secrets.token_urlsafe(32))
+        user.display_name = "Deleted user"
+        user.pending_email = None
+        user.year = None
+        user.major = None
+        user.bio = None
+        user.avatar_key = None
+        user.venmo_handle = None
+        user.payment_methods = []
+        user.status = UserStatus.suspended
+        user.deleted_at = now
+        await self._repo.revoke_all_for_user(user.id, now)
+        await self._session.execute(delete(DeviceToken).where(DeviceToken.user_id == user.id))
+        await self._session.execute(
+            delete(VerificationCode).where(VerificationCode.user_id == user.id)
+        )
+        self._session.add(
+            AuditLog(
+                actor_id=user.id,
+                action="auth.account_deleted",
+                target_type="user",
+                target_id=user.id,
+            )
+        )
+        # Loud, irreversible action — the farewell notice goes to the address
+        # the person actually controlled.
+        await self._send_security_notice(
+            to=old_email,
+            subject="Your Trot account was deleted",
+            what="Your Trot account was just permanently deleted.",
+        )
+        await self._session.commit()

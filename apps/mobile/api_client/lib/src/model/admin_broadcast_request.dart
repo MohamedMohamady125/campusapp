@@ -95,8 +95,9 @@ class _$AdminBroadcastRequestSerializer implements PrimitiveSerializer<AdminBroa
         case r'body':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.body = valueDes;
           break;
         case r'emails':
@@ -142,4 +143,5 @@ class _$AdminBroadcastRequestSerializer implements PrimitiveSerializer<AdminBroa
     return result.build();
   }
 }
+
 
