@@ -2668,6 +2668,137 @@ class _RequestSheetState extends ConsumerState<_RequestSheet> {
   }
 }
 
+/// Receipt-style card placed directly above the "Send request" button.
+/// Makes the runner-buys-first / you-pay-back-at-handoff flow impossible
+/// to miss — itemised food + fee rows with a bold total line.
+class _PaymentBreakdownCard extends StatelessWidget {
+  const _PaymentBreakdownCard({required this.run});
+
+  final RunResponse run;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colors = context.colors;
+    final hasFeeCents = run.feeCents > 0;
+    final prefs = paymentPrefsLabel(run.paymentPrefs ?? const []);
+    // Human-readable payment rail, or fall back to "cash" when unspecified.
+    final payHow = prefs ?? 'Cash';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: tokens.brMd,
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      padding: EdgeInsets.all(tokens.space3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // --- Header ---
+          Row(
+            children: [
+              Icon(Icons.payments_outlined, size: 15, color: colors.primary),
+              SizedBox(width: tokens.space1),
+              Text(
+                'Payment at drop-off',
+                style: context.text.labelMedium?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: tokens.space1 + 2),
+          Text(
+            'The runner pays at the store. '
+            'You pay them back in one go when they arrive.',
+            style: context.text.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: tokens.space3),
+          // --- Itemised rows ---
+          const _BillRow(
+            label: 'Your food',
+            value: 'exact receipt price',
+          ),
+          if (hasFeeCents) ...[
+            SizedBox(height: tokens.space1),
+            _BillRow(
+              label: 'Runner fee',
+              value: runFeeAmount(run.feeCents),
+              bold: true,
+            ),
+          ],
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: tokens.space2),
+            child: Divider(height: 1, color: colors.outlineVariant),
+          ),
+          // --- Bold total line ---
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'You pay the runner',
+                style: context.text.bodySmall?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                hasFeeCents
+                    ? 'food + ${runFeeAmount(run.feeCents)}'
+                    : 'food cost only',
+                style: context.text.bodySmall?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: tokens.space1),
+          Text(
+            hasFeeCents ? 'via $payHow' : 'No runner fee',
+            style: context.text.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One label + value row in the payment breakdown receipt.
+class _BillRow extends StatelessWidget {
+  const _BillRow({
+    required this.label,
+    required this.value,
+    this.bold = false,
+  });
+
+  final String label;
+  final String value;
+  final bool bold;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final style = context.text.bodySmall?.copyWith(
+      color: bold ? colors.onSurface : colors.onSurfaceVariant,
+      fontWeight: bold ? FontWeight.w600 : null,
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: style),
+        Text(value, style: style),
+      ],
+    );
+  }
+}
+
 /// Searchable drop-off picker: a type-to-filter list sheet replacing the raw
 /// Material dropdown (UX audit #15). Pops with the chosen spot.
 class _DropoffPickerSheet extends StatefulWidget {
