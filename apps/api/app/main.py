@@ -47,9 +47,13 @@ async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
     # Always-on maintenance (expire sweep + settle-up nudges) — skipped in
     # tests so background ticks never race transactional test fixtures.
     if settings.app_env != "test":
+        from app.services.realtime import hub
         from app.workers.maintenance import maintenance_loop
 
         tasks.append(asyncio.create_task(maintenance_loop()))
+        # Cross-worker WS fan-out: without this bridge a chat event only
+        # reaches sockets that happen to live on the publishing worker.
+        tasks.append(asyncio.create_task(hub.redis_listener()))
     if settings.demo_runs_keepalive:
         from app.workers.demo_keepalive import demo_keepalive_loop
 
