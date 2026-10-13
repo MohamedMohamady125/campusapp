@@ -12,7 +12,7 @@ from sqlalchemy import CursorResult, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.scoring import GLOBAL_MEAN_SEED
-from app.models import AnalyticsEvent, DailyMetric, Listing, Rating, VerificationCode
+from app.models import AnalyticsEvent, DailyMetric, Listing, Notification, Rating, VerificationCode
 from app.models.enums import ListingStatus, RunOrderStatus, RunStatus
 
 log = structlog.get_logger()
@@ -174,6 +174,24 @@ async def purge_verification_codes_job(session: AsyncSession) -> int:
     await session.commit()
     count = int(result.rowcount or 0)
     log.info("jobs.purge_verification_codes", purged=count)
+    return count
+
+
+NOTIFICATION_RETENTION = timedelta(days=90)
+
+
+async def purge_notifications_job(session: AsyncSession) -> int:
+    """Delete notifications older than NOTIFICATION_RETENTION (data-minimisation,
+    spec §8). The bell UI only pages recent items, so nothing user-visible is
+    lost — this just stops the table growing forever. Idempotent."""
+    cutoff = datetime.now(UTC) - NOTIFICATION_RETENTION
+    result = cast(
+        CursorResult[Any],
+        await session.execute(delete(Notification).where(Notification.created_at < cutoff)),
+    )
+    await session.commit()
+    count = int(result.rowcount or 0)
+    log.info("jobs.purge_notifications", purged=count)
     return count
 
 

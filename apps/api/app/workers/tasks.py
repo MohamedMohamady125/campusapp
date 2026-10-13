@@ -9,6 +9,7 @@ from app.workers.jobs import (
     aggregate_daily_metrics_job,
     expire_listings_job,
     expire_runs_job,
+    purge_notifications_job,
     purge_verification_codes_job,
     recompute_global_mean_job,
     settle_up_reminder_job,
@@ -46,6 +47,11 @@ def recompute_global_mean() -> float:
 @celery_app.task  # type: ignore[untyped-decorator]
 def purge_verification_codes() -> int:
     return int(_run(purge_verification_codes_job))
+
+
+@celery_app.task  # type: ignore[untyped-decorator]
+def purge_notifications() -> int:
+    return int(_run(purge_notifications_job))
 
 
 @celery_app.task  # type: ignore[untyped-decorator]
