@@ -39,6 +39,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   bool? _emailTaken;
   String _checkedEmail = '';
   String _passwordValue = '';
+  String _confirmValue = '';
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
 
@@ -340,6 +341,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             ),
                           ),
                         ),
+                        onChanged: (v) => setState(() => _confirmValue = v),
                         validator: (v) {
                           if (v == null || v.isEmpty) {
                             return 'Please confirm your password';
@@ -351,6 +353,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         },
                         onFieldSubmitted: (_) => _submitting ? null : _submit(),
                       ),
+                      // Live match indicator — only appears once the user
+                      // has typed something in the confirm field.
+                      if (_confirmValue.isNotEmpty) ...[
+                        SizedBox(height: tokens.space2),
+                        _MatchIndicator(
+                          matches: _confirmValue == _passwordValue,
+                        ),
+                      ],
                       SizedBox(height: tokens.space6),
                       // --- Terms notice ---
                       Padding(
@@ -494,6 +504,38 @@ class _RequirementRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Single-row indicator shown below the confirm-password field as soon as
+/// the user starts typing. Flips from a grey "no match" state to a green
+/// check the moment both fields are identical.
+class _MatchIndicator extends StatelessWidget {
+  const _MatchIndicator({required this.matches});
+
+  final bool matches;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final color = matches ? AppColors.success : colors.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          Icon(
+            matches ? Icons.check_circle_rounded : Icons.circle_outlined,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            matches ? 'Passwords match' : "Passwords don't match yet",
+            style: context.text.bodySmall?.copyWith(color: color),
+          ),
+        ],
+      ),
     );
   }
 }
