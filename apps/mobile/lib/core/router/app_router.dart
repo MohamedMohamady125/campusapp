@@ -245,7 +245,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-  // A tapped push banner deep-links straight to its run/chat/thread.
+  // A tapped push banner deep-links straight to its run/chat/thread. go (not
+  // push): shell-nested routes can't be pushed onto the root navigator; the
+  // landed screens carry a fallback back button when the stack is empty.
   ref.read(pushServiceProvider).onOpenRoute = router.go;
   // Behaviour analytics: every navigation feeds the screen-dwell tracker.
   final analytics = ref.read(analyticsServiceProvider);

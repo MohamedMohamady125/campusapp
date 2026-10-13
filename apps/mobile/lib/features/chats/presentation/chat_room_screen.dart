@@ -14,6 +14,7 @@ import 'package:campusconnect/features/chats/data/chats_repository.dart';
 import 'package:campusconnect/features/chats/presentation/chat_role_provider.dart';
 import 'package:campusconnect/features/chats/presentation/moderation_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `3:07 PM`-style label without pulling in intl (matches thread_screen).
 String _timeLabel(DateTime t) {
@@ -229,71 +230,86 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final tokens = context.tokens;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title ?? 'Chat')),
+      appBar: AppBar(
+        title: Text(widget.title ?? 'Chat'),
+        // Deep links (push taps) can land here with an empty stack — always
+        // give the user a way out.
+        leading: context.canPop()
+            ? null
+            : BackButton(onPressed: () => context.go('/chats')),
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: state.loading
-                  ? ListView(
-                      children: const [
-                        ListRowSkeleton(),
-                        ListRowSkeleton(),
-                        ListRowSkeleton(),
-                      ],
-                    )
-                  : state.messages.isEmpty
-                  // Empty-room copy per spec §13.2.
-                  ? const EmptyState(
-                      icon: Icons.forum_outlined,
-                      title: "It's quiet in here",
-                      body:
-                          'Say something. Someone will answer — '
-                          'this group has members online.',
-                    )
-                  : ListView.builder(
-                      reverse: true,
-                      padding: EdgeInsets.all(tokens.space4),
-                      itemCount: state.messages.length,
-                      itemBuilder: (context, i) {
-                        final msg =
-                            state.messages[state.messages.length - 1 - i];
-                        final pending = msg.id.startsWith('local-');
-                        final mine = msg.senderId == myId;
-                        if (msg.deletedAt != null) {
+        // Tap anywhere outside the composer to drop the keyboard.
+        child: GestureDetector(
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: Column(
+            children: [
+              Expanded(
+                child: state.loading
+                    ? ListView(
+                        children: const [
+                          ListRowSkeleton(),
+                          ListRowSkeleton(),
+                          ListRowSkeleton(),
+                        ],
+                      )
+                    : state.messages.isEmpty
+                    // Empty-room copy per spec §13.2.
+                    ? const EmptyState(
+                        icon: Icons.forum_outlined,
+                        title: "It's quiet in here",
+                        body:
+                            'Say something. Someone will answer — '
+                            'this group has members online.',
+                      )
+                    : ListView.builder(
+                        reverse: true,
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: EdgeInsets.all(tokens.space4),
+                        itemCount: state.messages.length,
+                        itemBuilder: (context, i) {
+                          final msg =
+                              state.messages[state.messages.length - 1 - i];
+                          final pending = msg.id.startsWith('local-');
+                          final mine = msg.senderId == myId;
+                          if (msg.deletedAt != null) {
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: tokens.space2),
+                              child: TombstoneBubble(
+                                isMine: mine,
+                                deletedByName: msg.deletedByName,
+                                reason: msg.deletedReason,
+                              ),
+                            );
+                          }
                           return Padding(
                             padding: EdgeInsets.only(bottom: tokens.space2),
-                            child: TombstoneBubble(
+                            child: MessageBubble(
+                              body: msg.body,
                               isMine: mine,
-                              deletedByName: msg.deletedByName,
-                              reason: msg.deletedReason,
+                              status: pending
+                                  ? MessageStatus.sending
+                                  : MessageStatus.sent,
+                              showTimestamp: true,
+                              timestamp: _timeLabel(msg.createdAt.toLocal()),
+                              onLongPress: canModerate && !mine && !pending
+                                  ? () => _moderate(
+                                      msg,
+                                      isOwner: isOwner,
+                                    ).ignore()
+                                  : null,
                             ),
                           );
-                        }
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: tokens.space2),
-                          child: MessageBubble(
-                            body: msg.body,
-                            isMine: mine,
-                            status: pending
-                                ? MessageStatus.sending
-                                : MessageStatus.sent,
-                            showTimestamp: true,
-                            timestamp: _timeLabel(msg.createdAt.toLocal()),
-                            onLongPress: canModerate && !mine && !pending
-                                ? () =>
-                                      _moderate(msg, isOwner: isOwner).ignore()
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-            ),
-            Composer(
-              controller: _composer,
-              onSend: (body) => _send(body).ignore(),
-            ),
-          ],
+                        },
+                      ),
+              ),
+              Composer(
+                controller: _composer,
+                onSend: (body) => _send(body).ignore(),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -12,6 +12,7 @@ import 'package:campusconnect/features/food_runs/presentation/spot_image.dart';
 import 'package:campusconnect/features/messaging/data/conversations_repository.dart';
 import 'package:campusconnect/features/messaging/presentation/thread_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Conversation detail (incl. run order context) for the pinned sub-header.
 final AutoDisposeFutureProviderFamily<ConversationResponse, String>
@@ -87,51 +88,66 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
         ?.runContext;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title ?? 'Conversation')),
+      appBar: AppBar(
+        title: Text(widget.title ?? 'Conversation'),
+        // Deep links (push taps) can land here with an empty stack — always
+        // give the user a way out.
+        leading: context.canPop()
+            ? null
+            : BackButton(onPressed: () => context.go('/runs')),
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Run chats keep the order + restaurant pinned for both parties.
-            if (runContext != null) _RunOrderHeader(context_: runContext),
-            Expanded(
-              child: state.loading
-                  ? ListView(
-                      children: const [
-                        ListRowSkeleton(),
-                        ListRowSkeleton(),
-                        ListRowSkeleton(),
-                      ],
-                    )
-                  : ListView.builder(
-                      reverse: true,
-                      padding: EdgeInsets.all(tokens.space4),
-                      itemCount: state.messages.length,
-                      itemBuilder: (context, i) {
-                        final msg =
-                            state.messages[state.messages.length - 1 - i];
-                        final pending = msg.id.startsWith('local-');
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: tokens.space2),
-                          child: MessageBubble(
-                            body: msg.body,
-                            isMine: msg.senderId == myId,
-                            status: pending
-                                ? MessageStatus.sending
-                                : MessageStatus.sent,
-                            // Every message carries its time — no guessing
-                            // when something was sent mid-run.
-                            showTimestamp: true,
-                            timestamp: _timeLabel(msg.createdAt.toLocal()),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-            Composer(
-              controller: _composer,
-              onSend: (body) => _send(body).ignore(),
-            ),
-          ],
+        child: GestureDetector(
+          // Tap anywhere outside the composer to drop the keyboard.
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: Column(
+            children: [
+              // Run chats keep the order + restaurant pinned for both parties.
+              if (runContext != null) _RunOrderHeader(context_: runContext),
+              Expanded(
+                // Tapping the messages dismisses the keyboard (chat-app
+                // standard), as does a scroll drag.
+                child: state.loading
+                    ? ListView(
+                        children: const [
+                          ListRowSkeleton(),
+                          ListRowSkeleton(),
+                          ListRowSkeleton(),
+                        ],
+                      )
+                    : ListView.builder(
+                        reverse: true,
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: EdgeInsets.all(tokens.space4),
+                        itemCount: state.messages.length,
+                        itemBuilder: (context, i) {
+                          final msg =
+                              state.messages[state.messages.length - 1 - i];
+                          final pending = msg.id.startsWith('local-');
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: tokens.space2),
+                            child: MessageBubble(
+                              body: msg.body,
+                              isMine: msg.senderId == myId,
+                              status: pending
+                                  ? MessageStatus.sending
+                                  : MessageStatus.sent,
+                              // Every message carries its time — no guessing
+                              // when something was sent mid-run.
+                              showTimestamp: true,
+                              timestamp: _timeLabel(msg.createdAt.toLocal()),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              Composer(
+                controller: _composer,
+                onSend: (body) => _send(body).ignore(),
+              ),
+            ],
+          ),
         ),
       ),
     );

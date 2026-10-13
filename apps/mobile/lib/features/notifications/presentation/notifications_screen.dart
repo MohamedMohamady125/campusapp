@@ -47,6 +47,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         .ignore();
     final route = notificationRoute(notification);
     if (route == null) return;
+    // go (not push): shell-nested routes can't be pushed onto the root
+    // navigator. Deep-linked screens carry their own fallback back button.
     context.go(route.$1, extra: route.$2);
   }
 
