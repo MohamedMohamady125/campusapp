@@ -138,6 +138,10 @@ String? pushRoute(Map<String, dynamic> data) {
         'run_settle_reminder':
       final runId = data['run_id'];
       return runId is String ? '/runs/run/$runId' : null;
+    case 'admin_message':
+      // Announcements have no richer context — land on the feed where the
+      // full staff copy is shown.
+      return '/notifications';
   }
   return null;
 }
