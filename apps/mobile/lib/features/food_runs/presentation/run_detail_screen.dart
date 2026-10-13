@@ -960,6 +960,10 @@ class _RunHeaderCard extends StatelessWidget {
               'Food + ${runFeeAmount(run.feeCents)} fee · cash on handoff',
             final String prefs =>
               'Food + ${runFeeAmount(run.feeCents)} fee · pay with $prefs',
+            // Null means "no prefs to show", NOT "no fee" — a paid run whose
+            // runner skipped payment prefs must still show the fee loud.
+            null when run.feeCents > 0 =>
+              'Food + ${runFeeAmount(run.feeCents)} fee at handoff',
             null => 'You pay for food at handoff · no runner fee',
           },
         ),
