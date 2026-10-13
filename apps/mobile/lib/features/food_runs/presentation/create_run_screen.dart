@@ -977,7 +977,7 @@ class _SpotPickerSheetState extends State<_SpotPickerSheet> {
     // Warm every catalog thumbnail up front — the list is small (~30 tiny
     // 96px images) so fast scrolling never shows placeholder tiles.
     for (final s in widget.spots) {
-      precacheSpotImage(context, s.imageUrl, decodeWidth: 96);
+      precacheSpotImage(context, s.imageUrl);
     }
   }
 

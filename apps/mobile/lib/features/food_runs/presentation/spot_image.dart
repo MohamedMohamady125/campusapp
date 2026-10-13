@@ -39,11 +39,15 @@ class SpotImage extends StatelessWidget {
       return _Monogram(name: name, fontSize: monogramFontSize);
     }
     final dpr = MediaQuery.devicePixelRatioOf(context);
-    final physicalWidth = (decodeWidth * dpr).round();
     return CachedNetworkImage(
-      imageUrl: sizedSpotImageUrl(url, physicalWidth),
+      // One canonical URL for every consumer (feed banner, hero backdrop,
+      // detail header, picker thumb): a spot's photo downloads exactly once
+      // per install, then every screen reads the warm disk cache.
+      imageUrl: spotImageUrl(url),
       fit: fit,
-      memCacheWidth: physicalWidth,
+      // Decode (not fetch) at display size — tiny thumbs stay cheap even
+      // though they share the full card-size file.
+      memCacheWidth: (decodeWidth * dpr).round(),
       fadeInDuration: const Duration(milliseconds: 120),
       // Quiet brand-tinted placeholder while the photo streams in — never a
       // spinner on a card (spec §6.3: zero-jank images, blur-up feel).
@@ -53,6 +57,16 @@ class SpotImage extends StatelessWidget {
     );
   }
 }
+
+/// Canonical fetch width (physical px) for all spot photos. One shared
+/// variant keeps the cache hit-rate at 100% across screens; 800px over the
+/// catalog's 2:1 crop is card-sharp at q=70 while costing ~35% fewer bytes
+/// than the raw w=1000 source.
+const kSpotImagePhysicalWidth = 800;
+
+/// The one URL every spot-photo consumer uses (see [kSpotImagePhysicalWidth]).
+String spotImageUrl(String url) =>
+    sizedSpotImageUrl(url, kSpotImagePhysicalWidth);
 
 /// Rewrites a CDN image URL to request no more pixels than [physicalWidth].
 ///
@@ -73,19 +87,28 @@ String sizedSpotImageUrl(String url, int physicalWidth) {
 }
 
 /// Warm the image cache for a spot photo before its card scrolls into view.
-/// Fire-and-forget; errors are swallowed (the card's monogram fallback
-/// handles genuinely broken URLs).
-void precacheSpotImage(
-  BuildContext context,
-  String? url, {
-  double decodeWidth = 800,
-}) {
+/// Uses the canonical variant, so this also covers the detail header, the
+/// picker and every other consumer. Fire-and-forget; errors are swallowed
+/// (the card's monogram fallback handles genuinely broken URLs).
+void precacheSpotImage(BuildContext context, String? url) {
   if (url == null || url.isEmpty) return;
-  final physicalWidth = (decodeWidth * MediaQuery.devicePixelRatioOf(context))
-      .round();
   unawaited(
     precacheImage(
-      CachedNetworkImageProvider(sizedSpotImageUrl(url, physicalWidth)),
+      CachedNetworkImageProvider(spotImageUrl(url)),
+      context,
+      onError: (_, _) {},
+    ),
+  );
+}
+
+/// Warm a user avatar before its row scrolls into view. Downloads the full
+/// file into the shared disk cache but decodes at a bounded width, so a
+/// multi-MP selfie never costs a full-res decode during the warmup.
+void precacheAvatar(BuildContext context, String? url) {
+  if (url == null || url.isEmpty) return;
+  unawaited(
+    precacheImage(
+      ResizeImage(CachedNetworkImageProvider(url), width: 256),
       context,
       onError: (_, _) {},
     ),

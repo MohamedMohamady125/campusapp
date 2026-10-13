@@ -13,6 +13,7 @@ import 'package:campusconnect/design_system/theme/app_colors.dart';
 import 'package:campusconnect/design_system/theme/app_motion.dart';
 import 'package:campusconnect/design_system/theme/app_text_styles.dart';
 import 'package:campusconnect/design_system/theme/app_tokens.dart';
+import 'package:campusconnect/features/food_runs/data/runs_repository.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_format.dart';
 import 'package:campusconnect/features/food_runs/presentation/run_row.dart';
 import 'package:campusconnect/features/food_runs/presentation/runs_feed_controller.dart';
@@ -51,6 +52,24 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
     super.dispose();
   }
 
+  /// Once per session, pull the whole spot catalog (~45 rows) and warm every
+  /// photo into the disk cache. After this, create-run's picker, My Runs and
+  /// run detail all scroll over pre-downloaded images — the "everything is
+  /// already loaded" feel. ~4MB once, then cached across launches.
+  static bool _catalogWarmed = false;
+
+  void _warmCatalog() {
+    if (_catalogWarmed) return;
+    _catalogWarmed = true;
+    Future(() async {
+      final spots = await ref.read(runsRepositoryProvider).fetchSpots();
+      if (!mounted) return;
+      for (final spot in spots) {
+        precacheSpotImage(context, spot.imageUrl);
+      }
+    }).ignore();
+  }
+
   Future<void> _refresh() async {
     await ref.read(runsFeedControllerProvider.notifier).refresh();
     unawaited(HapticFeedback.selectionClick());
@@ -60,12 +79,14 @@ class _RunsFeedScreenState extends ConsumerState<RunsFeedScreen> {
   Widget build(BuildContext context) {
     // Warm the image cache for every loaded card the moment the feed data
     // lands, so a fast fling scrolls over already-downloaded photos instead
-    // of a wall of placeholders.
+    // of a wall of placeholders. Runner selfies get the same treatment.
     ref.listen(runsFeedControllerProvider, (prev, next) {
       if (identical(prev?.items, next.items)) return;
       for (final run in next.items) {
         precacheSpotImage(context, run.foodSpot.imageUrl);
+        precacheAvatar(context, run.runner.avatarUrl);
       }
+      if (next.items.isNotEmpty) _warmCatalog();
     });
     final state = ref.watch(runsFeedControllerProvider);
     final liveCount = state.items.length;
