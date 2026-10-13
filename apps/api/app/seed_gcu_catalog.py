@@ -33,29 +33,29 @@ log = structlog.get_logger()
 _UNSPLASH = (
     "https://images.unsplash.com/photo-{pid}?auto=format&fit=crop&crop=entropy&w=1000&h=500&q=70"
 )
-_IMG_CHICKEN = _UNSPLASH.format(pid="1606755962773-d324e0a13086")
-_IMG_ASIAN = _UNSPLASH.format(pid="1512058564366-18510be2db19")
-_IMG_BOWL = _UNSPLASH.format(pid="1546069901-ba9599a7e63c")
-_IMG_SANDWICH = _UNSPLASH.format(pid="1509722747041-616f39b57569")
-_IMG_MED = _UNSPLASH.format(pid="1540914124281-342587941389")
-_IMG_PIZZA = _UNSPLASH.format(pid="1513104890138-7c749659a591")
-_IMG_SNACKS = _UNSPLASH.format(pid="1621939514649-280e2ee25f60")
-_IMG_MEX = _UNSPLASH.format(pid="1582234372722-50d7ccc30ebd")
-_IMG_FRIED = _UNSPLASH.format(pid="1562967914-608f82629710")
-_IMG_COFFEE = _UNSPLASH.format(pid="1509042239860-f550ce710b93")
-_IMG_BURGER = _UNSPLASH.format(pid="1568901346375-23c9450c58cd")
 
-# (canonical name, category, description, lat, lng, image-on-insert)
+
+def _img(pid: str) -> str:
+    """Curated per-venue photo (every ID verified live + visually reviewed
+    against the cuisine before landing here — don't swap without re-checking
+    the actual image content)."""
+    return _UNSPLASH.format(pid=pid)
+
+
+# (canonical name, category, description, lat, lng, image)
 # Coordinates are OSM building centroids inside the GCU campus (Oct 2026).
+# Venue list matches gcu.edu/admissions/visit-gcu-campus/campus-dining
+# (Oct 2026): Lopes Way, Student Union, Thunderground, Arena/Quad, the
+# residential GCBC/market satellites, The Rivers retail and Cañón 49.
 _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
-    # --- on campus -------------------------------------------------------
+    # --- on campus: Lopes Way ---------------------------------------------
     (
         "Chick-fil-A (Lopes Way)",
         FoodSpotCategory.campus,
         "Closed Sundays. Lines get long at noon.",
         33.512883,
         -112.122559,
-        _IMG_CHICKEN,
+        _img("1606755962773-d324e0a13086"),  # fried-chicken sandwich
     ),
     (
         "Panda Express (Lopes Way)",
@@ -63,15 +63,23 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Orange chicken never misses.",
         33.512596,
         -112.127117,
-        _IMG_ASIAN,
+        _img("1525755662778-989d0524087e"),  # orange chicken plate
     ),
     (
-        "Qdoba (Student Union)",
+        "Subway (Lopes Way)",
         FoodSpotCategory.campus,
-        "Burritos, bowls, queso.",
-        33.513231,
-        -112.130269,
-        _IMG_BOWL,
+        "Footlongs on Lopes Way.",
+        33.512585,
+        -112.127650,
+        _img("1528735602780-2552fd46c7af"),  # toasted sub
+    ),
+    (
+        "Taco Thunder (Lopes Way)",
+        FoodSpotCategory.campus,
+        "Street tacos on Lopes Way.",
+        33.512700,
+        -112.125500,
+        _img("1551504734-5ee1c4a1479b"),  # street tacos + salsa
     ),
     (
         "Pita Jungle (GCU)",
@@ -79,15 +87,32 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Fresh Mediterranean on campus.",
         33.512577,
         -112.128563,
-        _IMG_MED,
+        _img("1540914124281-342587941389"),  # mezze spread
     ),
     (
-        "Canyon Pizza Co.",
+        "Kaminari (Lopes Way)",
+        FoodSpotCategory.campus,
+        "Korean street food + poke on Lopes Way.",
+        33.512599,
+        -112.127240,
+        _img("1590301157890-4810ed352733"),  # bibimbap bowl
+    ),
+    # --- on campus: Student Union ------------------------------------------
+    (
+        "Qdoba (Student Union)",
+        FoodSpotCategory.campus,
+        "Burritos, bowls, queso.",
+        33.513231,
+        -112.130269,
+        _img("1562059390-a761a084768e"),  # burrito wraps
+    ),
+    (
+        "Canyon Pizza Company",
         FoodSpotCategory.campus,
         "Late-night slices.",
         33.513085,
         -112.129835,
-        _IMG_PIZZA,
+        _img("1513104890138-7c749659a591"),  # pepperoni pizza
     ),
     (
         "Einstein Bros. Bagels",
@@ -95,7 +120,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Bagels + coffee by the Student Union.",
         33.513353,
         -112.130217,
-        _IMG_SANDWICH,
+        _img("1585445490387-f47934b73b54"),  # fresh bagel tray
     ),
     (
         "Jamba (Student Union)",
@@ -103,15 +128,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Smoothies between classes.",
         33.513294,
         -112.130264,
-        _IMG_BOWL,
-    ),
-    (
-        "Taco Bell (Thunder Alley)",
-        FoodSpotCategory.campus,
-        "Crunchwrap HQ in Thunder Alley.",
-        33.513613,
-        -112.130710,
-        _IMG_MEX,
+        _img("1505252585461-04db1eb84625"),  # layered smoothies
     ),
     (
         "The Habit Burger Grill",
@@ -119,15 +136,23 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Charburgers by the Union.",
         33.513386,
         -112.129806,
-        _IMG_BURGER,
+        _img("1568901346375-23c9450c58cd"),  # charburger
     ),
     (
-        "Sweet Disciple",
+        "Lopes Training Table",
         FoodSpotCategory.campus,
-        "Ice cream + desserts in Thunder Alley.",
-        33.513499,
-        -112.130712,
-        _IMG_SNACKS,
+        "Protein plates by the Union.",
+        33.513267,
+        -112.129983,
+        _img("1532550907401-a500c9a57435"),  # grilled chicken plate
+    ),
+    (
+        "Lopacelli's Pasta (Student Union)",
+        FoodSpotCategory.campus,
+        "Pasta + breadsticks in the Union.",
+        33.513310,
+        -112.130120,
+        _img("1551183053-bf91a1d81141"),  # fresh pasta
     ),
     (
         "GCBC (Grand Canyon Beverage Co.)",
@@ -135,15 +160,49 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Campus coffee — pre-8am lifesaver.",
         33.511778,
         -112.128841,
-        _IMG_COFFEE,
+        _img("1509042239860-f550ce710b93"),  # latte art
     ),
+    # --- on campus: Thunderground ------------------------------------------
+    (
+        "Taco Bell (Thunder Alley)",
+        FoodSpotCategory.campus,
+        "Crunchwrap HQ in the Thunderground.",
+        33.513613,
+        -112.130710,
+        _img("1582234372722-50d7ccc30ebd"),  # tacos plate
+    ),
+    (
+        "Fresh Fusion (Thunderground)",
+        FoodSpotCategory.campus,
+        "Sushi + poke in the Thunderground.",
+        33.513540,
+        -112.130640,
+        _img("1579584425555-c3ce17fd4351"),  # sushi rolls
+    ),
+    (
+        "Sweet Disciple",
+        FoodSpotCategory.campus,
+        "Candy + desserts in Thunder Alley.",
+        33.513499,
+        -112.130712,
+        _img("1621939514649-280e2ee25f60"),  # candy wall
+    ),
+    # --- on campus: Arena & Quad -------------------------------------------
     (
         "Havoc House",
         FoodSpotCategory.campus,
         "Wings + games by the Arena.",
         33.510487,
         -112.129247,
-        _IMG_FRIED,
+        _img("1555939594-58d7cb561ad1"),  # grilled wings
+    ),
+    (
+        "Arena Café",
+        FoodSpotCategory.campus,
+        "Coffee + breakfast by the Arena.",
+        33.510149,
+        -112.128922,
+        _img("1553163147-622ab57be1c7"),  # breakfast skillet
     ),
     (
         "The Quad Kitchen",
@@ -151,48 +210,122 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Dining hall on the Quad.",
         33.511283,
         -112.128870,
-        _IMG_BOWL,
+        _img("1546069901-ba9599a7e63c"),  # dining spread
     ),
     (
-        "Training Table",
+        "Purple Greens (The Quad)",
         FoodSpotCategory.campus,
-        "Protein plates by the Union.",
-        33.513267,
-        -112.129983,
-        _IMG_CHICKEN,
+        "Salads on the Quad.",
+        33.511300,
+        -112.128800,
+        _img("1512621776951-a57141f2eefd"),  # salad bowl
+    ),
+    # --- on campus: residential + The Rivers -------------------------------
+    (
+        "Purple Greens & More (Turquoise)",
+        FoodSpotCategory.campus,
+        "Salads + wraps at Turquoise.",
+        33.512662,
+        -112.121824,
+        _img("1540420773420-3366772f4999"),  # garden salad
     ),
     (
-        "Kamnari (Lopes Way)",
+        "Herd Stop (Antelope)",
         FoodSpotCategory.campus,
-        "Korean street food on Lopes Way.",
-        33.512599,
-        -112.127240,
-        _IMG_ASIAN,
+        "Groceries + grab-and-go at Antelope.",
+        33.511773,
+        -112.122794,
+        _img("1578916171728-46686eac8d58"),  # grocery aisle
     ),
+    (
+        "Jimmy John's (Agua Fria)",
+        FoodSpotCategory.campus,
+        "Freaky fast subs at Agua Fria.",
+        33.515433,
+        -112.120701,
+        _img("1619096252214-ef06c45683e3"),  # stacked sub
+    ),
+    (
+        "GCBC (The Rivers)",
+        FoodSpotCategory.campus,
+        "Coffee at The Rivers.",
+        33.515453,
+        -112.118700,
+        _img("1495474472287-4d71bcdd2085"),  # coffee + pastry
+    ),
+    (
+        "Panera Bread (The Rivers)",
+        FoodSpotCategory.campus,
+        "Soup, salads + bakery at The Rivers.",
+        33.515450,
+        -112.119100,
+        _img("1555507036-ab1f4038808a"),  # bakery croissants
+    ),
+    (
+        "Nekter Juice Bar (The Rivers)",
+        FoodSpotCategory.campus,
+        "Juice + açaí bowls at The Rivers.",
+        33.515450,
+        -112.118900,
+        _img("1622597467836-f3285f2131b8"),  # fresh juices
+    ),
+    (
+        "Cañón 49 (GCU Hotel)",
+        FoodSpotCategory.campus,
+        "Sit-down grill at the GCU Hotel.",
+        33.511177,
+        -112.114136,
+        _img("1544025162-d76694265947"),  # grill platter
+    ),
+    # --- on campus: markets --------------------------------------------------
     (
         "Lope Shop (campus store)",
         FoodSpotCategory.campus,
         "Snacks, drinks, GCU gear.",
         33.511271,
         -112.129427,
-        _IMG_SNACKS,
+        _img("1582058091505-f87a2e55a40f"),  # snack sweets
     ),
     (
-        "The Grid (POD Market)",
+        "Lopes Mart (Lopes Way)",
         FoodSpotCategory.campus,
         "Snacks, drinks, essentials.",
         33.512745,
         -112.123618,
-        _IMG_SNACKS,
+        _img("1604719312566-8912e9227c6a"),  # market shelves
     ),
-    # --- off campus (walkable / short drive) -----------------------------
+    (
+        "Lopes Mart (The Grove)",
+        FoodSpotCategory.campus,
+        "Snacks, drinks, essentials.",
+        33.515670,
+        -112.130533,
+        _img("1604719312566-8912e9227c6a"),  # market shelves
+    ),
+    (
+        "Lopes Mart (Chaparral)",
+        FoodSpotCategory.campus,
+        "Snacks, drinks, essentials.",
+        33.514779,
+        -112.126305,
+        _img("1604719312566-8912e9227c6a"),  # market shelves
+    ),
+    (
+        "Lopes Mart (Canyon Activities Center)",
+        FoodSpotCategory.campus,
+        "Snacks, drinks, essentials.",
+        33.516088,
+        -112.123450,
+        _img("1604719312566-8912e9227c6a"),  # market shelves
+    ),
+    # --- off campus (walkable / short drive) -------------------------------
     (
         "Subway (35th & Camelback)",
         FoodSpotCategory.off_campus,
         "Footlongs just west of campus.",
         33.510359,
         -112.134701,
-        _IMG_SANDWICH,
+        _img("1553909489-cd47e0907980"),  # veggie club sandwich
     ),
     (
         "El Taco Tote (Camelback)",
@@ -200,7 +333,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Build-your-own taco spot.",
         33.509733,
         -112.133849,
-        _IMG_MEX,
+        _img("1613514785940-daed07799d9b"),  # taco spread
     ),
     (
         "Federico's Mexican Food",
@@ -208,7 +341,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Late-night burritos, open late.",
         33.509206,
         -112.133869,
-        _IMG_MEX,
+        _img("1626700051175-6818013e1d4f"),  # burrito
     ),
     (
         "Great Wall Cuisine",
@@ -216,7 +349,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Dim sum + Chinese on 35th Ave.",
         33.510939,
         -112.133373,
-        _IMG_ASIAN,
+        _img("1563245372-f21724e3856d"),  # dim sum steamer
     ),
     (
         "Pho Vinh Long",
@@ -224,7 +357,15 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Vietnamese pho south of Camelback.",
         33.508171,
         -112.134657,
-        _IMG_ASIAN,
+        _img("1569718212165-3a8278d5f624"),  # noodle soup
+    ),
+    (
+        "CVS Pharmacy (Camelback)",
+        FoodSpotCategory.off_campus,
+        "Pharmacy + groceries on Camelback.",
+        33.510008,
+        -112.134832,
+        _img("1576602976047-174e57a47881"),  # store interior
     ),
     (
         "Chipotle (27th Ave)",
@@ -232,7 +373,23 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Just off campus — bowl run classic.",
         33.509300,
         -112.116800,
-        _IMG_MEX,
+        _img("1615870216519-2f9fa575fa5c"),  # fresh-Mex tacos
+    ),
+    (
+        "McDonald's (27th Ave)",
+        FoodSpotCategory.off_campus,
+        "Classics on 27th Ave.",
+        33.509209,
+        -112.116701,
+        _img("1550547660-d9450f859349"),  # burger
+    ),
+    (
+        "Jack in the Box (27th Ave)",
+        FoodSpotCategory.off_campus,
+        "Burgers + tacos, open late.",
+        33.509213,
+        -112.117483,
+        _img("1481070555726-e2fe8357725c"),  # stacked burger
     ),
     (
         "Raising Cane's (Camelback)",
@@ -240,7 +397,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Box combos + Cane's sauce.",
         33.509500,
         -112.100300,
-        _IMG_FRIED,
+        _img("1562967914-608f82629710"),  # fried chicken
     ),
     (
         "Dutch Bros (Camelback)",
@@ -248,7 +405,7 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Coffee runs before 8am class.",
         33.509600,
         -112.110200,
-        _IMG_COFFEE,
+        _img("1447933601403-0c6688de566e"),  # espresso + beans
     ),
     (
         "In-N-Out (Northern Ave)",
@@ -256,15 +413,20 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         "Worth the drive. Animal style.",
         33.554100,
         -112.128900,
-        _IMG_BURGER,
+        _img("1571091718767-18b5b1457add"),  # burger + fries
     ),
 ]
 
-# Legacy seed names → canonical names above, so the upsert renames the old
+# Legacy seed names -> canonical names above, so the upsert renames the old
 # approximate rows in place instead of leaving duplicates behind.
+# NOTE: never map FROM a name that is also in _FOOD_SPOTS — the rename pass
+# pops it from the lookup dict and the canonical pass would re-insert a dupe.
 _SPOT_RENAMES: dict[str, str] = {
     "Qdoba (Lopes Way)": "Qdoba (Student Union)",
-    "Subway (Lopes Way)": "Subway (35th & Camelback)",
+    "Kamnari (Lopes Way)": "Kaminari (Lopes Way)",
+    "Canyon Pizza Co.": "Canyon Pizza Company",
+    "Training Table": "Lopes Training Table",
+    "The Grid (POD Market)": "Lopes Mart (Lopes Way)",
 }
 
 # (name, description, lat, lng) — OSM building centroids. Names double as the
@@ -299,7 +461,10 @@ _DROPOFFS: list[tuple[str, str, float, float]] = [
     ("Papago Apartments South", "Ground-floor mailroom.", 33.512361, -112.126382),
     ("Ponderosa Apartments", "Main entrance.", 33.510006, -112.120631),
     ("Roadrunner Apartments", "Main entrance.", 33.511790, -112.128444),
+    ("Gila Apartments", "Main entrance.", 33.514560, -112.118579),
+    ("Salt River Apartments", "Main entrance.", 33.515441, -112.119568),
     ("Santa Cruz Apartments", "Main entrance.", 33.514146, -112.120717),
+    ("Verde River Apartments", "Main entrance.", 33.515453, -112.118597),
     ("Sonora Apartments", "Main entrance.", 33.511056, -112.122794),
     ("Turquoise Apartments", "Main entrance.", 33.512662, -112.121824),
     # --- landmarks & campus life ----------------------------------------
