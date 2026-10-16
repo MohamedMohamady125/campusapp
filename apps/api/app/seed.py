@@ -237,38 +237,6 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         -112.1285,
         _UNSPLASH.format(pid="1621939514649-280e2ee25f60"),
     ),
-    (
-        "Chipotle (27th Ave)",
-        FoodSpotCategory.off_campus,
-        "Just off campus — bowl run classic.",
-        33.5093,
-        -112.1168,
-        _UNSPLASH.format(pid="1582234372722-50d7ccc30ebd"),
-    ),
-    (
-        "Raising Cane's (Camelback)",
-        FoodSpotCategory.off_campus,
-        "Box combos + Cane's sauce.",
-        33.5095,
-        -112.1003,
-        _UNSPLASH.format(pid="1562967914-608f82629710"),
-    ),
-    (
-        "Dutch Bros (Camelback)",
-        FoodSpotCategory.off_campus,
-        "Coffee runs before 8am class.",
-        33.5096,
-        -112.1102,
-        _UNSPLASH.format(pid="1509042239860-f550ce710b93"),
-    ),
-    (
-        "In-N-Out (Northern Ave)",
-        FoodSpotCategory.off_campus,
-        "Worth the drive. Animal style.",
-        33.5541,
-        -112.1289,
-        _UNSPLASH.format(pid="1568901346375-23c9450c58cd"),
-    ),
 ]
 
 # Admin-curated drop-off catalog — requesters pick one from a dropdown so no one

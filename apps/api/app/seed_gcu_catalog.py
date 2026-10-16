@@ -318,103 +318,6 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         -112.123450,
         _img("1604719312566-8912e9227c6a"),  # market shelves
     ),
-    # --- off campus (walkable / short drive) -------------------------------
-    (
-        "Subway (35th & Camelback)",
-        FoodSpotCategory.off_campus,
-        "Footlongs just west of campus.",
-        33.510359,
-        -112.134701,
-        _img("1553909489-cd47e0907980"),  # veggie club sandwich
-    ),
-    (
-        "El Taco Tote (Camelback)",
-        FoodSpotCategory.off_campus,
-        "Build-your-own taco spot.",
-        33.509733,
-        -112.133849,
-        _img("1613514785940-daed07799d9b"),  # taco spread
-    ),
-    (
-        "Federico's Mexican Food",
-        FoodSpotCategory.off_campus,
-        "Late-night burritos, open late.",
-        33.509206,
-        -112.133869,
-        _img("1626700051175-6818013e1d4f"),  # burrito
-    ),
-    (
-        "Great Wall Cuisine",
-        FoodSpotCategory.off_campus,
-        "Dim sum + Chinese on 35th Ave.",
-        33.510939,
-        -112.133373,
-        _img("1563245372-f21724e3856d"),  # dim sum steamer
-    ),
-    (
-        "Pho Vinh Long",
-        FoodSpotCategory.off_campus,
-        "Vietnamese pho south of Camelback.",
-        33.508171,
-        -112.134657,
-        _img("1569718212165-3a8278d5f624"),  # noodle soup
-    ),
-    (
-        "CVS Pharmacy (Camelback)",
-        FoodSpotCategory.off_campus,
-        "Pharmacy + groceries on Camelback.",
-        33.510008,
-        -112.134832,
-        _img("1576602976047-174e57a47881"),  # store interior
-    ),
-    (
-        "Chipotle (27th Ave)",
-        FoodSpotCategory.off_campus,
-        "Just off campus — bowl run classic.",
-        33.509300,
-        -112.116800,
-        _img("1615870216519-2f9fa575fa5c"),  # fresh-Mex tacos
-    ),
-    (
-        "McDonald's (27th Ave)",
-        FoodSpotCategory.off_campus,
-        "Classics on 27th Ave.",
-        33.509209,
-        -112.116701,
-        _img("1550547660-d9450f859349"),  # burger
-    ),
-    (
-        "Jack in the Box (27th Ave)",
-        FoodSpotCategory.off_campus,
-        "Burgers + tacos, open late.",
-        33.509213,
-        -112.117483,
-        _img("1481070555726-e2fe8357725c"),  # stacked burger
-    ),
-    (
-        "Raising Cane's (Camelback)",
-        FoodSpotCategory.off_campus,
-        "Box combos + Cane's sauce.",
-        33.509500,
-        -112.100300,
-        _img("1562967914-608f82629710"),  # fried chicken
-    ),
-    (
-        "Dutch Bros (Camelback)",
-        FoodSpotCategory.off_campus,
-        "Coffee runs before 8am class.",
-        33.509600,
-        -112.110200,
-        _img("1447933601403-0c6688de566e"),  # espresso + beans
-    ),
-    (
-        "In-N-Out (Northern Ave)",
-        FoodSpotCategory.off_campus,
-        "Worth the drive. Animal style.",
-        33.554100,
-        -112.128900,
-        _img("1571091718767-18b5b1457add"),  # burger + fries
-    ),
 ]
 
 # Legacy seed names -> canonical names above, so the upsert renames the old
@@ -550,6 +453,15 @@ async def _seed(session: AsyncSession) -> None:
             row.image_url = image
             updated += 1
     log.info("seed_gcu_catalog.spots", created=created, updated=updated)
+
+    # Deactivate any off-campus spots that exist in the DB — on-campus only.
+    deactivated = 0
+    for row in spots.values():
+        if row.category == FoodSpotCategory.off_campus and row.active:
+            row.active = False
+            deactivated += 1
+    if deactivated:
+        log.info("seed_gcu_catalog.deactivated_off_campus", count=deactivated)
 
     dropoffs = {d.name: d for d in (await session.execute(select(DropoffLocation))).scalars()}
     for old, new in _DROPOFF_RENAMES.items():
