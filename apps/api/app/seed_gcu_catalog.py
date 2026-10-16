@@ -269,14 +269,6 @@ _FOOD_SPOTS: list[tuple[str, FoodSpotCategory, str, float, float, str]] = [
         -112.118900,
         _img("1622597467836-f3285f2131b8"),  # fresh juices
     ),
-    (
-        "Cañón 49 (GCU Hotel)",
-        FoodSpotCategory.campus,
-        "Sit-down grill at the GCU Hotel.",
-        33.511177,
-        -112.114136,
-        _img("1544025162-d76694265947"),  # grill platter
-    ),
     # --- on campus: markets --------------------------------------------------
     (
         "Lope Shop (campus store)",
@@ -454,14 +446,15 @@ async def _seed(session: AsyncSession) -> None:
             updated += 1
     log.info("seed_gcu_catalog.spots", created=created, updated=updated)
 
-    # Deactivate any off-campus spots that exist in the DB — on-campus only.
+    # Deactivate off-campus spots and any explicitly removed spots.
+    _DEACTIVATE = {"Cañón 49 (GCU Hotel)"}
     deactivated = 0
     for row in spots.values():
-        if row.category == FoodSpotCategory.off_campus and row.active:
+        if (row.category == FoodSpotCategory.off_campus or row.name in _DEACTIVATE) and row.active:
             row.active = False
             deactivated += 1
     if deactivated:
-        log.info("seed_gcu_catalog.deactivated_off_campus", count=deactivated)
+        log.info("seed_gcu_catalog.deactivated", count=deactivated)
 
     dropoffs = {d.name: d for d in (await session.execute(select(DropoffLocation))).scalars()}
     for old, new in _DROPOFF_RENAMES.items():
